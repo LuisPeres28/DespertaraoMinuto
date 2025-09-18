@@ -26,6 +26,7 @@ let defaultUsers: any[] = [];
 function App() {
 
 const { user, loading, signIn, signOut } = useSupabaseAuth();
+  const [activeTab, setActiveTab] = useState('client-booking');
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showClientLoginModal, setShowClientLoginModal] = useState(false);
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(null);
