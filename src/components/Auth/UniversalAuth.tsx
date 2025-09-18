@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, LogIn, UserPlus, Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle, AlertTriangle, Shield, Heart } from 'lucide-react';
-import { useLocalAuth } from '../../hooks/useLocalAuth';
+
 
 interface UniversalAuthProps {
   onLogin: (username: string, password: string) => Promise<any>;
@@ -11,7 +11,7 @@ interface UniversalAuthProps {
 
 export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", restrictToStaff = false }: UniversalAuthProps) {
   const { signIn, signUp } = useLocalAuth();
-  const [mode, setMode] = useState<'login' | 'register' | 'recovery'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'recovery'>('login'); 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
     try {
       console.log('🔐 Tentando login com:', formData.email, formData.password);
       
-      const result = await signIn(formData.email, formData.password);
+   const result = await onLogin(formData.email, formData.password);   
       console.log('📡 Resultado do login:', result);
       
       if (result.success && result.user) {
@@ -66,73 +66,8 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
     }
   };
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
 
-    // Validation
-    if (!formData.email || !formData.password || !formData.fullName) {
-      setError('Todos os campos são obrigatórios');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password deve ter pelo menos 6 caracteres');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('As passwords não coincidem');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Generate username from email
-      const username = formData.email.split('@')[0];
-      
-      const result = await signUp(username, formData.email, formData.password, formData.fullName);
-      
-      if (result.success && result.user) {
-        setSuccess('Conta criada com sucesso!');
-        // Auto-login immediately after successful registration
-        setTimeout(() => {
-          onClose();
-          window.location.reload();
-        }, 500);
-      } else {
-        setError(result.error || 'Erro ao criar conta');
-      }
-    } catch (error) {
-      setError('Erro inesperado');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePasswordRecovery = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!formData.recoveryEmail) {
-      setError('Por favor, insira o seu email');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Simulate password recovery
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setSuccess('Email de recuperação enviado! Verifique a sua caixa de entrada.');
-      setTimeout(() => setMode('login'), 2000);
-    } catch (error) {
-      setError('Erro ao enviar email de recuperação');
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
 
   const fillTestCredentials = (type: 'admin' | 'therapist' | 'client') => {
     const credentials = {
