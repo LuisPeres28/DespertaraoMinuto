@@ -23,9 +23,8 @@ import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
 let defaultUsers: any[] = [];
 
 function App() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('client-booking');
+
+const { user, loading, signIn, signOut } = useSupabaseAuth();
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showClientLoginModal, setShowClientLoginModal] = useState(false);
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(null);
@@ -45,33 +44,7 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem('desperto_user');
-    
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        
-        if (userData && userData.id && userData.email) {
-          setUser(userData);
-          if (userData.userType === 'admin' || userData.userType === 'therapist') {
-            setActiveTab('dashboard');
-          }
-        } else {
-          localStorage.removeItem('desperto_user');
-          setUser(null);
-        }
-      } catch (error) {
-        localStorage.removeItem('desperto_user');
-        setUser(null);
-      }
-    } else {
-      setUser(null);
-    }
-    
-    setLoading(false);
-    EmailService.initialize();
-  }, []);
+
 
   const handleLogin = async (username: string, password: string) => {
     // Carregar utilizadores guardados localmente
