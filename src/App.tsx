@@ -46,53 +46,28 @@ const { user, loading, signIn, signOut } = useSupabaseAuth();
 
 
 
-  const handleLogin = async (username: string, password: string) => {
-    // Carregar utilizadores guardados localmente
-    const savedUsers = JSON.parse(localStorage.getItem('desperto_users') || '[]');
-    const allUsers = [...defaultUsers, ...savedUsers];
-    
-    // Procurar utilizador por username ou email
-    const foundUser = allUsers.find(u => 
-      (u.username === username || u.email === username) && u.password === password
-    );
-    
-    if (foundUser) {
-      const userData = {
-        id: foundUser.id,
-        username: foundUser.username,
-        email: foundUser.email,
-        userType: foundUser.userType,
-        fullName: foundUser.fullName
-      };
-      
-      console.log('✅ Login bem-sucedido, definindo utilizador:', userData);
-      setUser(userData);
-      localStorage.setItem('desperto_user', JSON.stringify(userData));
-      
+    const handleLogin = async (username: string, password: string) => {
+    const result = await signIn(username, password);
+    if (result.success) {
       // Set view mode based on user type
-      if (userData.userType === 'admin' || userData.userType === 'therapist') {
-        console.log('👤 Utilizador é staff, mudando para dashboard');
+      if (result.user.userType === 'admin' || result.user.userType === 'therapist') {
         setActiveTab('dashboard');
-      } else if (userData.userType === 'client') {
-        console.log('👤 Utilizador é cliente, mantendo na área de cliente');
+      } else if (result.user.userType === 'client') {
         setActiveTab('client-booking');
       }
-      
-      // Close any open modals immediately
       setShowAdminLoginModal(false);
-      
-      return { success: true };
-    } else {
-      return { success: false, error: 'Email/username ou password incorretos' };
     }
+    return result;
   };
 
+
+
   const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('desperto_user');
+    signOut();
     setActiveTab('client-booking');
     setShowAdminLoginModal(false);
   };
+
 
   const handleAdminLoginRequest = () => {
     setShowAdminLoginModal(true);
