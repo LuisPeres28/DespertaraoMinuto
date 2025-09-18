@@ -182,15 +182,12 @@ export class AuthService {
 
 
   static async verifyPassword(password: string, hash: string): Promise<boolean> {
-    // Em produção, usar bcrypt.compare(password, hash)
-    // Para demonstração, usar hash simples
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const computedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    
-    return computedHash === hash;
+    // WARNING: This is an INSECURE implementation for demonstration purposes only.
+    // In a production environment, you MUST use a strong, one-way hashing algorithm
+    // like bcrypt on the server-side, and compare hashes securely.
+    // The password_hash in the database should store the result of a server-side hash.
+    // For this demo, we assume the 'hash' from the database is the plain text password.
+    return password === hash;
   }
 
   static async send2FACode(user: any) {
