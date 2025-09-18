@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { X, LogIn, UserPlus, Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle, AlertTriangle, Shield, Heart } from 'lucide-react';
 
-
 interface UniversalAuthProps {
   onLogin: (username: string, password: string) => Promise<any>;
   onClose: () => void;
@@ -10,20 +9,15 @@ interface UniversalAuthProps {
 }
 
 export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", restrictToStaff = false }: UniversalAuthProps) {
-  const { signIn, signUp } = useLocalAuth();
-  const [mode, setMode] = useState<'login' | 'recovery'>('login'); 
+  const [mode, setMode] = useState<'login'>('login'); 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    recoveryEmail: ''
+    password: ''
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -39,7 +33,7 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
     try {
       console.log('🔐 Tentando login com:', formData.email, formData.password);
       
-   const result = await onLogin(formData.email, formData.password);   
+      const result = await onLogin(formData.email, formData.password);   
       console.log('📡 Resultado do login:', result);
       
       if (result.success && result.user) {
@@ -66,9 +60,6 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
     }
   };
 
-
- 
-
   const fillTestCredentials = (type: 'admin' | 'therapist' | 'client') => {
     const credentials = {
       admin: { email: 'euestoudesperto@gmail.com', password: 'Dhvif2m1' },
@@ -93,17 +84,11 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                {mode === 'login' ? <LogIn className="w-7 h-7" /> :
-                 mode === 'register' ? <UserPlus className="w-7 h-7" /> :
-                 <Mail className="w-7 h-7" />}
+                <LogIn className="w-7 h-7" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Entrar na Desperto</h2>
-                <p className="text-white/90 text-sm">
-                  {mode === 'login' ? 'Entre na sua conta' :
-                   mode === 'register' ? 'Criar nova conta' :
-                   'Recuperar password'}
-                </p>
+                <p className="text-white/90 text-sm">Entre na sua conta</p>
               </div>
             </div>
             <button
@@ -128,259 +113,69 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
           )}
 
           {/* LOGIN FORM */}
-          {mode === 'login' && (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
-                    placeholder="seu@email.com"
-                    required
-                  />
-                </div>
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+                  placeholder="seu@email.com"
+                  required
+                />
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    className="w-full pl-12 pr-14 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
-                    placeholder="Sua password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                    <span className="text-red-800 text-sm font-medium">{error}</span>
-                  </div>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
-              >
-                {loading ? (
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span>Entrar</span>
-                )}
-              </button>
-
-              {/* Links para outros modos */}
-              <div className="text-center space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setMode('register')}
-                  className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold hover:underline transition-all"
-                >
-                  Criar nova conta
-                </button>
-                <br />
-                <button
-                  type="button"
-                  onClick={() => setMode('recovery')}
-                  className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold hover:underline transition-all"
-                >
-                  Esqueci a minha password
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* REGISTER FORM */}
-
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all"
-                    placeholder="Seu nome completo"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all"
-                    placeholder="seu@email.com"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    className="w-full pl-12 pr-14 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all"
-                    placeholder="Mínimo 6 caracteres"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Confirmar Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    className="w-full pl-12 pr-14 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all"
-                    placeholder="Repita a password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                    <span className="text-red-800 text-sm font-medium">{error}</span>
-                  </div>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
-              >
-                {loading ? (
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span>Criar Conta</span>
-                )}
-              </button>
-
-              {/* Link para login */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setMode('login')}
-                  className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold hover:underline transition-all"
-                >
-                  Já tem conta? Entrar
-                </button>
-              </div>
-            </form>
-          )}
-
-        
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors mb-4"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Voltar ao Login</span>
-              </button>
-
-              <form onSubmit={handlePasswordRecovery} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email de Recuperação
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
-                    <input
-                      type="email"
-                      value={formData.recoveryEmail}
-                      onChange={(e) => handleInputChange('recoveryEmail', e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
-                      placeholder="seu@email.com"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <div className="flex items-center space-x-2">
-                    <Mail className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-blue-900">Como funciona</span>
-                  </div>
-                  <ul className="text-blue-800 text-sm mt-2 space-y-1">
-                    <li>• Enviamos um link seguro para o seu email</li>
-                    <li>• O link é válido por 30 minutos</li>
-                    <li>• Clique no link para redefinir a password</li>
-                  </ul>
-                </div>
-
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                    <div className="flex items-center space-x-2">
-                      <AlertTriangle className="w-5 h-5 text-red-600" />
-                      <span className="text-red-800 text-sm font-medium">{error}</span>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
-                >
-                  {loading ? (
-                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <span>Enviar Email</span>
-                  )}
-                </button>
-              </form>
             </div>
-          )}
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  className="w-full pl-12 pr-14 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+                  placeholder="Sua password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <span className="text-red-800 text-sm font-medium">{error}</span>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
+            >
+              {loading ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span>Entrar</span>
+              )}
+            </button>
+          </form>
 
           {/* Test Credentials */}
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
