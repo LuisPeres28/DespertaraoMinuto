@@ -11,7 +11,7 @@ interface UniversalAuthProps {
 
 export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", restrictToStaff = false }: UniversalAuthProps) {
   const { signIn, signUp } = useLocalAuth();
-  const [mode, setMode] = useState<'login' | 'register' | 'recovery'>('login'); 
+  const [mode, setMode] = useState<'login' | 'recovery'>('login'); 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -214,18 +214,7 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
           )}
 
           {/* REGISTER FORM */}
-          {mode === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nome Completo
-                </label>
-                <div className="relative">
-                  <User className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+
                     className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all"
                     placeholder="Seu nome completo"
                     required
@@ -332,11 +321,7 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
             </form>
           )}
 
-          {/* PASSWORD RECOVERY FORM */}
-          {mode === 'recovery' && (
-            <div className="space-y-6">
-              <button
-                onClick={() => setMode('login')}
+        
                 className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors mb-4"
               >
                 <ArrowLeft className="w-4 h-4" />
