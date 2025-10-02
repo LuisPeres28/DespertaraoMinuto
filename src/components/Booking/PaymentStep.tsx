@@ -69,14 +69,26 @@ export function PaymentStep({
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'card') {
-      // For real payments, generate payment link
       try {
-        const link = await PaymentService.createPaymentLink(amount, serviceName, 'temp-booking-id');
-        setPaymentLink(link);
-        setShowPaymentLink(true);
-        setIsProcessing(false);
+        const result = await PaymentService.processPayment(amount, 'card', 'temp-booking-id');
+
+        if (result.success && result.clientSecret) {
+          const confirmResult = await PaymentService.confirmPayment(result.clientSecret, 'card');
+
+          if (confirmResult.success && confirmResult.paymentIntent) {
+            setPaymentResult({ success: true });
+            window.setTimeout(() => {
+              onPaymentSuccess(confirmResult.paymentIntent!.id);
+            }, 1500);
+          } else {
+            setPaymentResult({ success: false, error: confirmResult.error || 'Erro no pagamento' });
+          }
+        } else {
+          setPaymentResult({ success: false, error: result.error || 'Erro ao criar pagamento' });
+        }
       } catch (error) {
-        setPaymentResult({ success: false, error: 'Erro ao criar link de pagamento' });
+        setPaymentResult({ success: false, error: 'Erro ao processar pagamento' });
+      } finally {
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'multibanco') {
