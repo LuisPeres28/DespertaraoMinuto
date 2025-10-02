@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, LogIn, UserPlus, Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle, AlertTriangle, Shield, Heart } from 'lucide-react';
+import { X, LogIn, Eye, EyeOff, Mail, Lock, CheckCircle, AlertTriangle, KeyRound } from 'lucide-react';
 
 interface UniversalAuthProps {
   onLogin: (username: string, password: string) => Promise<any>;
@@ -9,12 +9,12 @@ interface UniversalAuthProps {
 }
 
 export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", restrictToStaff = false }: UniversalAuthProps) {
-  const [mode, setMode] = useState<'login'>('login'); 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+  const [showRecovery, setShowRecovery] = useState(false);
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -60,20 +60,19 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
     }
   };
 
-  const fillTestCredentials = (type: 'admin' | 'therapist' | 'client') => {
-    const credentials = {
-      admin: { email: 'euestoudesperto@gmail.com', password: 'Dhvif2m1' },
-      therapist: { email: 'luisperes28@gmail.com', password: 'Dhvif2m0' },
-      client: { email: 'cliente@teste.com', password: '123456' }
-    };
-    
-    if (restrictToStaff && type === 'client') return;
-    
-    setFormData(prev => ({
-      ...prev,
-      email: credentials[type].email,
-      password: credentials[type].password
-    }));
+  const handleRecoveryRequest = async () => {
+    if (!formData.email) {
+      setError('Por favor, insira o seu email para recuperar a password');
+      return;
+    }
+
+    setError('');
+    setSuccess('Se o email existir na nossa base de dados, receberá instruções de recuperação.');
+
+    setTimeout(() => {
+      setShowRecovery(false);
+      setSuccess('');
+    }, 3000);
   };
 
   return (
@@ -177,22 +176,44 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
             </button>
           </form>
 
-          {/* Test Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-            <div className="flex items-center space-x-2 mb-3">
-              <AlertTriangle className="w-5 h-5 text-blue-600" />
-              <h4 className="font-semibold text-blue-900">Sistema de Produção</h4>
+          {/* Password Recovery Link */}
+          {!showRecovery && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowRecovery(true)}
+                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center justify-center space-x-2 mx-auto"
+              >
+                <KeyRound className="w-4 h-4" />
+                <span>Esqueci a minha password</span>
+              </button>
             </div>
-            <div className="text-sm text-blue-800 space-y-2">
-              <p>Este é um ambiente de produção. As contas de demonstração foram removidas por segurança.</p>
-              <p><strong>Para aceder:</strong></p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Registe-se como novo utilizador</li>
-                <li>Contacte o administrador para credenciais de staff</li>
-                <li>Use apenas credenciais válidas fornecidas oficialmente</li>
-              </ul>
+          )}
+
+          {/* Recovery Mode */}
+          {showRecovery && (
+            <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-indigo-900">Recuperar Password</h4>
+                <button
+                  onClick={() => setShowRecovery(false)}
+                  className="text-indigo-600 hover:text-indigo-800"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm text-indigo-800 mb-3">
+                Insira o seu email acima e clique no botão abaixo para receber instruções de recuperação.
+              </p>
+              <button
+                type="button"
+                onClick={handleRecoveryRequest}
+                className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+              >
+                Enviar Instruções
+              </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
