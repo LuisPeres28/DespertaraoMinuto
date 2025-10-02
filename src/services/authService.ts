@@ -23,37 +23,41 @@ export class AuthService {
         };
       }
 
-      // Tentar autenticar
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('*')
-        .or(`email.eq.${username},username.eq.${username}`)
-        .limit(1);
+      // USAR FUNÇÃO DO SUPABASE para autenticar com bcrypt
+      const { data: authResult, error: authError } = await supabase
+        .rpc('authenticate_user', {
+          username_input: username,
+          password_input: password
+        });
 
-      if (error || !users || users.length === 0) {
+      if (authError || !authResult || authResult.length === 0) {
+        // Tentar encontrar o user para incrementar failed attempts
+        const { data: users } = await supabase
+          .from('users')
+          .select('id')
+          .or(`email.eq.${username},username.eq.${username}`)
+          .limit(1);
+
+        if (users && users.length > 0) {
+          const failedAttempts = await this.handleFailedLogin(users[0].id, username);
+          return {
+            success: false,
+            error: `Credenciais incorretas. Restam ${Math.max(0, 5 - failedAttempts)} tentativas.`
+          };
+        }
+
         return { success: false, error: 'Credenciais incorretas' };
       }
 
-      const user = users[0];
+      const authenticatedUser = authResult[0];
 
       // Verificar tipo de utilizador se especificado
-      if (userType && user.user_type !== userType) {
-        return { 
-          success: false, 
-          error: userType === 'client' 
+      if (userType && authenticatedUser.user_type !== userType) {
+        return {
+          success: false,
+          error: userType === 'client'
             ? 'Esta área é apenas para clientes'
             : 'Esta área é apenas para staff/admin'
-        };
-      }
-
-      // Verificar password (simulado - em produção usar bcrypt)
-      const passwordMatch = await this.verifyPassword(password, user.password_hash);
-      
-      if (!passwordMatch) {
-        const failedAttempts = await this.handleFailedLogin(user.id, username);
-        return { 
-          success: false, 
-          error: `Credenciais incorretas. Restam ${Math.max(0, 5 - failedAttempts)} tentativas.`
         };
       }
 
@@ -61,13 +65,12 @@ export class AuthService {
       const { data: twoFactor } = await supabase
         .from('two_factor_auth_settings')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', authenticatedUser.user_id)
         .eq('enabled', true)
         .limit(1);
 
       if (twoFactor && twoFactor.length > 0) {
-        // Gerar e enviar código 2FA
-        await this.send2FACode(user);
+        await this.send2FACode(authenticatedUser);
         return {
           success: false,
           requiresTwoFactor: true,
@@ -76,16 +79,16 @@ export class AuthService {
       }
 
       // Login bem-sucedido
-      await this.handleSuccessfulLogin(user.id);
-      
+      await this.handleSuccessfulLogin(authenticatedUser.user_id);
+
       return {
         success: true,
         user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          userType: user.user_type,
-          fullName: user.full_name || user.username
+          id: authenticatedUser.user_id,
+          username: authenticatedUser.username,
+          email: authenticatedUser.email,
+          userType: authenticatedUser.user_type,
+          fullName: authenticatedUser.full_name || authenticatedUser.username
         }
       };
 
