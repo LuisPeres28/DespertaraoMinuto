@@ -92,14 +92,13 @@ const { user, loading, signIn, signOut } = useSupabaseAuth();
     setAuthenticatedClient(null);
     localStorage.removeItem('clientAuth');
     setShowClientBookingForm(false);
-    
+
     // Se é um utilizador cliente logado, fazer logout completo
     if (user && user.userType === 'client') {
-      setUser(null);
-      localStorage.removeItem('desperto_user');
+      signOut();
       setActiveTab('client-booking');
     }
-    
+
     console.log('✅ Logout de cliente completo');
   };
 
