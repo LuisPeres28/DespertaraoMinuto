@@ -19,6 +19,7 @@ import { UniversalAuth } from './components/Auth/UniversalAuth';
 import { ClientLogin } from './components/Auth/ClientLogin';
 import { ClientHistory } from './components/ClientBooking/ClientHistory';
 import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
+import { SystemCheck } from './components/Diagnostics/SystemCheck';
 
 // Production environment - no hardcoded test users
 let defaultUsers: any[] = [];
@@ -198,6 +199,8 @@ const { user, loading, signIn, signOut } = useSupabaseAuth();
         return <CouponManagement />;
       case 'therapist-notes':
         return <TherapistNotes />;
+      case 'system-check':
+        return <SystemCheck />;
       case 'messages':
         return (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">

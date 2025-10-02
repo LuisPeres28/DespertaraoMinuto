@@ -1,16 +1,17 @@
 import React from 'react';
-import { 
-  Calendar, 
-  Users, 
-  CreditCard, 
-  Settings, 
-  BarChart3, 
+import {
+  Calendar,
+  Users,
+  CreditCard,
+  Settings,
+  BarChart3,
   MessageSquare,
   FileText,
   Zap,
   UserPlus,
   Mail,
-  Ticket
+  Ticket,
+  Activity
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -28,6 +29,7 @@ const navItems = [
   { id: 'coupons', label: 'Cupões', icon: Ticket },
   { id: 'therapist-notes', label: 'Notas', icon: FileText },
   { id: 'messages', label: 'Mensagens', icon: MessageSquare },
+  { id: 'system-check', label: 'Diagnóstico Sistema', icon: Activity },
   { id: 'settings', label: 'Definições', icon: Settings },
   { id: 'email-setup', label: 'Configurar Email', icon: Mail },
   { id: 'therapist-management', label: 'Gerir Terapeutas', icon: Users },
