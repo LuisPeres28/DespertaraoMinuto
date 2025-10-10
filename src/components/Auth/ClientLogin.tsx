@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, User, LogIn, UserPlus, Lock, ArrowLeft, Mail, Eye, EyeOff, Phone, MessageSquare } from 'lucide-react';
 import { PasswordRecovery } from './PasswordRecovery';
-import { useLocalAuth } from '../../hooks/useLocalAuth';
+import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 
 interface ClientLoginProps {
   onLogin: (clientData: any) => void;
@@ -9,7 +9,7 @@ interface ClientLoginProps {
 }
 
 export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
-  const { signIn, signUp } = useLocalAuth();
+  const { signIn, signUp } = useSupabaseAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -57,7 +57,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
           return;
         }
 
-        const result = await signUp(formData.username, formData.email, formData.password, formData.fullName);
+        const result = await signUp(formData.username, formData.email, formData.password, formData.fullName, formData.phone);
         
         if (result.success && result.user) {
           onLogin({

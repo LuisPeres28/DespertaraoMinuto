@@ -81,31 +81,19 @@ export function useSupabaseAuth() {
     }
   }
 
-  const signUp = async (username: string, email: string, password: string, fullName: string) => {
+  const signUp = async (username: string, email: string, password: string, fullName: string, phone?: string) => {
     try {
       setLoading(true)
-      
-      // Call the auth edge function
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          action: 'register',
-          username,
-          email,
-          password,
-          fullName,
-          userType: 'client'
-        })
-      })
 
-      const result = await response.json()
+      console.log('📝 Tentativa de registo:', { username, email, fullName })
+
+      // Use AuthService to register user
+      const result = await AuthService.signUp(username, email, password, fullName, phone)
+      console.log('📡 Resposta do servidor:', result)
 
       if (result.success) {
         const userData = result.user
+        console.log('✅ Registo bem-sucedido:', userData)
         setUser(userData)
         localStorage.setItem('desperto_user', JSON.stringify(userData))
 

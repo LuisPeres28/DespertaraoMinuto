@@ -346,4 +346,86 @@ export class AuthService {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
+
+  static async signUp(username: string, email: string, password: string, fullName: string, phone?: string): Promise<LoginResult> {
+    try {
+      if (!supabase) {
+        return {
+          success: false,
+          error: 'Serviço de autenticação indisponível.'
+        };
+      }
+
+      // Verificar se username ou email já existem
+      const { data: existingUsers } = await supabase
+        .from('users')
+        .select('id')
+        .or(`email.eq.${email},username.eq.${username}`)
+        .limit(1);
+
+      if (existingUsers && existingUsers.length > 0) {
+        return {
+          success: false,
+          error: 'Username ou email já existem.'
+        };
+      }
+
+      // Criar hash da password
+      const { data: hashData } = await supabase.rpc('hash_password', {
+        password: password
+      });
+
+      if (!hashData) {
+        return {
+          success: false,
+          error: 'Erro ao processar password.'
+        };
+      }
+
+      // Criar novo utilizador
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          username,
+          email,
+          password_hash: hashData,
+          user_type: 'client',
+          phone_number: phone,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (createError || !newUser) {
+        return {
+          success: false,
+          error: 'Erro ao criar conta.'
+        };
+      }
+
+      // Criar perfil do utilizador
+      await supabase
+        .from('user_profiles')
+        .insert({
+          user_id: newUser.id,
+          full_name: fullName,
+          phone: phone
+        });
+
+      return {
+        success: true,
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          userType: newUser.user_type,
+          fullName: fullName
+        }
+      };
+
+    } catch (error) {
+      console.error('SignUp error:', error);
+      return { success: false, error: 'Erro interno do servidor' };
+    }
+  }
 }
