@@ -23,9 +23,10 @@ export function useSupabaseAuth() {
         setUser(userData)
         // Set user context for RLS
         if (supabase) {
-          supabase.rpc('set_current_user', { user_id_input: userData.id }).catch((error) => {
-            console.error('Error setting user context:', error)
-          })
+          supabase.rpc('set_current_user', { user_id_input: userData.id }).then(
+            () => {},
+            (error) => console.error('Error setting user context:', error)
+          )
         }
       } catch (error) {
         console.error('Error parsing saved user:', error)
@@ -53,9 +54,11 @@ export function useSupabaseAuth() {
 
         // Set user context for RLS
         if (supabase) {
-          await supabase.rpc('set_current_user', { user_id_input: userData.id }).catch((error) => {
+          try {
+            await supabase.rpc('set_current_user', { user_id_input: userData.id })
+          } catch (error) {
             console.error('Error setting user context:', error)
-          })
+          }
         }
 
         return { success: true, user: userData }
@@ -108,9 +111,11 @@ export function useSupabaseAuth() {
 
         // Set user context for RLS
         if (supabase) {
-          await supabase.rpc('set_current_user', { user_id_input: userData.id }).catch((error) => {
+          try {
+            await supabase.rpc('set_current_user', { user_id_input: userData.id })
+          } catch (error) {
             console.error('Error setting user context:', error)
-          })
+          }
         }
 
         return { success: true, user: userData }

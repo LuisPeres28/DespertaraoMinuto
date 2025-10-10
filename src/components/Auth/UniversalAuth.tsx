@@ -47,8 +47,7 @@ export function UniversalAuth({ onLogin, onClose, title = "Entrar na Desperto", 
         setSuccess('Login realizado com sucesso!');
         setTimeout(() => {
           onClose();
-          window.location.reload();
-        }, 500);
+        }, 300);
       } else {
         setError(result.error || 'Credenciais incorretas');
       }
