@@ -179,19 +179,15 @@ export class PaymentService {
     amount: number,
     bookingId: string
   ): Promise<{ entity: string; reference: string; amount: number }> {
-    console.log('🏧 Multibanco via Stripe:', { amount, bookingId });
+    console.log('🏧 Generating Multibanco reference:', { amount, bookingId });
 
-    const result = await this.processPayment(amount, 'multibanco', bookingId);
-
-    if (result.success) {
-      return {
-        entity: '12345',
-        reference: Math.floor(100000000 + Math.random() * 900000000).toString(),
-        amount
-      };
-    }
-
-    throw new Error('Failed to generate Multibanco reference');
+    // Generate reference without Stripe dependency
+    // In production, this would integrate with a payment gateway like SIBS/Easypay
+    return {
+      entity: '11249', // Example entity
+      reference: Math.floor(100000000 + Math.random() * 900000000).toString(),
+      amount
+    };
   }
 
   static getPaymentMethods(): Array<{ id: string; name: string; icon: string }> {
@@ -199,6 +195,7 @@ export class PaymentService {
       { id: 'card', name: 'Cartão de Crédito/Débito', icon: '💳' },
       { id: 'mbway', name: 'MB WAY', icon: '📱' },
       { id: 'multibanco', name: 'Referência Multibanco', icon: '🏧' },
+      { id: 'cash', name: 'Dinheiro (Pagamento na Consulta)', icon: '💵' },
       { id: 'coupon', name: 'Cupão/Ticket', icon: '🎫' }
     ];
   }

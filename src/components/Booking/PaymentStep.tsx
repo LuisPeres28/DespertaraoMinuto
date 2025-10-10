@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CreditCard, DollarSign, Loader, CheckCircle, X } from 'lucide-react';
+import { CreditCard, DollarSign, Loader, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import { PaymentService } from '../../services/paymentService';
 import { CouponService } from '../../services/couponService';
 import { useApp } from '../../context/AppContext';
@@ -36,7 +36,18 @@ export function PaymentStep({
   const [validatedCoupon, setValidatedCoupon] = useState<any>(null);
   const [couponValidationError, setCouponValidationError] = useState<string>('');
 
-  const paymentMethods = PaymentService.getPaymentMethods();
+  const allPaymentMethods = PaymentService.getPaymentMethods();
+  const hasStripeConfig = !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+  // Filter payment methods based on Stripe configuration
+  const paymentMethods = allPaymentMethods.filter(method => {
+    // Always show coupon method
+    if (method.id === 'coupon') return true;
+    // Only show online methods if Stripe is configured
+    if (method.id === 'card' || method.id === 'mbway') return hasStripeConfig;
+    // Show multibanco and cash always
+    return true;
+  });
 
   const generateCouponPassword = (): string => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -97,13 +108,25 @@ export function PaymentStep({
       // For Multibanco, generate reference and show it
       try {
         const reference = await PaymentService.generateMultibancoReference(amount, 'temp-booking-id');
-        setPaymentResult({ 
-          success: false, 
-          error: `Referência Multibanco gerada:\n\nEntidade: ${reference.entity}\nReferência: ${reference.reference}\nValor: €${amount}\n\nApós o pagamento, o seu agendamento será confirmado automaticamente.` 
+        setPaymentResult({
+          success: false,
+          error: `Referência Multibanco gerada:\n\nEntidade: ${reference.entity}\nReferência: ${reference.reference}\nValor: €${amount}\n\nApós o pagamento, o seu agendamento será confirmado automaticamente.`
         });
         setIsProcessing(false);
       } catch (error) {
         setPaymentResult({ success: false, error: 'Erro ao gerar referência Multibanco' });
+        setIsProcessing(false);
+      }
+    } else if (selectedMethod === 'cash') {
+      // For cash, just confirm and proceed
+      try {
+        setPaymentResult({ success: true });
+        window.setTimeout(() => {
+          onPaymentSuccess('cash_' + Date.now());
+        }, 1500);
+      } catch (error) {
+        setPaymentResult({ success: false, error: 'Erro ao processar pagamento em dinheiro' });
+      } finally {
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'coupon') {
@@ -266,6 +289,26 @@ export function PaymentStep({
           O pagamento é obrigatório para confirmar o seu agendamento.
         </p>
       </div>
+
+      {/* Stripe Configuration Warning */}
+      {!hasStripeConfig && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5">
+          <div className="flex items-start space-x-3">
+            <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-amber-900 mb-1">Pagamentos Online Temporariamente Indisponíveis</h4>
+              <p className="text-sm text-amber-800 mb-3">
+                Os pagamentos por cartão e MB WAY estão temporariamente indisponíveis. Por favor, escolha uma das seguintes opções:
+              </p>
+              <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
+                <li><strong>Cupão:</strong> Se recebeu um cupão do terapeuta</li>
+                <li><strong>Multibanco:</strong> Receberá referência para pagamento</li>
+                <li><strong>Dinheiro:</strong> Pagamento na consulta</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stripe Payment Link (if available) */}
       {stripePaymentLink && (
