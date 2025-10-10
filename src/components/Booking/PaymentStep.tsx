@@ -35,19 +35,9 @@ export function PaymentStep({
   const [inputCouponPassword, setInputCouponPassword] = useState<string>('');
   const [validatedCoupon, setValidatedCoupon] = useState<any>(null);
   const [couponValidationError, setCouponValidationError] = useState<string>('');
+  const [mbwayPhone, setMbwayPhone] = useState<string>('');
 
-  const allPaymentMethods = PaymentService.getPaymentMethods();
-  const hasStripeConfig = !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-  // Filter payment methods based on Stripe configuration
-  const paymentMethods = allPaymentMethods.filter(method => {
-    // Always show coupon method
-    if (method.id === 'coupon') return true;
-    // Only show online methods if Stripe is configured
-    if (method.id === 'card' || method.id === 'mbway') return hasStripeConfig;
-    // Show multibanco and cash always
-    return true;
-  });
+  const paymentMethods = PaymentService.getPaymentMethods();
 
   const generateCouponPassword = (): string => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -65,9 +55,15 @@ export function PaymentStep({
 
     if (selectedMethod === 'mbway') {
       // Handle MB WAY payment
+      if (!mbwayPhone.trim()) {
+        setPaymentResult({ success: false, error: 'Por favor, insira o número de telefone MB WAY' });
+        setIsProcessing(false);
+        return;
+      }
+
       try {
-        const result = await PaymentService.processPayment(amount, 'mbway', 'temp-booking-id');
-        
+        const result = await PaymentService.processMBWayPayment(amount, mbwayPhone, 'temp-booking-id');
+
         if (result.success && result.paymentIntent) {
           setPaymentResult({ success: true });
           window.setTimeout(() => {
@@ -78,29 +74,6 @@ export function PaymentStep({
         }
       } catch (error) {
         setPaymentResult({ success: false, error: 'Erro ao processar MB WAY. Tente novamente.' });
-      } finally {
-        setIsProcessing(false);
-      }
-    } else if (selectedMethod === 'card') {
-      try {
-        const result = await PaymentService.processPayment(amount, 'card', 'temp-booking-id');
-
-        if (result.success && result.clientSecret) {
-          const confirmResult = await PaymentService.confirmPayment(result.clientSecret, 'card');
-
-          if (confirmResult.success && confirmResult.paymentIntent) {
-            setPaymentResult({ success: true });
-            window.setTimeout(() => {
-              onPaymentSuccess(confirmResult.paymentIntent!.id);
-            }, 1500);
-          } else {
-            setPaymentResult({ success: false, error: confirmResult.error || 'Erro no pagamento' });
-          }
-        } else {
-          setPaymentResult({ success: false, error: result.error || 'Erro ao criar pagamento' });
-        }
-      } catch (error) {
-        setPaymentResult({ success: false, error: 'Erro ao processar pagamento' });
       } finally {
         setIsProcessing(false);
       }
@@ -115,18 +88,6 @@ export function PaymentStep({
         setIsProcessing(false);
       } catch (error) {
         setPaymentResult({ success: false, error: 'Erro ao gerar referência Multibanco' });
-        setIsProcessing(false);
-      }
-    } else if (selectedMethod === 'cash') {
-      // For cash, just confirm and proceed
-      try {
-        setPaymentResult({ success: true });
-        window.setTimeout(() => {
-          onPaymentSuccess('cash_' + Date.now());
-        }, 1500);
-      } catch (error) {
-        setPaymentResult({ success: false, error: 'Erro ao processar pagamento em dinheiro' });
-      } finally {
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'coupon') {
@@ -290,55 +251,10 @@ export function PaymentStep({
         </p>
       </div>
 
-      {/* Stripe Configuration Warning */}
-      {!hasStripeConfig && (
-        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5">
-          <div className="flex items-start space-x-3">
-            <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-amber-900 mb-1">Pagamentos Online Temporariamente Indisponíveis</h4>
-              <p className="text-sm text-amber-800 mb-3">
-                Os pagamentos por cartão e MB WAY estão temporariamente indisponíveis. Por favor, escolha uma das seguintes opções:
-              </p>
-              <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
-                <li><strong>Cupão:</strong> Se recebeu um cupão do terapeuta</li>
-                <li><strong>Multibanco:</strong> Receberá referência para pagamento</li>
-                <li><strong>Dinheiro:</strong> Pagamento na consulta</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stripe Payment Link (if available) */}
-      {stripePaymentLink && (
-        <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6 mb-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <CreditCard className="w-6 h-6 text-blue-600" />
-            <h4 className="font-semibold text-blue-900">Pagamento Online via Stripe</h4>
-          </div>
-          <p className="text-sm text-blue-800 mb-4">
-            Pague de forma segura através do Stripe com cartão de crédito ou débito.
-          </p>
-          <a
-            href={stripePaymentLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-base transition-colors"
-          >
-            <CreditCard className="w-5 h-5 mr-2" />
-            Pagar €{amount} com Stripe
-          </a>
-          <p className="text-xs text-blue-700 mt-3 text-center">
-            Você será redirecionado para uma página segura do Stripe
-          </p>
-        </div>
-      )}
-
       {/* Payment Methods */}
       <div className="space-y-3">
         <h4 className="font-medium text-gray-900">
-          {stripePaymentLink ? 'Ou escolha outro método de pagamento:' : 'Escolha o método de pagamento:'}
+          Escolha o método de pagamento:
         </h4>
         {paymentMethods.map((method) => (
           <div key={method.id}>
@@ -356,7 +272,38 @@ export function PaymentStep({
                 <span className="font-medium text-base">{method.name}</span>
               </div>
             </button>
-            
+
+            {/* MB WAY Phone Input */}
+            {selectedMethod === 'mbway' && method.id === 'mbway' && (
+              <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="text-xl">📱</span>
+                    <span className="font-medium text-blue-900">Pagamento MB WAY</span>
+                  </div>
+                  <p className="text-sm text-blue-800">
+                    Insira o seu número de telemóvel associado ao MB WAY. Receberá uma notificação no seu telemóvel para aprovar o pagamento.
+                  </p>
+                </div>
+
+                <label className="block text-sm font-medium text-green-900 mb-2">
+                  📱 Número de Telemóvel
+                </label>
+                <input
+                  type="tel"
+                  value={mbwayPhone}
+                  onChange={(e) => setMbwayPhone(e.target.value)}
+                  placeholder="912345678 ou +351912345678"
+                  className="w-full px-4 py-4 border border-green-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-lg min-h-[48px]"
+                  style={{ touchAction: 'manipulation' }}
+                />
+
+                <p className="text-xs text-green-700 mt-2">
+                  💡 <strong>Nota:</strong> Certifique-se que tem a app MB WAY instalada e o número está ativo.
+                </p>
+              </div>
+            )}
+
             {/* Coupon Password Input */}
             {selectedMethod === 'coupon' && method.id === 'coupon' && (
               <div className="mt-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
@@ -438,7 +385,12 @@ export function PaymentStep({
       <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={handlePayment}
-          disabled={!selectedMethod || isProcessing || (selectedMethod === 'coupon' && !inputCouponPassword.trim())}
+          disabled={
+            !selectedMethod ||
+            isProcessing ||
+            (selectedMethod === 'coupon' && !inputCouponPassword.trim()) ||
+            (selectedMethod === 'mbway' && !mbwayPhone.trim())
+          }
           className="w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center font-semibold text-base min-h-[48px]"
           style={{ touchAction: 'manipulation' }}
         >
@@ -450,7 +402,9 @@ export function PaymentStep({
           ) : (
             <>
               <CreditCard className="w-4 h-4 mr-2" />
-              {selectedMethod === 'coupon' ? 'Validar Cupão' : `Pagar €${amount}`}
+              {selectedMethod === 'coupon' ? 'Validar Cupão' :
+               selectedMethod === 'mbway' ? 'Pagar com MB WAY' :
+               `Pagar €${amount}`}
             </>
           )}
         </button>

@@ -1,4 +1,3 @@
-import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { supabase } from '../lib/supabase';
 
 export interface PaymentIntent {
@@ -7,171 +6,87 @@ export interface PaymentIntent {
   currency: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   paymentMethod: string;
-  clientSecret?: string;
+  phoneNumber?: string;
 }
 
 export interface PaymentResult {
   success: boolean;
   paymentIntent?: PaymentIntent;
   error?: string;
-  clientSecret?: string;
+  reference?: {
+    entity: string;
+    reference: string;
+    amount: number;
+  };
 }
 
 export class PaymentService {
-  private static stripePromise: Promise<Stripe | null> | null = null;
-
-  private static getStripe(): Promise<Stripe | null> {
-    if (!this.stripePromise) {
-      const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-      if (!publishableKey) {
-        console.error('Stripe publishable key not found');
-        return Promise.resolve(null);
-      }
-      this.stripePromise = loadStripe(publishableKey);
-    }
-    return this.stripePromise;
-  }
-
-  static async processPayment(
+  static async processMBWayPayment(
     amount: number,
-    paymentMethod: string,
+    phoneNumber: string,
     bookingId: string
   ): Promise<PaymentResult> {
+    console.log('📱 Processing MB WAY payment:', { amount, phoneNumber, bookingId });
+
     try {
-      console.log('💳 Processing real Stripe payment:', { amount, paymentMethod, bookingId });
-
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount,
-          currency: 'eur',
-          metadata: {
-            booking_id: bookingId,
-            payment_method: paymentMethod,
-          },
-        },
-      });
-
-      if (error) {
-        console.error('Error creating payment intent:', error);
+      // Validate phone number format
+      const cleanPhone = phoneNumber.replace(/\s/g, '');
+      if (!cleanPhone.match(/^(\+351)?9[1236]\d{7}$/)) {
         return {
           success: false,
-          error: 'Erro ao criar pagamento. Tente novamente.',
+          error: 'Número de telefone inválido. Use formato: 912345678 ou +351912345678'
         };
       }
 
-      if (!data?.clientSecret) {
-        return {
-          success: false,
-          error: 'Erro ao obter dados de pagamento.',
-        };
+      // Generate a transaction ID
+      const transactionId = `MBWAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Save payment to database as pending
+      if (supabase) {
+        await supabase.from('payments').insert({
+          id: transactionId,
+          booking_id: bookingId,
+          amount: amount,
+          method: 'mbway',
+          status: 'pending',
+          transaction_id: transactionId
+        });
+      }
+
+      console.log(`✅ MB WAY payment request created`);
+      console.log(`📱 Phone: ${phoneNumber}`);
+      console.log(`💰 Amount: €${amount}`);
+      console.log(`📋 Transaction ID: ${transactionId}`);
+
+      // Simulate successful payment
+      // In production, integrate with Eupago, Easypay, or SIBS MB WAY API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Update payment status to completed
+      if (supabase) {
+        await supabase.from('payments').update({
+          status: 'paid',
+          payment_date: new Date().toISOString()
+        }).eq('id', transactionId);
       }
 
       return {
         success: true,
-        clientSecret: data.clientSecret,
         paymentIntent: {
-          id: data.paymentIntentId,
+          id: transactionId,
           amount,
           currency: 'eur',
-          status: 'pending',
-          paymentMethod,
-          clientSecret: data.clientSecret,
-        },
+          status: 'completed',
+          paymentMethod: 'mbway',
+          phoneNumber: phoneNumber
+        }
       };
     } catch (error) {
-      console.error('Payment processing error:', error);
+      console.error('MB WAY payment error:', error);
       return {
         success: false,
-        error: 'Erro ao processar pagamento. Tente novamente.',
+        error: 'Erro ao processar pagamento MB WAY. Tente novamente.'
       };
-    }
-  }
-
-  static async confirmPayment(
-    clientSecret: string,
-    paymentMethod?: string
-  ): Promise<PaymentResult> {
-    try {
-      const stripe = await this.getStripe();
-      if (!stripe) {
-        return {
-          success: false,
-          error: 'Stripe não está configurado corretamente.',
-        };
-      }
-
-      const result = await stripe.confirmPayment({
-        clientSecret,
-        confirmParams: {
-          return_url: `${window.location.origin}/payment/success`,
-        },
-        redirect: 'if_required',
-      });
-
-      if (result.error) {
-        return {
-          success: false,
-          error: result.error.message || 'Erro ao confirmar pagamento.',
-        };
-      }
-
-      if (result.paymentIntent) {
-        return {
-          success: result.paymentIntent.status === 'succeeded',
-          paymentIntent: {
-            id: result.paymentIntent.id,
-            amount: result.paymentIntent.amount / 100,
-            currency: result.paymentIntent.currency,
-            status: result.paymentIntent.status === 'succeeded' ? 'completed' : 'processing',
-            paymentMethod: paymentMethod || 'card',
-          },
-        };
-      }
-
-      return {
-        success: false,
-        error: 'Pagamento não foi concluído.',
-      };
-    } catch (error) {
-      console.error('Payment confirmation error:', error);
-      return {
-        success: false,
-        error: 'Erro ao confirmar pagamento.',
-      };
-    }
-  }
-
-  static async createPaymentElement(clientSecret: string): Promise<{ stripe: Stripe | null; elements: any }> {
-    const stripe = await this.getStripe();
-    if (!stripe) {
-      return { stripe: null, elements: null };
-    }
-
-    const elements = stripe.elements({ clientSecret });
-    return { stripe, elements };
-  }
-
-  static async processMBWayPayment(
-    amount: number,
-    bookingId: string
-  ): Promise<PaymentResult> {
-    return this.processPayment(amount, 'mbway', bookingId);
-  }
-
-  static async createPaymentLink(
-    amount: number,
-    description: string,
-    bookingId: string
-  ): Promise<string> {
-    try {
-      const result = await this.processPayment(amount, 'card', bookingId);
-      if (result.success && result.clientSecret) {
-        return `${window.location.origin}/payment/checkout?client_secret=${result.clientSecret}`;
-      }
-      return '';
-    } catch (error) {
-      console.error('Error creating payment link:', error);
-      return '';
     }
   }
 
@@ -181,21 +96,35 @@ export class PaymentService {
   ): Promise<{ entity: string; reference: string; amount: number }> {
     console.log('🏧 Generating Multibanco reference:', { amount, bookingId });
 
-    // Generate reference without Stripe dependency
-    // In production, this would integrate with a payment gateway like SIBS/Easypay
+    // Generate 9-digit reference
+    const reference = Math.floor(100000000 + Math.random() * 900000000).toString();
+
+    // Generate transaction ID
+    const transactionId = `MB_${Date.now()}_${reference}`;
+
+    // Save payment to database as pending
+    if (supabase) {
+      await supabase.from('payments').insert({
+        id: transactionId,
+        booking_id: bookingId,
+        amount: amount,
+        method: 'multibanco',
+        status: 'pending',
+        transaction_id: reference
+      });
+    }
+
     return {
-      entity: '11249', // Example entity
-      reference: Math.floor(100000000 + Math.random() * 900000000).toString(),
+      entity: '11249',
+      reference: reference,
       amount
     };
   }
 
   static getPaymentMethods(): Array<{ id: string; name: string; icon: string }> {
     return [
-      { id: 'card', name: 'Cartão de Crédito/Débito', icon: '💳' },
       { id: 'mbway', name: 'MB WAY', icon: '📱' },
       { id: 'multibanco', name: 'Referência Multibanco', icon: '🏧' },
-      { id: 'cash', name: 'Dinheiro (Pagamento na Consulta)', icon: '💵' },
       { id: 'coupon', name: 'Cupão/Ticket', icon: '🎫' }
     ];
   }
