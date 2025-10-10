@@ -16,7 +16,6 @@ import { TherapistManagement } from './components/Therapists/TherapistManagement
 import { CouponManagement } from './components/Coupons/CouponManagement';
 import { TherapistNotes } from './components/Therapists/TherapistNotes';
 import { UniversalAuth } from './components/Auth/UniversalAuth';
-import { ClientLogin } from './components/Auth/ClientLogin';
 import { ClientHistory } from './components/ClientBooking/ClientHistory';
 import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
 import { SystemCheck } from './components/Diagnostics/SystemCheck';
@@ -26,10 +25,9 @@ let defaultUsers: any[] = [];
 
 function App() {
 
-const { user, loading, signIn, signOut } = useSupabaseAuth();
+const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('client-booking');
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
-  const [showClientLoginModal, setShowClientLoginModal] = useState(false);
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(null);
   const [showClientHistory, setShowClientHistory] = useState(false);
   const [showClientBookingForm, setShowClientBookingForm] = useState(false);
@@ -49,8 +47,8 @@ const { user, loading, signIn, signOut } = useSupabaseAuth();
 
 
 
-    const handleLogin = async (username: string, password: string) => {
-    const result = await signIn(username, password);
+    const handleLogin = async (email: string, password: string) => {
+    const result = await signIn(email, password);
     if (result.success) {
       // Set view mode based on user type
       if (result.user.userType === 'admin' || result.user.userType === 'therapist') {
@@ -58,6 +56,16 @@ const { user, loading, signIn, signOut } = useSupabaseAuth();
       } else if (result.user.userType === 'client') {
         setActiveTab('client-booking');
       }
+      setShowAdminLoginModal(false);
+    }
+    return result;
+  };
+
+  const handleRegister = async (email: string, password: string, fullName: string, phone?: string) => {
+    const result = await signUp(email, password, fullName, phone);
+    if (result.success) {
+      // Novos utilizadores são sempre clientes
+      setActiveTab('client-booking');
       setShowAdminLoginModal(false);
     }
     return result;
@@ -83,7 +91,6 @@ const { user, loading, signIn, signOut } = useSupabaseAuth();
   const handleClientLogin = (clientData: any) => {
     setAuthenticatedClient(clientData);
     localStorage.setItem('clientAuth', JSON.stringify(clientData));
-    setShowClientLoginModal(false);
     setShowClientBookingForm(false); // Prevent duplicate forms
   };
 
@@ -235,7 +242,7 @@ const { user, loading, signIn, signOut } = useSupabaseAuth();
                 onLogout={handleLogout}
                 isStaffUser={isStaffUser}
                 authenticatedClient={authenticatedClient}
-                onClientLogin={() => setShowClientLoginModal(true)}
+                onClientLogin={() => setShowAdminLoginModal(true)}
                 onClientLogout={handleClientLogout}
                 onShowHistory={() => setShowClientHistory(true)}
               />
@@ -288,29 +295,16 @@ const { user, loading, signIn, signOut } = useSupabaseAuth();
           />
         )}
         
-        {/* Admin Login Modal */}
+        {/* Universal Login/Register Modal */}
         {showAdminLoginModal && (
           <UniversalAuth
-            onLogin={async (username, password) => {
-              const result = await handleLogin(username, password);
-              if (result.success) {
-                setShowAdminLoginModal(false);
-              }
-              return result;
-            }}
+            onLogin={handleLogin}
+            onRegister={handleRegister}
             onClose={handleAdminLoginClose}
             title="Entrar na Desperto"
-            restrictToStaff={false}
           />
         )}
 
-        {/* Client Login Modal */}
-        {showClientLoginModal && (
-          <ClientLogin
-            onLogin={handleClientLogin}
-            onClose={() => setShowClientLoginModal(false)}
-          />
-        )}
       </div>
     </AppProvider>
   );

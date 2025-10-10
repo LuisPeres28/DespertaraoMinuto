@@ -347,7 +347,7 @@ export class AuthService {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  static async signUp(username: string, email: string, password: string, fullName: string, phone?: string): Promise<LoginResult> {
+  static async signUp(email: string, password: string, fullName: string, phone?: string): Promise<LoginResult> {
     try {
       if (!supabase) {
         return {
@@ -356,19 +356,22 @@ export class AuthService {
         };
       }
 
-      // Verificar se username ou email já existem
+      // Verificar se email já existe
       const { data: existingUsers } = await supabase
         .from('users')
         .select('id')
-        .or(`email.eq.${email},username.eq.${username}`)
+        .eq('email', email)
         .limit(1);
 
       if (existingUsers && existingUsers.length > 0) {
         return {
           success: false,
-          error: 'Username ou email já existem.'
+          error: 'Email já registado.'
         };
       }
+
+      // Gerar username a partir do email (parte antes do @)
+      const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
 
       // Criar hash da password
       const { data: hashData } = await supabase.rpc('hash_password', {

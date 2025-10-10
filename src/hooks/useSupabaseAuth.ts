@@ -81,14 +81,14 @@ export function useSupabaseAuth() {
     }
   }
 
-  const signUp = async (username: string, email: string, password: string, fullName: string, phone?: string) => {
+  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     try {
       setLoading(true)
 
-      console.log('📝 Tentativa de registo:', { username, email, fullName })
+      console.log('📝 Tentativa de registo:', { email, fullName })
 
       // Use AuthService to register user
-      const result = await AuthService.signUp(username, email, password, fullName, phone)
+      const result = await AuthService.signUp(email, password, fullName, phone)
       console.log('📡 Resposta do servidor:', result)
 
       if (result.success) {
