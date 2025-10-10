@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Ticket, Calendar, User, DollarSign, CheckCircle, X, AlertTriangle, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, Ticket, Calendar, User, DollarSign, CheckCircle, X, AlertTriangle, CreditCard as Edit, Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { CouponService } from '../../services/couponService';
 import { Coupon, CouponUsage } from '../../types';
