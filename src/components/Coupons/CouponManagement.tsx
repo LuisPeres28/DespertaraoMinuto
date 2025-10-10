@@ -429,11 +429,13 @@ export function CouponManagement() {
             </thead>
             <tbody>
               {filteredCoupons.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <Ticket className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>Nenhum cupão encontrado</p>
-                  <p className="text-sm">Crie o primeiro cupão para começar</p>
-                </div>
+                <tr>
+                  <td colSpan={8} className="text-center py-12 text-gray-500">
+                    <Ticket className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>Nenhum cupão encontrado</p>
+                    <p className="text-sm">Crie o primeiro cupão para começar</p>
+                  </td>
+                </tr>
               ) : (
                 filteredCoupons.map((coupon) => {
                   const client = coupon.clientId ? clients.find(c => c.id === coupon.clientId) : null;

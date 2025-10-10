@@ -22,7 +22,11 @@ export function useSupabaseAuth() {
         const userData = JSON.parse(savedUser)
         setUser(userData)
         // Set user context for RLS
-        supabase.rpc('set_current_user', { user_id_input: userData.id })
+        if (supabase) {
+          supabase.rpc('set_current_user', { user_id_input: userData.id }).catch((error) => {
+            console.error('Error setting user context:', error)
+          })
+        }
       } catch (error) {
         console.error('Error parsing saved user:', error)
         localStorage.removeItem('desperto_user')
@@ -46,10 +50,14 @@ export function useSupabaseAuth() {
         console.log('✅ Login bem-sucedido:', userData)
         setUser(userData)
         localStorage.setItem('desperto_user', JSON.stringify(userData))
-        
+
         // Set user context for RLS
-        await supabase.rpc('set_current_user', { user_id_input: userData.id })
-        
+        if (supabase) {
+          await supabase.rpc('set_current_user', { user_id_input: userData.id }).catch((error) => {
+            console.error('Error setting user context:', error)
+          })
+        }
+
         return { success: true, user: userData }
       } else if (result.requiresTwoFactor) {
         console.log('🔐 2FA requerido')
@@ -97,10 +105,14 @@ export function useSupabaseAuth() {
         const userData = result.user
         setUser(userData)
         localStorage.setItem('desperto_user', JSON.stringify(userData))
-        
+
         // Set user context for RLS
-        await supabase.rpc('set_current_user', { user_id_input: userData.id })
-        
+        if (supabase) {
+          await supabase.rpc('set_current_user', { user_id_input: userData.id }).catch((error) => {
+            console.error('Error setting user context:', error)
+          })
+        }
+
         return { success: true, user: userData }
       } else {
         return { success: false, error: result.error || 'Registration failed' }

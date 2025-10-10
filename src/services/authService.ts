@@ -12,6 +12,13 @@ export interface LoginResult {
 export class AuthService {
   static async login(username: string, password: string, userType?: 'client' | 'therapist' | 'admin'): Promise<LoginResult> {
     try {
+      if (!supabase) {
+        return {
+          success: false,
+          error: 'Serviço de autenticação indisponível. Por favor, verifique a configuração.'
+        };
+      }
+
       // Verificar se a conta está bloqueada
       const lockoutCheck = await this.checkAccountLockout(username);
       if (lockoutCheck.isLocked) {
