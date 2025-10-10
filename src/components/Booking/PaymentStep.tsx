@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, DollarSign, Loader, CheckCircle, X, AlertTriangle } from 'lucide-react';
+import { CreditCard, DollarSign, Loader, CheckCircle, X, AlertTriangle, Smartphone } from 'lucide-react';
 import { PaymentService } from '../../services/paymentService';
 import { CouponService } from '../../services/couponService';
 import { useApp } from '../../context/AppContext';
-import { loadStripe } from '@stripe/stripe-js';
 
 interface PaymentStepProps {
   amount: number;
@@ -38,7 +37,8 @@ export function PaymentStep({
   const [couponValidationError, setCouponValidationError] = useState<string>('');
   const [mbwayPhone, setMbwayPhone] = useState<string>('');
   const [processingMBWay, setProcessingMBWay] = useState(false);
-  const [mbwayReference, setMbwayReference] = useState<{entity: string, reference: string} | null>(null);
+  const [mbwayPaymentId, setMbwayPaymentId] = useState<string | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState(false);
 
   const paymentMethods = PaymentService.getPaymentMethods();
 
@@ -57,7 +57,7 @@ export function PaymentStep({
     setPaymentResult(null);
 
     if (selectedMethod === 'mbway') {
-      // Handle MB WAY payment via Stripe
+      // Handle MB WAY payment via Easypay
       if (!mbwayPhone.trim()) {
         setPaymentResult({ success: false, error: 'Por favor, insira o número de telefone MB WAY' });
         setIsProcessing(false);
@@ -68,36 +68,39 @@ export function PaymentStep({
         setProcessingMBWay(true);
         const result = await PaymentService.processMBWayPayment(amount, mbwayPhone, 'temp-booking-id');
 
-        if (result.success && result.clientSecret) {
-          // Show MB WAY reference from Stripe
-          const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
-          if (!stripe) {
-            setPaymentResult({ success: false, error: 'Erro ao carregar Stripe' });
-            setIsProcessing(false);
-            setProcessingMBWay(false);
-            return;
-          }
+        if (result.success && result.paymentIntent) {
+          setMbwayPaymentId(result.paymentIntent.id);
+          setProcessingMBWay(false);
 
-          // Confirm payment with Stripe
-          const confirmResult = await PaymentService.confirmMBWayPayment(
-            result.clientSecret,
-            mbwayPhone
-          );
+          // Start checking payment status
+          setCheckingPayment(true);
 
-          if (confirmResult.success) {
-            setPaymentResult({ success: true });
-            setProcessingMBWay(false);
-            window.setTimeout(() => {
-              onPaymentSuccess(confirmResult.paymentIntent!.id);
-            }, 1500);
-          } else {
-            // Show Multibanco reference as fallback
-            setPaymentResult({
-              success: false,
-              error: 'Pagamento MB WAY aguardando confirmação. Pode também usar a referência Multibanco gerada.'
-            });
-            setProcessingMBWay(false);
-          }
+          // Check payment status every 3 seconds for 3 minutes
+          const checkInterval = setInterval(async () => {
+            const statusResult = await PaymentService.checkMBWayPaymentStatus(result.paymentIntent!.id);
+
+            if (statusResult.success) {
+              clearInterval(checkInterval);
+              setCheckingPayment(false);
+              setPaymentResult({ success: true });
+              window.setTimeout(() => {
+                onPaymentSuccess(result.paymentIntent!.id);
+              }, 1500);
+            }
+          }, 3000);
+
+          // Stop checking after 3 minutes
+          setTimeout(() => {
+            clearInterval(checkInterval);
+            if (checkingPayment) {
+              setCheckingPayment(false);
+              setPaymentResult({
+                success: false,
+                error: 'Tempo esgotado. Verifique a sua app MB WAY e aprove o pagamento.'
+              });
+            }
+          }, 180000);
+
         } else {
           setPaymentResult({ success: false, error: result.error || 'Erro no pagamento MB WAY' });
           setProcessingMBWay(false);
@@ -310,12 +313,17 @@ export function PaymentStep({
               <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl">
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-xl">📱</span>
-                    <span className="font-medium text-blue-900">Pagamento MB WAY via Stripe</span>
+                    <Smartphone className="w-5 h-5 text-blue-900" />
+                    <span className="font-medium text-blue-900">Pagamento MB WAY Real (Easypay)</span>
                   </div>
-                  <p className="text-sm text-blue-800">
-                    Insira o seu número de telemóvel associado ao MB WAY. O pagamento será processado de forma segura através do Stripe.
+                  <p className="text-sm text-blue-800 mb-2">
+                    Insira o seu número de telemóvel associado ao MB WAY. Vai receber uma notificação na sua app para aprovar o pagamento.
                   </p>
+                  <div className="text-xs text-blue-700 space-y-1">
+                    <p>• Abra a app MB WAY no seu telemóvel</p>
+                    <p>• Aprove o pedido de pagamento de €{amount.toFixed(2)}</p>
+                    <p>• Tem 5 minutos para aprovar</p>
+                  </div>
                 </div>
 
                 <label className="block text-sm font-medium text-green-900 mb-2">
@@ -325,10 +333,10 @@ export function PaymentStep({
                   type="tel"
                   value={mbwayPhone}
                   onChange={(e) => setMbwayPhone(e.target.value)}
-                  placeholder="912345678 ou +351912345678"
+                  placeholder="912345678"
                   className="w-full px-4 py-4 border border-green-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-lg min-h-[48px]"
                   style={{ touchAction: 'manipulation' }}
-                  disabled={processingMBWay}
+                  disabled={processingMBWay || checkingPayment}
                 />
 
                 {processingMBWay && (
@@ -336,25 +344,33 @@ export function PaymentStep({
                     <div className="flex items-center space-x-2">
                       <Loader className="w-4 h-4 animate-spin text-yellow-600" />
                       <span className="text-sm text-yellow-800">
-                        Processando pagamento MB WAY... Aguarde a confirmação.
+                        A criar pedido de pagamento MB WAY...
                       </span>
                     </div>
                   </div>
                 )}
 
-                {mbwayReference && (
-                  <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="font-semibold text-blue-900 mb-2">Referência Multibanco (alternativa)</h4>
-                    <div className="text-sm text-blue-800 space-y-1">
-                      <p><strong>Entidade:</strong> {mbwayReference.entity}</p>
-                      <p><strong>Referência:</strong> {mbwayReference.reference}</p>
-                      <p><strong>Valor:</strong> €{amount.toFixed(2)}</p>
+                {checkingPayment && mbwayPaymentId && (
+                  <div className="mt-3 p-4 bg-green-100 border-2 border-green-300 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Smartphone className="w-5 h-5 text-green-700 animate-pulse" />
+                      <span className="font-semibold text-green-900">
+                        Pedido enviado para o seu telemóvel!
+                      </span>
+                    </div>
+                    <div className="text-sm text-green-800 space-y-2">
+                      <p className="font-medium">📩 Abra a app MB WAY e aprove o pagamento de €{amount.toFixed(2)}</p>
+                      <p className="text-xs">🕒 A aguardar aprovação...</p>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <Loader className="w-3 h-3 animate-spin text-green-600" />
+                        <span className="text-xs text-green-700">A verificar estado do pagamento...</span>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 <p className="text-xs text-green-700 mt-2">
-                  💡 <strong>Nota:</strong> O pagamento é processado através do Stripe com tecnologia MB WAY/Multibanco.
+                  ✅ <strong>Sistema Real:</strong> Pagamento processado via Easypay (operador oficial MB WAY)
                 </p>
               </div>
             )}
