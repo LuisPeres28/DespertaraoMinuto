@@ -44,7 +44,8 @@ export const defaultServices: Service[] = [
     price: 35,
     description: 'Sessão de transformação através do Miracle Choice',
     category: 'Padrão',
-    therapistId: '1'
+    therapistId: '1',
+    stripePaymentLink: 'https://buy.stripe.com/bJe00j4TvcqdcXf3LD93y00'
   },
   {
     id: '3',
@@ -62,7 +63,8 @@ export const defaultServices: Service[] = [
     price: 35,
     description: 'Sessão de transformação através do Miracle Choice',
     category: 'Terapia',
-    therapistId: '2'
+    therapistId: '2',
+    stripePaymentLink: 'https://buy.stripe.com/bJe00j4TvcqdcXf3LD93y00'
   },
   {
     id: '5',

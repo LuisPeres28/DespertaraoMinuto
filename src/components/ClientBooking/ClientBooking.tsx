@@ -963,6 +963,7 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                   requirePayment={requirePayment}
                   clientEmail={clientInfo.email}
                   serviceId={selectedService}
+                  stripePaymentLink={selectedServiceDetails.stripePaymentLink}
                 />
               </div>
 

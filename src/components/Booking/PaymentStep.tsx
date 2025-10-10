@@ -12,16 +12,18 @@ interface PaymentStepProps {
   requirePayment: boolean;
   clientEmail?: string;
   serviceId?: string;
+  stripePaymentLink?: string;
 }
 
-export function PaymentStep({ 
-  amount, 
-  serviceName, 
-  onPaymentSuccess, 
-  onPaymentSkip, 
+export function PaymentStep({
+  amount,
+  serviceName,
+  onPaymentSuccess,
+  onPaymentSkip,
   requirePayment,
   clientEmail,
-  serviceId
+  serviceId,
+  stripePaymentLink
 }: PaymentStepProps) {
   const { coupons, setCoupons, couponUsage, setCouponUsage, clients, services } = useApp();
   const [selectedMethod, setSelectedMethod] = useState<string>('');
@@ -265,9 +267,36 @@ export function PaymentStep({
         </p>
       </div>
 
+      {/* Stripe Payment Link (if available) */}
+      {stripePaymentLink && (
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6 mb-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <CreditCard className="w-6 h-6 text-blue-600" />
+            <h4 className="font-semibold text-blue-900">Pagamento Online via Stripe</h4>
+          </div>
+          <p className="text-sm text-blue-800 mb-4">
+            Pague de forma segura através do Stripe com cartão de crédito ou débito.
+          </p>
+          <a
+            href={stripePaymentLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-base transition-colors"
+          >
+            <CreditCard className="w-5 h-5 mr-2" />
+            Pagar €{amount} com Stripe
+          </a>
+          <p className="text-xs text-blue-700 mt-3 text-center">
+            Você será redirecionado para uma página segura do Stripe
+          </p>
+        </div>
+      )}
+
       {/* Payment Methods */}
       <div className="space-y-3">
-        <h4 className="font-medium text-gray-900">Escolha o método de pagamento:</h4>
+        <h4 className="font-medium text-gray-900">
+          {stripePaymentLink ? 'Ou escolha outro método de pagamento:' : 'Escolha o método de pagamento:'}
+        </h4>
         {paymentMethods.map((method) => (
           <div key={method.id}>
             <button

@@ -31,6 +31,7 @@ export interface Service {
   description: string;
   category: string;
   therapistId: string;
+  stripePaymentLink?: string; // Optional external Stripe payment link
 }
 
 export interface Booking {
