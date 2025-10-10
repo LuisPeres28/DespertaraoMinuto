@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CreditCard, DollarSign, Loader, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import { PaymentService } from '../../services/paymentService';
 import { CouponService } from '../../services/couponService';
 import { useApp } from '../../context/AppContext';
+import { loadStripe } from '@stripe/stripe-js';
 
 interface PaymentStepProps {
   amount: number;
@@ -36,6 +37,8 @@ export function PaymentStep({
   const [validatedCoupon, setValidatedCoupon] = useState<any>(null);
   const [couponValidationError, setCouponValidationError] = useState<string>('');
   const [mbwayPhone, setMbwayPhone] = useState<string>('');
+  const [processingMBWay, setProcessingMBWay] = useState(false);
+  const [mbwayReference, setMbwayReference] = useState<{entity: string, reference: string} | null>(null);
 
   const paymentMethods = PaymentService.getPaymentMethods();
 
@@ -54,7 +57,7 @@ export function PaymentStep({
     setPaymentResult(null);
 
     if (selectedMethod === 'mbway') {
-      // Handle MB WAY payment
+      // Handle MB WAY payment via Stripe
       if (!mbwayPhone.trim()) {
         setPaymentResult({ success: false, error: 'Por favor, insira o número de telefone MB WAY' });
         setIsProcessing(false);
@@ -62,18 +65,47 @@ export function PaymentStep({
       }
 
       try {
+        setProcessingMBWay(true);
         const result = await PaymentService.processMBWayPayment(amount, mbwayPhone, 'temp-booking-id');
 
-        if (result.success && result.paymentIntent) {
-          setPaymentResult({ success: true });
-          window.setTimeout(() => {
-            onPaymentSuccess(result.paymentIntent!.id);
-          }, 1500);
+        if (result.success && result.clientSecret) {
+          // Show MB WAY reference from Stripe
+          const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+          if (!stripe) {
+            setPaymentResult({ success: false, error: 'Erro ao carregar Stripe' });
+            setIsProcessing(false);
+            setProcessingMBWay(false);
+            return;
+          }
+
+          // Confirm payment with Stripe
+          const confirmResult = await PaymentService.confirmMBWayPayment(
+            result.clientSecret,
+            mbwayPhone
+          );
+
+          if (confirmResult.success) {
+            setPaymentResult({ success: true });
+            setProcessingMBWay(false);
+            window.setTimeout(() => {
+              onPaymentSuccess(confirmResult.paymentIntent!.id);
+            }, 1500);
+          } else {
+            // Show Multibanco reference as fallback
+            setPaymentResult({
+              success: false,
+              error: 'Pagamento MB WAY aguardando confirmação. Pode também usar a referência Multibanco gerada.'
+            });
+            setProcessingMBWay(false);
+          }
         } else {
           setPaymentResult({ success: false, error: result.error || 'Erro no pagamento MB WAY' });
+          setProcessingMBWay(false);
         }
       } catch (error) {
+        console.error('MB WAY error:', error);
         setPaymentResult({ success: false, error: 'Erro ao processar MB WAY. Tente novamente.' });
+        setProcessingMBWay(false);
       } finally {
         setIsProcessing(false);
       }
@@ -279,10 +311,10 @@ export function PaymentStep({
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-xl">📱</span>
-                    <span className="font-medium text-blue-900">Pagamento MB WAY</span>
+                    <span className="font-medium text-blue-900">Pagamento MB WAY via Stripe</span>
                   </div>
                   <p className="text-sm text-blue-800">
-                    Insira o seu número de telemóvel associado ao MB WAY. Receberá uma notificação no seu telemóvel para aprovar o pagamento.
+                    Insira o seu número de telemóvel associado ao MB WAY. O pagamento será processado de forma segura através do Stripe.
                   </p>
                 </div>
 
@@ -296,10 +328,33 @@ export function PaymentStep({
                   placeholder="912345678 ou +351912345678"
                   className="w-full px-4 py-4 border border-green-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-lg min-h-[48px]"
                   style={{ touchAction: 'manipulation' }}
+                  disabled={processingMBWay}
                 />
 
+                {processingMBWay && (
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Loader className="w-4 h-4 animate-spin text-yellow-600" />
+                      <span className="text-sm text-yellow-800">
+                        Processando pagamento MB WAY... Aguarde a confirmação.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {mbwayReference && (
+                  <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-2">Referência Multibanco (alternativa)</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p><strong>Entidade:</strong> {mbwayReference.entity}</p>
+                      <p><strong>Referência:</strong> {mbwayReference.reference}</p>
+                      <p><strong>Valor:</strong> €{amount.toFixed(2)}</p>
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-xs text-green-700 mt-2">
-                  💡 <strong>Nota:</strong> Certifique-se que tem a app MB WAY instalada e o número está ativo.
+                  💡 <strong>Nota:</strong> O pagamento é processado através do Stripe com tecnologia MB WAY/Multibanco.
                 </p>
               </div>
             )}
@@ -394,16 +449,16 @@ export function PaymentStep({
           className="w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center font-semibold text-base min-h-[48px]"
           style={{ touchAction: 'manipulation' }}
         >
-          {isProcessing ? (
+          {isProcessing || processingMBWay ? (
             <>
               <Loader className="w-4 h-4 mr-2 animate-spin" />
-              Processando...
+              {processingMBWay ? 'Processando MB WAY...' : 'Processando...'}
             </>
           ) : (
             <>
               <CreditCard className="w-4 h-4 mr-2" />
               {selectedMethod === 'coupon' ? 'Validar Cupão' :
-               selectedMethod === 'mbway' ? 'Pagar com MB WAY' :
+               selectedMethod === 'mbway' ? 'Pagar com MB WAY (Stripe)' :
                `Pagar €${amount}`}
             </>
           )}

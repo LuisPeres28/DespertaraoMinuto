@@ -20,7 +20,12 @@ Deno.serve(async (req: Request) => {
       apiVersion: "2024-12-18.acacia",
     });
 
-    const { amount, currency = "eur", metadata = {} } = await req.json();
+    const {
+      amount,
+      currency = "eur",
+      metadata = {},
+      payment_method_types = ["card"]
+    } = await req.json();
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -32,19 +37,22 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Create payment intent with specified payment methods
+    // Stripe supports 'multibanco' which includes MB WAY in Portugal
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
       currency,
       metadata,
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: payment_method_types.includes('multibanco')
+        ? ['multibanco']
+        : ['card', 'multibanco'],
     });
 
     return new Response(
       JSON.stringify({
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
+        status: paymentIntent.status,
       }),
       {
         status: 200,
