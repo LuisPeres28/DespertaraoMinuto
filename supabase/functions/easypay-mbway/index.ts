@@ -17,21 +17,9 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const accountId = Deno.env.get("EASYPAY_ACCOUNT_ID");
-    const apiKey = Deno.env.get("EASYPAY_API_KEY");
-
-    if (!accountId || !apiKey) {
-      return new Response(
-        JSON.stringify({
-          error: "Easypay credentials not configured",
-          message: "Contact administrator to configure Easypay"
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    // Try to get from environment variables first, fallback to hardcoded values
+    const accountId = Deno.env.get("EASYPAY_ACCOUNT_ID") || "998699971";
+    const apiKey = Deno.env.get("EASYPAY_API_KEY") || "65cf2bcb-d572-4155-811e-38fdc5d3ef13";
 
     const { action, phoneNumber, amount, bookingId, paymentId } = await req.json();
 
