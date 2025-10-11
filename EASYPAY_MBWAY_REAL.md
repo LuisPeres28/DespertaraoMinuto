@@ -1,73 +1,115 @@
-# MB WAY Real - Integração com Easypay
+# MB WAY - Status e Resolução de Problemas
 
-O sistema está agora integrado com **Easypay**, o operador oficial português de pagamentos MB WAY. Isto significa que os pagamentos MB WAY funcionam a 100% na realidade.
+## PROBLEMA ATUAL: Authentication Failed
 
-## O que foi implementado
+A integração MB WAY está a retornar erro de autenticação da API Easypay.
 
-- ✅ Integração completa com API Easypay
-- ✅ Pagamentos MB WAY reais em Portugal
-- ✅ Notificações push para app MB WAY
-- ✅ Verificação automática do estado do pagamento
-- ✅Timeout de 3 minutos (conforme especificação MB WAY)
-
-## Como funciona
-
-1. Cliente escolhe MB WAY e insere o número de telemóvel
-2. Sistema envia pedido para Easypay
-3. Cliente recebe notificação na app MB WAY
-4. Cliente aprova o pagamento na app
-5. Sistema verifica automaticamente se foi pago
-6. Reserva confirmada
-
-## Para ativar o MB WAY
-
-Precisa de criar uma conta Easypay e obter as credenciais:
-
-### Passo 1: Criar conta Easypay
-
-1. Aceda a [https://www.easypay.pt](https://www.easypay.pt)
-2. Clique em "Aderir" ou "Criar Conta"
-3. Escolha o plano adequado ao seu negócio
-4. Complete o processo de registo
-
-### Passo 2: Obter credenciais da API
-
-1. Faça login no [Backoffice Easypay](https://backoffice.easypay.pt)
-2. Vá a **Configurações** > **API & Integrações**
-3. Encontre as suas credenciais:
-   - **Account ID** (identificador da conta)
-   - **API Key** (chave de acesso)
-
-### Passo 3: Configurar no Supabase
-
-1. Aceda ao [Supabase Dashboard](https://supabase.com/dashboard)
-2. Selecione o seu projeto
-3. Vá a **Settings** > **Edge Functions**
-4. Adicione estas variáveis de ambiente:
-
-```
-EASYPAY_ACCOUNT_ID=seu_account_id_aqui
-EASYPAY_API_KEY=sua_api_key_aqui
+**Erro recebido:**
+```json
+{
+  "error": "Failed to create MB WAY payment",
+  "details": {
+    "status": "error",
+    "message": ["Authentication failed"]
+  }
+}
 ```
 
-**IMPORTANTE:** Use as credenciais de PRODUÇÃO da Easypay, não as de teste.
+## Diagnóstico
 
-## Custos Easypay
+### O que está a funcionar ✅
+1. Edge Function `easypay-mbway` está deployada e ativa
+2. A função recebe os pedidos corretamente
+3. A validação de números de telemóvel funciona
+4. A comunicação com a API Easypay está estabelecida
+5. CORS está configurado corretamente
 
-- **Taxa por transação MB WAY:** 0,90% + €0,09 (+ IVA)
-- **Sem mensalidades**
-- **Sem custos de adesão**
-- Só paga pelas transações bem-sucedidas
+### O que NÃO está a funcionar ❌
+1. A API Easypay está a rejeitar as credenciais fornecidas
+2. Erro: "Authentication failed"
 
-## Testes em Ambiente de Desenvolvimento
+## Credenciais Actuais
+- **Account ID**: 998699971
+- **API Key**: 65cf2bcb-d572-4155-811e-38fdc5d3ef13
+- **Ambiente**: Produção (api.prod.easypay.pt)
 
-Para testar sem fazer pagamentos reais, use as credenciais de TESTE da Easypay:
+## Possíveis Causas
 
-### Números de teste:
-- **911234567** - Pagamento aprovado
-- **917654321** - Pagamento falhado
-- **913456789** - Pagamento recusado
-- **919876543** - Pagamento pendente
+### 1. Credenciais Incorretas
+As credenciais podem estar:
+- Digitadas incorretamente
+- Expiradas
+- Desactivadas no backoffice Easypay
+
+### 2. Conta não Activada para Produção
+A conta Easypay pode estar:
+- Apenas configurada para sandbox/teste
+- Sem permissões para ambiente de produção
+- Pendente de activação
+
+### 3. API Key não corresponde ao Account ID
+- O Account ID pode pertencer a outra conta
+- A API Key pode ter sido gerada para outro Account ID
+
+## SOLUÇÃO URGENTE
+
+### Passo 1: Verificar Credenciais no Backoffice Easypay
+1. Aceder a: https://backoffice.easypay.pt/
+2. Fazer login com as suas credenciais
+3. Ir para **Configurações** > **API**
+4. Verificar:
+   - O **Account ID** correto
+   - Gerar uma nova **API Key** se necessário
+   - Confirmar se está no ambiente de **Produção**
+
+### Passo 2: Confirmar Ambiente
+Verifique se a conta está activada para:
+- [ ] Ambiente de Produção (não apenas Sandbox)
+- [ ] Método de pagamento MB WAY habilitado
+- [ ] Sem restrições de IP ou domínio
+
+### Passo 3: Actualizar Credenciais
+
+**Depois de confirmar as credenciais corretas, envie-me:**
+- Account ID correcto
+- API Key correcta
+- Eu actualizo a Edge Function imediatamente
+
+**OU adicione você mesmo no Supabase:**
+1. Ir para: https://supabase.com/dashboard/project/dnswlrvleqvsueawxzfy/settings/functions
+2. Na secção "Edge Function Secrets"
+3. Adicionar/Actualizar:
+   - `EASYPAY_ACCOUNT_ID` = [novo valor]
+   - `EASYPAY_API_KEY` = [novo valor]
+
+## Teste Após Correcção
+
+Depois de actualizar as credenciais, teste com:
+
+```bash
+curl -X POST \
+  https://dnswlrvleqvsueawxzfy.supabase.co/functions/v1/easypay-mbway \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuc3dscnZsZXF2c3VlYXd4emZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODEyMjIsImV4cCI6MjA3NDk1NzIyMn0.bsg6sfD9d2CT5EiiGWOKtl1FeaeN1DnDYiUtLeqkOmQ" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "create",
+    "phoneNumber": "912345678",
+    "amount": 50,
+    "bookingId": "test123"
+  }'
+```
+
+**Resposta esperada de SUCESSO:**
+```json
+{
+  "success": true,
+  "paymentId": "xxx-yyy",
+  "status": "pending",
+  "phoneNumber": "912345678",
+  "amount": 50,
+  "message": "Payment request sent to MB WAY app"
+}
+```
 
 ## Fluxo do Pagamento
 
