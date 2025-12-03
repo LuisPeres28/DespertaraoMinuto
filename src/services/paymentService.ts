@@ -58,6 +58,21 @@ export class PaymentService {
           bookingId: bookingId
         })
       });
+  static async openStripePayment(stripeLink: string) {
+  try {
+    if (!stripeLink) throw new Error('Stripe link não encontrado.');
+
+    window.location.href = stripeLink;
+
+  } catch (error) {
+    console.error('Erro ao abrir pagamento Stripe:', error);
+    return {
+      success: false,
+      error: 'Não foi possível abrir o link de pagamento Stripe.',
+    };
+  }
+}
+    
 
       const result = await response.json();
 
