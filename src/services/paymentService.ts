@@ -57,7 +57,6 @@ export class PaymentService {
           amount: amount,
           bookingId: bookingId
         })
-      });
   static async openStripePayment(stripeLink: string) {
   try {
     if (!stripeLink) throw new Error('Stripe link não encontrado.');
