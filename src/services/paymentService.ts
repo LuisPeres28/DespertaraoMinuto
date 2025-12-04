@@ -61,8 +61,6 @@ export class PaymentService {
         }
 }
 
-    
-
       const result = await response.json();
 
       if (!response.ok || !result.success) {
