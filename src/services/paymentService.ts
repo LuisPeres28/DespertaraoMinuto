@@ -202,6 +202,32 @@ export class PaymentService {
       { id: 'coupon', name: 'Cupão/Ticket', icon: '🎫' }
     ];
   }
+  static async openStripePayment(stripeLink: string): Promise<PaymentResult> {
+    try {
+      if (!stripeLink) {
+        return {
+          success: false,
+          error: 'Stripe link não encontrado.',
+        };
+      }
+
+      // Redireciona o browser para a página de pagamento Stripe
+      window.location.href = stripeLink;
+
+      // Normalmente não vamos usar este return porque a página muda,
+      // mas deixamos um "ok" por segurança
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('Erro ao abrir pagamento Stripe:', error);
+      return {
+        success: false,
+        error: 'Não foi possível abrir o link de pagamento Stripe.',
+      };
+    }
+  }
+
 
   static async processPayment(
     amount: number,
