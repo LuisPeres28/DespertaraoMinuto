@@ -1,5 +1,11 @@
 import { supabase } from '../lib/supabase';
 
+//
+// ────────────────────────────────
+// Interfaces
+// ────────────────────────────────
+//
+
 export interface PaymentIntent {
   id: string;
   amount: number;
@@ -22,29 +28,35 @@ export interface PaymentResult {
   clientSecret?: string;
 }
 
+//
+// ────────────────────────────────
+// Payment Service
+// ────────────────────────────────
+//
+
 export class PaymentService {
+
+  //
+  // ────────────────────────────────
+  // 1) MB WAY — Easypay Integration
+  // ────────────────────────────────
+  //
 
   static async processMBWayPayment(
     amount: number,
     phoneNumber: string,
     bookingId: string
   ): Promise<PaymentResult> {
-    console.log('📱 Processing MB WAY payment via Easypay:', { amount, phoneNumber, bookingId });
 
     try {
-      // Validate phone number format
       const cleanPhone = phoneNumber.replace(/\s/g, '');
       if (!cleanPhone.match(/^(\+351)?9[1236]\d{7}$/)) {
-        return {
-          success: false,
-          error: 'Número de telefone inválido. Use formato: 912345678 ou +351912345678'
-        };
+        return { success: false, error: 'Número de telefone inválido.' };
       }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // Call Easypay Edge Function to create MB WAY payment
       const response = await fetch(`${supabaseUrl}/functions/v1/easypay-mbway`, {
         method: 'POST',
         headers: {
@@ -54,40 +66,28 @@ export class PaymentService {
         body: JSON.stringify({
           action: 'create',
           phoneNumber: cleanPhone,
-          amount: amount,
-          bookingId: bookingId
+          amount,
+          bookingId
         })
- 
-        }
-}
+      });
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        console.error('Easypay error:', result);
         return {
           success: false,
-          error: result.message || result.error || 'Erro ao criar pagamento MB WAY'
+          error: result.message || 'Erro ao criar pagamento MB WAY.'
         };
       }
 
-      // Save payment to database as pending
-      if (supabase) {
-        await supabase.from('payments').insert({
-          id: result.paymentId,
-          booking_id: bookingId,
-          amount: amount,
-          method: 'mbway',
-          status: 'pending',
-          transaction_id: result.paymentId
-        });
-      }
-
-      console.log(`✅ MB WAY payment created via Easypay`);
-      console.log(`📱 Phone: ${result.phoneNumber}`);
-      console.log(`💰 Amount: €${amount}`);
-      console.log(`📋 Payment ID: ${result.paymentId}`);
-      console.log(`📩 ${result.message}`);
+      await supabase.from('payments').insert({
+        id: result.paymentId,
+        booking_id: bookingId,
+        amount: amount,
+        method: 'mbway',
+        status: 'pending',
+        transaction_id: result.paymentId
+      });
 
       return {
         success: true,
@@ -97,21 +97,25 @@ export class PaymentService {
           currency: 'eur',
           status: 'pending',
           paymentMethod: 'mbway',
-          phoneNumber: result.phoneNumber
+          phoneNumber: cleanPhone,
         }
       };
+
     } catch (error) {
       console.error('MB WAY payment error:', error);
-      return {
-        success: false,
-        error: 'Erro ao processar pagamento MB WAY. Tente novamente.'
-      };
+      return { success: false, error: 'Falha ao processar MB WAY.' };
     }
   }
 
-  static async checkMBWayPaymentStatus(
-    paymentId: string
-  ): Promise<PaymentResult> {
+
+
+  //
+  // ────────────────────────────────
+  // 2) MB WAY — Check Payment Status
+  // ────────────────────────────────
+  //
+
+  static async checkMBWayPaymentStatus(paymentId: string): Promise<PaymentResult> {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -124,141 +128,139 @@ export class PaymentService {
         },
         body: JSON.stringify({
           action: 'check',
-          paymentId: paymentId
+          paymentId
         })
       });
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        return {
-          success: false,
-          error: result.error || 'Erro ao verificar pagamento'
-        };
+        return { success: false, error: 'Erro ao verificar pagamento MB WAY.' };
       }
 
-      // Update payment in database if paid
-      if (result.paid && supabase) {
-        await supabase.from('payments').update({
-          status: 'paid',
-          payment_date: new Date().toISOString()
-        }).eq('id', paymentId);
+      if (result.paid) {
+        await supabase.from('payments')
+          .update({
+            status: 'paid',
+            payment_date: new Date().toISOString()
+          })
+          .eq('id', paymentId);
       }
 
       return {
         success: result.paid,
         paymentIntent: {
-          id: result.paymentId,
-          amount: 0,
+          id: paymentId,
+          amount: result.amount || 0,
           currency: 'eur',
           status: result.paid ? 'completed' : 'pending',
-          paymentMethod: 'mbway'
+          paymentMethod: 'mbway',
         }
       };
+
     } catch (error) {
-      console.error('Error checking payment status:', error);
-      return {
-        success: false,
-        error: 'Erro ao verificar estado do pagamento'
-      };
+      console.error('Check MB WAY error:', error);
+      return { success: false, error: 'Falha ao verificar pagamento.' };
     }
   }
+
+
+
+  //
+  // ────────────────────────────────
+  // 3) MULTIBANCO — Reference Generation
+  // ────────────────────────────────
+  //
 
   static async generateMultibancoReference(
     amount: number,
     bookingId: string
   ): Promise<{ entity: string; reference: string; amount: number }> {
-    console.log('🏧 Generating Multibanco reference:', { amount, bookingId });
 
-    // Generate 9-digit reference
     const reference = Math.floor(100000000 + Math.random() * 900000000).toString();
-
-    // Generate transaction ID
     const transactionId = `MB_${Date.now()}_${reference}`;
 
-    // Save payment to database as pending
-    if (supabase) {
-      await supabase.from('payments').insert({
-        id: transactionId,
-        booking_id: bookingId,
-        amount: amount,
-        method: 'multibanco',
-        status: 'pending',
-        transaction_id: reference
-      });
-    }
+    await supabase.from('payments').insert({
+      id: transactionId,
+      booking_id: bookingId,
+      amount,
+      method: 'multibanco',
+      status: 'pending',
+      transaction_id: reference
+    });
 
     return {
       entity: '11249',
-      reference: reference,
+      reference,
       amount
     };
   }
 
-  static getPaymentMethods(): Array<{ id: string; name: string; icon: string }> {
-    return [
-      { id: 'mbway', name: 'MB WAY', icon: '📱' },
-      { id: 'multibanco', name: 'Referência Multibanco', icon: '🏧' },
-      { id: 'card', name: 'Cartão de Crédito/Débito', icon: '💳' },
-      { id: 'coupon', name: 'Cupão/Ticket', icon: '🎫' }
-    ];
-  }
+
+
+  //
+  // ────────────────────────────────
+  // 4) STRIPE — Redirect Link
+  // ────────────────────────────────
+  //
+
   static async openStripePayment(stripeLink: string): Promise<PaymentResult> {
     try {
-      if (!stripeLink) {
-        return {
-          success: false,
-          error: 'Stripe link não encontrado.',
-        };
-      }
+      if (!stripeLink) return { success: false, error: 'Stripe link não encontrado.' };
 
-      // Redireciona o browser para a página de pagamento Stripe
-      window.location.href = stripeLink;
+      window.location.href = stripeLink; // Redirect
 
-      // Normalmente não vamos usar este return porque a página muda,
-      // mas deixamos um "ok" por segurança
-      return {
-        success: true,
-      };
+      return { success: true };
     } catch (error) {
-      console.error('Erro ao abrir pagamento Stripe:', error);
-      return {
-        success: false,
-        error: 'Não foi possível abrir o link de pagamento Stripe.',
-      };
+      console.error('Stripe redirect error:', error);
+      return { success: false, error: 'Falha ao abrir Stripe.' };
     }
   }
 
 
-  static async processPayment(
-    amount: number,
-    method: string,
-    bookingId: string
-  ): Promise<PaymentResult> {
-    console.log('Processing payment:', { amount, method, bookingId });
 
+  //
+  // ────────────────────────────────
+  // 5) Payment Method Definitions
+  // ────────────────────────────────
+  //
+
+  static getPaymentMethods() {
+    return [
+      { id: 'mbway', name: 'MB WAY', icon: '📱' },
+      { id: 'multibanco', name: 'Referência Multibanco', icon: '🏧' },
+      { id: 'card', name: 'Cartão de Crédito/Débito', icon: '💳' },
+      { id: 'coupon', name: 'Cupão', icon: '🎫' }
+    ];
+  }
+
+
+
+  //
+  // ────────────────────────────────
+  // 6) Fake Payment (DEV MODE)
+  // ────────────────────────────────
+  //
+
+  static async processPayment(amount: number, method: string, bookingId: string): Promise<PaymentResult> {
     try {
-      const transactionId = `${method.toUpperCase()}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const transactionId = `${method}_${Date.now()}`;
 
-      if (supabase) {
-        await supabase.from('payments').insert({
-          id: transactionId,
-          booking_id: bookingId,
-          amount: amount,
-          method: method,
-          status: 'pending',
-          transaction_id: transactionId
-        });
-      }
+      await supabase.from('payments').insert({
+        id: transactionId,
+        booking_id: bookingId,
+        amount,
+        method,
+        status: 'pending',
+        transaction_id: transactionId
+      });
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (supabase) {
-        await supabase.from('payments').update({
-          status: 'paid',
-          payment_date: new Date().toISOString()
-        }).eq('id', transactionId);
-      }
+      await supabase.from('payments').update({
+        status: 'paid',
+        payment_date: new Date().toISOString()
+      }).eq('id', transactionId);
 
       return {
         success: true,
@@ -267,15 +269,13 @@ export class PaymentService {
           amount,
           currency: 'eur',
           status: 'completed',
-          paymentMethod: method
+          paymentMethod: method,
         }
       };
+
     } catch (error) {
-      console.error('Payment error:', error);
-      return {
-        success: false,
-        error: 'Erro ao processar pagamento. Tente novamente.'
-      };
+      console.error('Fake payment error:', error);
+      return { success: false, error: 'Falha no pagamento.' };
     }
   }
 }
