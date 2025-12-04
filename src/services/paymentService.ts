@@ -58,6 +58,9 @@ export class PaymentService {
           bookingId: bookingId
         })
  
+        }
+}
+
     
 
       const result = await response.json();
