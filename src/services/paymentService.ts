@@ -31,21 +31,20 @@ export interface PaymentResult {
 export class PaymentService {
 
   // ─────────────────────────────────────────────
-  // 1. OBTER MÉTODOS DE PAGAMENTO (O que faltava!)
+  // 1. LISTAR MÉTODOS DE PAGAMENTO (Isto corrige o ecrã branco!)
   // ─────────────────────────────────────────────
   
   static async getPaymentMethods() {
-    // Isto diz ao teu site quais os botões que deve mostrar no Passo 4
     return [
       { id: 'mbway', label: 'MB Way', icon: 'smartphone' },
-      { id: 'multibanco', label: 'Multibanco', icon: 'credit-card' },
-      // Podes ativar o Stripe se quiseres depois
-      // { id: 'stripe', label: 'Cartão de Crédito', icon: 'credit-card' } 
+      { id: 'multibanco', label: 'Multibanco', icon: 'credit-card' }
+      // Se quiseres ativar o cartão de crédito mais tarde, descomenta a linha abaixo:
+      // { id: 'stripe', label: 'Cartão de Crédito', icon: 'credit-card' }
     ];
   }
 
   // ─────────────────────────────────────────────
-  // 2. MB WAY – Create Payment
+  // 2. MB WAY – Criar Pagamento
   // ─────────────────────────────────────────────
 
   static async processMBWayPayment(
@@ -54,20 +53,21 @@ export class PaymentService {
     bookingId: string
   ): Promise<PaymentResult> {
 
-    console.log("📱 Creating MB WAY payment…");
+    console.log("📱 A iniciar pagamento MB WAY...");
 
     try {
+      // Limpar espaços do telemóvel
       const cleanPhone = phoneNumber.replace(/\s/g, '');
 
-      // Validação simples de telemóvel português
+      // Validação simples (aceita com ou sem +351)
       if (!cleanPhone.match(/^(\+351)?9[1236]\d{7}$/)) {
-        return { success: false, error: "Número de telefone inválido." };
+        return { success: false, error: "Número de telemóvel inválido." };
       }
 
       const url = import.meta.env.VITE_SUPABASE_URL;
       const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // Chama a tua Edge Function no Supabase
+      // Chama a tua Edge Function no Supabase (a ponte para a Easypay)
       const response = await fetch(`${url}/functions/v1/easypay-mbway`, {
         method: "POST",
         headers: {
@@ -87,11 +87,11 @@ export class PaymentService {
       if (!response.ok || !result.success) {
         return {
           success: false,
-          error: result.error || "Erro ao criar pagamento MB WAY."
+          error: result.error || "Erro ao comunicar com a Easypay."
         };
       }
 
-      // Guarda na base de dados
+      // Guardar registo na base de dados
       await supabase.from("payments").insert({
         id: result.paymentId,
         booking_id: bookingId,
@@ -115,12 +115,12 @@ export class PaymentService {
 
     } catch (err) {
       console.error(err);
-      return { success: false, error: "Erro ao processar MB WAY." };
+      return { success: false, error: "Erro interno no pagamento MB Way." };
     }
   }
 
   // ─────────────────────────────────────────────
-  // 3. MB WAY — Check Status
+  // 3. MB WAY — Verificar Estado (Polling)
   // ─────────────────────────────────────────────
 
   static async checkMBWayPaymentStatus(paymentId: string): Promise<PaymentResult> {
@@ -144,10 +144,11 @@ export class PaymentService {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        return { success: false, error: "Erro ao verificar pagamento." };
+        return { success: false, error: "Erro ao verificar estado." };
       }
 
       if (result.paid) {
+        // Se já pagou, atualiza a base de dados
         await supabase.from("payments")
           .update({ status: "paid", payment_date: new Date().toISOString() })
           .eq("id", paymentId);
@@ -166,19 +167,20 @@ export class PaymentService {
 
     } catch (err) {
       console.error(err);
-      return { success: false, error: "Erro ao verificar pagamento." };
+      return { success: false, error: "Erro na verificação do pagamento." };
     }
   }
 
   // ─────────────────────────────────────────────
-  // 4. MULTIBANCO — Generate reference
+  // 4. MULTIBANCO — Gerar Referência (Simulação/Placeholder)
   // ─────────────────────────────────────────────
 
   static async generateMultibancoReference(
     amount: number,
     bookingId: string
   ) {
-    // Simulacão de referência (Em produção terias de usar a API da Easypay também)
+    // Nota: Em produção, isto também devia chamar a API da Easypay
+    // Por agora gera uma referência aleatória para não bloquear o site
     const reference = Math.floor(100000000 + Math.random() * 900000000).toString();
     const transactionId = `MB_${Date.now()}_${reference}`;
 
@@ -192,14 +194,14 @@ export class PaymentService {
     });
 
     return {
-      entity: "11249", // Entidade de teste
+      entity: "11249", 
       reference,
       amount
     };
   }
 
   // ─────────────────────────────────────────────
-  // 5. STRIPE — Open link
+  // 5. STRIPE — Abrir Link (Opcional)
   // ─────────────────────────────────────────────
 
   static async openStripePayment(stripeLink: string): Promise<PaymentResult> {
@@ -211,7 +213,7 @@ export class PaymentService {
   }
 
   // ─────────────────────────────────────────────
-  // 6. Test Payment (Fallback/Manual)
+  // 6. PAGAMENTO DE TESTE (Fallback Manual)
   // ─────────────────────────────────────────────
 
   static async processPayment(amount: number, method: string, bookingId: string): Promise<PaymentResult> {
@@ -226,7 +228,7 @@ export class PaymentService {
       transaction_id: transactionId
     });
 
-    // Simula sucesso após 1 segundo
+    // Simula sucesso após 1.2 segundos
     await new Promise(r => setTimeout(r, 1200));
 
     await supabase.from("payments").update({
