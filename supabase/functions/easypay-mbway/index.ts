@@ -32,6 +32,7 @@ serve(async (req) => {
         body: JSON.stringify({
           type: 'sale',
           method: 'mbway',
+          url: 'https://api.easypay.pt/2.0/single',
           value: String(amount),
           currency: 'EUR',
           mbway: {
