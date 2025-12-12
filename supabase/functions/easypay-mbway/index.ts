@@ -17,39 +17,51 @@ serve(async (req) => {
     const apiKey = '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
 
     if (action === 'create') {
+      const phone = phoneNumber.replace(/[^0-9]/g, '').slice(-9)
+
       console.log("Creating MB WAY payment")
       console.log("Amount:", String(amount))
-      console.log("Phone:", phoneNumber)
+      console.log("Phone:", "351" + phone)
+
+      const body = JSON.stringify({
+        type: "sale",
+        method: "mbway",
+        value: String(amount),
+        currency: "EUR",
+        mbway: {
+          phone: "351" + phone
+        },
+        capture: {
+          descriptive: "Desperto"
+        }
+      })
+
+      console.log("Request body:", body)
 
       const response = await fetch('https://api.easypay.pt/2.0/single', {
         method: 'POST',
         headers: {
-          'AccountId': 'ba41236b-b132-4c82-bd06-ad4f6d33a6d4',
-          'ApiKey': '65f2bcb-d572-41f5-811e-38f6c5d3ef13',
-          'Content-Type': 'application/json'
+          "AccountId": "ba41236b-b132-4c82-bd06-ad4f6d33a6d4",
+          "ApiKey": "65f2bcb-d572-41f5-811e-38f6c5d3ef13",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          type: 'sale',
-          method: 'mbway',
-          value: String(amount),
-          currency: 'EUR',
-          mbway: {
-            phone: phoneNumber.replace(/[^0-9]/g, '').replace(/^351/, '').padStart(9, '').replace(/^/, '351')
-          },
-          capture: {
-            descriptive: 'Desperto'
-          }
-        })
+        body: body
       })
 
       const responseText = await response.text()
-      console.log("Easypay raw response:", responseText)
+      console.log("Easypay response status:", response.status)
+      console.log("Easypay response:", responseText)
 
       if (!response.ok) {
         throw new Error(responseText)
       }
 
-      const data = JSON.parse(responseText)
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        throw new Error("Non-JSON response: " + responseText)
+      }
 
       return new Response(JSON.stringify({
         success: true,
