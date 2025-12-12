@@ -17,10 +17,9 @@ serve(async (req) => {
     const apiKey = '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
 
     if (action === 'create') {
-      const phone = phoneNumber.replace(/[^0-9]/g, '').replace(/^351/, '').padStart(9, '').replace(/^/, '351')
-
-      console.log("Creating MB WAY payment with phone:", phone)
+      console.log("Creating MB WAY payment")
       console.log("Amount:", String(amount))
+      console.log("Phone:", phoneNumber)
 
       const response = await fetch('https://api.easypay.pt/2.0/single', {
         method: 'POST',
@@ -32,11 +31,10 @@ serve(async (req) => {
         body: JSON.stringify({
           type: 'sale',
           method: 'mbway',
-          url: 'https://api.easypay.pt/2.0/single',
           value: String(amount),
           currency: 'EUR',
           mbway: {
-            phone: phone
+            phone: phoneNumber.replace(/[^0-9]/g, '').replace(/^351/, '').padStart(9, '').replace(/^/, '351')
           },
           capture: {
             descriptive: 'Desperto'
