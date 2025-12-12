@@ -35,6 +35,7 @@ serve(async (req) => {
         method: "mbw",
         value: Number(amount),
         currency: "EUR",
+        test: false,
         capture: {
             transaction_key: crypto.randomUUID(),
             descriptive: "Desperto ao Minuto"
