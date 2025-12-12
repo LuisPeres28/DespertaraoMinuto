@@ -17,17 +17,16 @@ serve(async (req) => {
     const apiKey = '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
 
     if (action === 'create') {
-      // Clean phone number and ensure country code 351
-      const cleanPhone = phoneNumber.replace(/[^0-9]/g, '').replace(/^351/, '')
-      const formattedPhone = '351' + (cleanPhone.padStart(9, ''))
+      const phone = phoneNumber.replace(/[^0-9]/g, '').replace(/^351/, '').padStart(9, '').replace(/^/, '351')
 
-      console.log("Formatted phone for MB WAY:", formattedPhone)
+      console.log("Creating MB WAY payment with phone:", phone)
+      console.log("Amount:", String(amount))
 
       const response = await fetch('https://api.easypay.pt/2.0/single', {
         method: 'POST',
         headers: {
-          'AccountId': accountId,
-          'ApiKey': apiKey,
+          'AccountId': 'ba41236b-b132-4c82-bd06-ad4f6d33a6d4',
+          'ApiKey': '65f2bcb-d572-41f5-811e-38f6c5d3ef13',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -36,7 +35,7 @@ serve(async (req) => {
           value: String(amount),
           currency: 'EUR',
           mbway: {
-            phone: formattedPhone
+            phone: phone
           },
           capture: {
             descriptive: 'Desperto'
@@ -45,9 +44,8 @@ serve(async (req) => {
       })
 
       const responseText = await response.text()
-      console.log("Easypay response:", responseText)
+      console.log("Easypay raw response:", responseText)
 
-      // Force real error display - throw the raw response if not ok
       if (!response.ok) {
         throw new Error(responseText)
       }
@@ -76,7 +74,6 @@ serve(async (req) => {
       const responseText = await response.text()
       console.log("Easypay check response:", responseText)
 
-      // Force real error display - throw the raw response if not ok
       if (!response.ok) {
         throw new Error(responseText)
       }
