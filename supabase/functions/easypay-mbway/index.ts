@@ -15,9 +15,10 @@ serve(async (req) => {
     // 2. Receber os dados do site
     const { action, amount, phoneNumber, paymentId } = await req.json()
     
-    // 3. Ir buscar as chaves que guardaste no Supabase
-    const accountId = Deno.env.get('EASYPAY_ACCOUNT_ID') || 'ba41236b-b132-4c82-bd06-ad4f6d33a6d4'
-    const apiKey = Deno.env.get('EASYPAY_API_KEY') || '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
+    // 3. Configuração Easypay (Produção)
+    const accountId = Deno.env.get('EASYPAY_ACCOUNT_ID') || 'bafe2a58-734e-43ff-9a87-19e28202f01b'
+    const apiKey = Deno.env.get('EASYPAY_API_KEY') || '04f21956-25e6-4ca9-b8b9-c1182792b19a'
+    const isProduction = true
 
     if (!accountId || !apiKey) {
       throw new Error('Chaves da Easypay não encontradas no servidor')
