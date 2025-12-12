@@ -16,8 +16,8 @@ serve(async (req) => {
     const { action, amount, phoneNumber, paymentId } = await req.json()
     
     // 3. Ir buscar as chaves que guardaste no Supabase
-    const accountId = Deno.env.get('EASYPAY_ACCOUNT_ID')
-    const apiKey = Deno.env.get('EASYPAY_API_KEY')
+    const accountId = Deno.env.get('EASYPAY_ACCOUNT_ID') || 'ba41236b-b132-4c82-bd06-ad4f6d33a6d4'
+    const apiKey = Deno.env.get('EASYPAY_API_KEY') || '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
 
     if (!accountId || !apiKey) {
       throw new Error('Chaves da Easypay não encontradas no servidor')
@@ -30,7 +30,7 @@ serve(async (req) => {
       
       const payload = {
         type: "sale",
-        method: "mbw", // MB Way
+        method: "mbw",
         value: Number(amount),
         currency: "EUR",
         capture: {
@@ -47,28 +47,39 @@ serve(async (req) => {
 
       const response = await fetch('https://api.easypay.pt/2.0/single', {
         method: 'POST',
-        headers: { 
-            'AccountId': accountId, 
-            'PartnerKey': apiKey, 
-            'Content-Type': 'application/json' 
+        headers: {
+            'AccountId': accountId,
+            'PartnerKey': apiKey,
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       })
 
-      const data = await response.json()
+      const responseText = await response.text()
+      let data
+
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        console.error("Erro ao fazer parse JSON:", responseText)
+        return new Response(JSON.stringify({
+            success: false,
+            error: "Resposta inválida da Easypay: " + responseText.substring(0, 100)
+        }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
 
       if (!response.ok) {
          console.error("Erro Easypay:", JSON.stringify(data))
-         // Devolve o erro detalhado para o site saber o que se passa
-         return new Response(JSON.stringify({ 
-             success: false, 
-             error: data.message?.[0] || "Erro na Easypay" 
-         }), { 
-             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+         return new Response(JSON.stringify({
+             success: false,
+             error: data.message?.[0] || data.error || "Erro na Easypay"
+         }), {
+             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
          })
       }
 
-      // Sucesso!
       return new Response(JSON.stringify({ 
         success: true, 
         paymentId: data.id, 
@@ -84,17 +95,31 @@ serve(async (req) => {
     if (action === 'check') {
         const response = await fetch(`https://api.easypay.pt/2.0/single/${paymentId}`, {
             method: 'GET',
-            headers: { 
-                'AccountId': accountId, 
+            headers: {
+                'AccountId': accountId,
                 'PartnerKey': apiKey,
-                'Content-Type': 'application/json' 
+                'Content-Type': 'application/json'
             }
         })
-        const data = await response.json()
-        
-        return new Response(JSON.stringify({ 
-            success: true, 
-            paid: data.method?.status === 'processed' 
+
+        const responseText = await response.text()
+        let data
+
+        try {
+          data = JSON.parse(responseText)
+        } catch (e) {
+          console.error("Erro ao fazer parse JSON no check:", responseText)
+          return new Response(JSON.stringify({
+              success: false,
+              error: "Resposta inválida da Easypay"
+          }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        return new Response(JSON.stringify({
+            success: true,
+            paid: data.method?.status === 'processed'
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
