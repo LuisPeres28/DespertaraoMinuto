@@ -19,6 +19,7 @@ serve(async (req) => {
     const accountId = Deno.env.get('EASYPAY_ACCOUNT_ID') || 'ba41236b-b132-4c82-bd06-ad4f6d33a6d4'
     const apiKey = Deno.env.get('EASYPAY_API_KEY') || '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
     const isProduction = true
+    const API_BASE_URL = 'https://api.easypay.pt'
 
     if (!accountId || !apiKey) {
       throw new Error('Chaves da Easypay não encontradas no servidor')
@@ -46,7 +47,7 @@ serve(async (req) => {
 
       console.log("A pedir pagamento à Easypay...")
 
-      const response = await fetch('https://api.easypay.pt/2.0/single', {
+      const response = await fetch(`${API_BASE_URL}/2.0/single`, {
         method: 'POST',
         headers: {
             'AccountId': accountId,
@@ -94,7 +95,7 @@ serve(async (req) => {
     // AÇÃO: VERIFICAR ESTADO
     // ─────────────────────────────────────────────
     if (action === 'check') {
-        const response = await fetch(`https://api.easypay.pt/2.0/single/${paymentId}`, {
+        const response = await fetch(`${API_BASE_URL}/2.0/single/${paymentId}`, {
             method: 'GET',
             headers: {
                 'AccountId': accountId,
