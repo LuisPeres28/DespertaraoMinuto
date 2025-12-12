@@ -61,9 +61,20 @@ serve(async (req) => {
 
       if (!response.ok) {
         console.error("Easypay error:", JSON.stringify(data))
+
+        // Extract the real error message from Easypay
+        let errorMessage = "Payment failed"
+        if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+          errorMessage = data.messages.join(', ')
+        } else if (data.message) {
+          errorMessage = data.message
+        } else if (data.error) {
+          errorMessage = data.error
+        }
+
         return new Response(JSON.stringify({
           success: false,
-          error: data.message || data.error || "Payment failed"
+          error: errorMessage
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: response.status
@@ -106,9 +117,19 @@ serve(async (req) => {
       }
 
       if (!response.ok) {
+        // Extract the real error message from Easypay
+        let errorMessage = "Failed to check payment status"
+        if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+          errorMessage = data.messages.join(', ')
+        } else if (data.message) {
+          errorMessage = data.message
+        } else if (data.error) {
+          errorMessage = data.error
+        }
+
         return new Response(JSON.stringify({
           success: false,
-          error: "Failed to check payment status"
+          error: errorMessage
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: response.status
