@@ -13,8 +13,8 @@ serve(async (req) => {
   try {
     const { action, amount, phoneNumber, paymentId } = await req.json()
 
-    const accountId = 'bafe2a58-734e-43ff-9a87-19e28202f01b'
-    const apiKey = '04f21956-25e6-4ca9-b8b9-c1182792b19a'
+    const accountId = 'ba41236b-b132-4c82-bd06-ad4f6d33a6d4'
+    const apiKey = '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
 
     if (action === 'create') {
       const phone = phoneNumber.replace(/[^0-9]/g, '').slice(-9)
@@ -26,7 +26,7 @@ serve(async (req) => {
       const body = JSON.stringify({
         type: "sale",
         method: "mbway",
-        value: String(amount),
+        value: amount,
         currency: "EUR",
         mbway: {
           phone: "351" + phone
@@ -41,8 +41,8 @@ serve(async (req) => {
       const response = await fetch('https://api.easypay.pt/2.0/single', {
         method: 'POST',
         headers: {
-          "AccountId": "bafe2a58-734e-43ff-9a87-19e28202f01b",
-          "ApiKey": "04f21956-25e6-4ca9-b8b9-c1182792b19a",
+          "AccountId": "ba41236b-b132-4c82-bd06-ad4f6d33a6d4",
+          "ApiKey": "65f2bcb-d572-41f5-811e-38f6c5d3ef13",
           "Content-Type": "application/json"
         },
         body: body
