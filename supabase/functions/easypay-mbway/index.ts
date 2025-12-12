@@ -17,6 +17,10 @@ serve(async (req) => {
     const apiKey = '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
 
     if (action === 'create') {
+      // Automatically add country code 351 if not present
+      const formattedPhone = phoneNumber.replace(/^351/, '').replace(/^\+351/, '')
+      const phoneWithCountryCode = '351' + formattedPhone
+
       const payload = {
         type: "sale",
         method: "mbway",
@@ -26,7 +30,7 @@ serve(async (req) => {
           descriptive: "Desperto"
         },
         mbway: {
-          phone: phoneNumber
+          phone: phoneWithCountryCode
         }
       }
 
@@ -45,41 +49,12 @@ serve(async (req) => {
       const responseText = await response.text()
       console.log("Easypay response:", responseText)
 
-      let data
-      try {
-        data = JSON.parse(responseText)
-      } catch (e) {
-        console.error("JSON parse error:", responseText)
-        return new Response(JSON.stringify({
-          success: false,
-          error: "Invalid response from Easypay"
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        })
-      }
-
+      // Force real error display - throw the raw response if not ok
       if (!response.ok) {
-        console.error("Easypay error:", JSON.stringify(data))
-
-        // Extract the real error message from Easypay
-        let errorMessage = "Payment failed"
-        if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
-          errorMessage = data.messages.join(', ')
-        } else if (data.message) {
-          errorMessage = data.message
-        } else if (data.error) {
-          errorMessage = data.error
-        }
-
-        return new Response(JSON.stringify({
-          success: false,
-          error: errorMessage
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: response.status
-        })
+        throw new Error(responseText)
       }
+
+      const data = JSON.parse(responseText)
 
       return new Response(JSON.stringify({
         success: true,
@@ -101,40 +76,14 @@ serve(async (req) => {
       })
 
       const responseText = await response.text()
-      let data
+      console.log("Easypay check response:", responseText)
 
-      try {
-        data = JSON.parse(responseText)
-      } catch (e) {
-        console.error("JSON parse error on check:", responseText)
-        return new Response(JSON.stringify({
-          success: false,
-          error: "Invalid response from Easypay"
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        })
-      }
-
+      // Force real error display - throw the raw response if not ok
       if (!response.ok) {
-        // Extract the real error message from Easypay
-        let errorMessage = "Failed to check payment status"
-        if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
-          errorMessage = data.messages.join(', ')
-        } else if (data.message) {
-          errorMessage = data.message
-        } else if (data.error) {
-          errorMessage = data.error
-        }
-
-        return new Response(JSON.stringify({
-          success: false,
-          error: errorMessage
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: response.status
-        })
+        throw new Error(responseText)
       }
+
+      const data = JSON.parse(responseText)
 
       return new Response(JSON.stringify({
         success: true,
