@@ -17,24 +17,11 @@ serve(async (req) => {
     const apiKey = '65f2bcb-d572-41f5-811e-38f6c5d3ef13'
 
     if (action === 'create') {
-      // Automatically add country code 351 if not present
-      const formattedPhone = phoneNumber.replace(/^351/, '').replace(/^\+351/, '')
-      const phoneWithCountryCode = '351' + formattedPhone
+      // Clean phone number and ensure country code 351
+      const cleanPhone = phoneNumber.replace(/[^0-9]/g, '').replace(/^351/, '')
+      const formattedPhone = '351' + (cleanPhone.padStart(9, ''))
 
-      const payload = {
-        type: "sale",
-        method: "mbway",
-        value: Number(amount),
-        currency: "EUR",
-        capture: {
-          descriptive: "Desperto"
-        },
-        mbway: {
-          phone: phoneWithCountryCode
-        }
-      }
-
-      console.log("Creating MB WAY payment:", JSON.stringify(payload, null, 2))
+      console.log("Formatted phone for MB WAY:", formattedPhone)
 
       const response = await fetch('https://api.easypay.pt/2.0/single', {
         method: 'POST',
@@ -43,7 +30,18 @@ serve(async (req) => {
           'ApiKey': apiKey,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          type: 'sale',
+          method: 'mbway',
+          value: String(amount),
+          currency: 'EUR',
+          mbway: {
+            phone: formattedPhone
+          },
+          capture: {
+            descriptive: 'Desperto'
+          }
+        })
       })
 
       const responseText = await response.text()
