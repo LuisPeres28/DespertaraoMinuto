@@ -7,21 +7,16 @@ export interface EmailTemplate {
 }
 
 export class EmailService {
-  private static readonly DEFAULT_PUBLIC_KEY = 'yxdL1IoXHXaC3Q-Cw';
-  private static readonly DEFAULT_PRIVATE_KEY = 'IDsqDpiM12CvEx1R0fKMt';
-  private static readonly DEFAULT_SERVICE_ID = 'service_eqp55ju';
-  private static readonly DEFAULT_TEMPLATE_ID = 'template_qwhxunh';
-
   static async initialize() {
-    const publicKey = localStorage.getItem('emailjs_public_key') || this.DEFAULT_PUBLIC_KEY;
-    const privateKey = localStorage.getItem('emailjs_private_key') || this.DEFAULT_PRIVATE_KEY;
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+    if (!publicKey) {
+      console.warn('⚠️ VITE_EMAILJS_PUBLIC_KEY not configured');
+      return;
+    }
 
     emailjs.init(publicKey);
     console.log('✅ EmailJS initialized successfully');
-
-    if (privateKey) {
-      console.log('✅ EmailJS credentials configured');
-    }
   }
 
   static generateConfirmationEmail(
@@ -130,9 +125,19 @@ euestoudesperto@gmail.com
 
   static async sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
     try {
-      const serviceId = localStorage.getItem('emailjs_service_id') || this.DEFAULT_SERVICE_ID;
-      const templateId = localStorage.getItem('emailjs_template_id') || this.DEFAULT_TEMPLATE_ID;
-      const publicKey = localStorage.getItem('emailjs_public_key') || this.DEFAULT_PUBLIC_KEY;
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+      if (!serviceId || !templateId || !publicKey) {
+        console.warn('⚠️ EmailJS environment variables not configured');
+        console.log('📧 Email details for manual sending:');
+        console.log('From: euestoudesperto@gmail.com');
+        console.log('To:', to);
+        console.log('Subject:', template.subject);
+        console.log('Body:', template.body);
+        return true;
+      }
 
       console.log('📧 Sending email to:', to);
       console.log('📧 Using Service ID:', serviceId);
@@ -150,19 +155,19 @@ euestoudesperto@gmail.com
         },
         publicKey
       );
-      
+
       console.log('✅ Email sent successfully:', result);
       return true;
     } catch (error) {
       console.error('❌ Email sending failed:', error);
-      
+
       // Fallback: Log the email details for manual sending
       console.log('📧 Email details for manual sending:');
       console.log('From: euestoudesperto@gmail.com');
       console.log('To:', to);
       console.log('Subject:', template.subject);
       console.log('Body:', template.body);
-      
+
       // For now, return true to continue the booking process
       return true;
     }

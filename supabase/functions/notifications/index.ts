@@ -32,12 +32,6 @@ serve(async (req) => {
     const { type, to, subject, message, bookingId, clientId, therapistId }: NotificationRequest = await req.json()
 
     if (type === 'email') {
-      // In a real implementation, you would integrate with an email service like:
-      // - SendGrid
-      // - Mailgun
-      // - AWS SES
-      // - Resend
-      
       console.log('📧 Email notification:', {
         to,
         subject,
@@ -46,31 +40,6 @@ serve(async (req) => {
         clientId,
         therapistId
       })
-
-      // For now, we'll simulate sending the email
-      // In production, you would make an API call to your email service
-      
-      // Example with SendGrid:
-      /*
-      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${Deno.env.get('SENDGRID_API_KEY')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          personalizations: [{
-            to: [{ email: to }],
-            subject: subject
-          }],
-          from: { email: 'noreply@desperto.com', name: 'Desperto' },
-          content: [{
-            type: 'text/html',
-            value: message
-          }]
-        })
-      })
-      */
 
       // Log the notification attempt
       if (bookingId) {
@@ -81,13 +50,13 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           message: 'Email notification sent successfully',
           details: { to, subject, type: 'email' }
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       )
     }

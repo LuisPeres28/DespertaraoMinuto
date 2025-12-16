@@ -92,18 +92,18 @@ export function SystemCheck() {
     }
 
     updateCheck('emailjs', 'loading', 'Verificando EmailJS...');
-    const emailjsServiceId = localStorage.getItem('emailjs_service_id');
-    const emailjsTemplateId = localStorage.getItem('emailjs_template_id');
-    const emailjsPublicKey = localStorage.getItem('emailjs_public_key');
+    const emailjsServiceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+    const emailjsTemplateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+    const emailjsPublicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
     if (emailjsServiceId && emailjsTemplateId && emailjsPublicKey) {
       updateCheck('emailjs', 'success', 'EmailJS configurado',
-        'Service ID e Template ID encontrados');
+        'Variáveis de ambiente configuradas');
     } else {
       const missing = [];
-      if (!emailjsServiceId) missing.push('Service ID');
-      if (!emailjsTemplateId) missing.push('Template ID');
-      if (!emailjsPublicKey) missing.push('Public Key');
+      if (!emailjsServiceId) missing.push('VITE_EMAILJS_SERVICE_ID');
+      if (!emailjsTemplateId) missing.push('VITE_EMAILJS_TEMPLATE_ID');
+      if (!emailjsPublicKey) missing.push('VITE_EMAILJS_PUBLIC_KEY');
 
       updateCheck('emailjs', 'warning', 'EmailJS parcialmente configurado',
         `Em falta: ${missing.join(', ')}`);
