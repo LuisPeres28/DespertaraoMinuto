@@ -129,7 +129,7 @@ export function PaymentStep({
         const bankDetails = await PaymentService.generateBankTransferDetails(amount, 'temp-booking-id');
         setPaymentResult({
           success: false,
-          error: `Dados para Transferência Bancária:\n\nIBAN: ${bankDetails.iban}\nSWIFT/BIC: ${bankDetails.swift}\nBanco: ${bankDetails.bankName}\nTitular: ${bankDetails.accountHolder}\nReferência: ${bankDetails.reference}\nValor: €${amount}\n\nApós a transferência, o seu agendamento será confirmado automaticamente.`
+          error: `Dados para Transferência Bancária:\n\nIBAN: ${bankDetails.iban}\nBanco: ${bankDetails.bankName}\nTitular: ${bankDetails.accountHolder}\nReferência: ${bankDetails.reference}\nValor: €${amount}\n\nApós a transferência, o seu agendamento será confirmado automaticamente.`
         });
         setIsProcessing(false);
       } catch (error) {
@@ -395,7 +395,7 @@ export function PaymentStep({
                   <span className="font-medium text-blue-900">Transferência Bancária</span>
                 </div>
                 <p className="text-sm text-blue-800">
-                  Ao clicar em "Gerar Dados Bancários", receberá os dados completos (IBAN, SWIFT, referência) para efetuar a transferência. O agendamento será confirmado após receção do pagamento.
+                  Ao clicar em "Gerar Dados Bancários", receberá os dados completos (IBAN, titular, referência) para efetuar a transferência. O agendamento será confirmado após receção do pagamento.
                 </p>
               </div>
             )}

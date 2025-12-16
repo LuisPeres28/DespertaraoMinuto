@@ -117,10 +117,9 @@ export class PaymentService {
       transaction_id: reference
     });
     return {
-      iban: "PT50 0035 0000 00000000000 00",
-      swift: "CGDIPTPL",
-      bankName: "Caixa Geral de Depósitos",
-      accountHolder: "Desperto - Terapias",
+      iban: "PT50 0193 0000 1050 6185 1975 9",
+      bankName: "Banco CTT",
+      accountHolder: "Luis Peres",
       reference,
       amount
     };
