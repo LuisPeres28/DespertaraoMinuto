@@ -3,7 +3,7 @@ import { Mail, Key, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 
 export function EmailSetup() {
   const [serviceId, setServiceId] = useState('service_eqp55ju');
-  const [templateId, setTemplateId] = useState('');
+  const [templateId, setTemplateId] = useState('template_qwhxunh');
   const [publicKey, setPublicKey] = useState('760566696417-10jkflpar8h9u7nei0v2idv5p2rbtpgq.apps.googleusercontent.com');
   const [privateKey, setPrivateKey] = useState('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');
   const [isConfigured, setIsConfigured] = useState(false);
