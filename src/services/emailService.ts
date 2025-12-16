@@ -173,15 +173,84 @@ euestoudesperto@gmail.com
     }
   }
 
+  static async sendRescheduleNotification(
+    clientName: string,
+    clientEmail: string,
+    oldDate: Date,
+    newDate: Date,
+    notes: string,
+    serviceName: string
+  ): Promise<boolean> {
+    try {
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_RESCHEDULE_TEMPLATE_ID;
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+      const adminEmail = 'euestoudesperto@gmail.com';
+
+      if (!serviceId || !templateId || !publicKey) {
+        console.warn('⚠️ EmailJS reschedule template not configured');
+        console.log('📧 Reschedule notification details:');
+        console.log('To: Admin', adminEmail);
+        console.log('Client:', clientName, clientEmail);
+        console.log('Old Date:', oldDate);
+        console.log('New Date:', newDate);
+        console.log('Notes:', notes);
+        return true;
+      }
+
+      const formattedOldDate = oldDate.toLocaleDateString('pt-PT', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const formattedNewDate = newDate.toLocaleDateString('pt-PT', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      console.log('📧 Sending reschedule notification to admin');
+
+      const result = await emailjs.send(
+        serviceId,
+        templateId,
+        {
+          to_email: adminEmail,
+          name: clientName,
+          email: clientEmail,
+          date: formattedOldDate,
+          new_date: formattedNewDate,
+          notes: notes || 'Sem motivo especificado',
+          service: serviceName,
+          reply_to: clientEmail
+        },
+        publicKey
+      );
+
+      console.log('✅ Reschedule notification sent successfully:', result);
+      return true;
+    } catch (error) {
+      console.error('❌ Reschedule notification failed:', error);
+      return false;
+    }
+  }
+
   static async sendSMS(to: string, message: string): Promise<boolean> {
     // In a real application, this would integrate with an SMS service like:
     // - Twilio
     // - AWS SNS
     // - Vonage (Nexmo)
-    
+
     console.log('📱 SMS would be sent to:', to);
     console.log('📱 Message:', message);
-    
+
     // Simulate SMS sending
     return new Promise((resolve) => {
       setTimeout(() => {

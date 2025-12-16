@@ -99,40 +99,19 @@ euestoudesperto@gmail.com
       b.id === bookingId ? updatedBooking : b
     ));
 
-    // Send notification email to therapist
+    // Send notification email to admin
     const service = services.find(s => s.id === booking.serviceId);
     const therapist = therapists.find(t => t.id === booking.therapistId);
-    
+
     if (service && therapist) {
-      const therapistNotification = {
-        subject: 'Pedido de Reagendamento - ' + service.name,
-        body: `
-Olá ${therapist.name},
-
-O cliente ${client.name} solicitou o reagendamento da sua consulta.
-
-📅 **Agendamento Atual:**
-- Data: ${new Date(booking.date).toLocaleDateString('pt-PT')}
-- Hora: ${new Date(booking.date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-- Serviço: ${service.name}
-
-📅 **Novo Horário Solicitado:**
-- Data: ${newDateTime.toLocaleDateString('pt-PT')}
-- Hora: ${newDateTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-
-${rescheduleData.reason ? `📝 **Motivo:** ${rescheduleData.reason}` : ''}
-
-👤 **Cliente:** ${client.name} (${client.email})
-
-Por favor, aceda ao sistema para aprovar ou rejeitar este pedido.
-
-Cumprimentos,
-Sistema Desperto
-        `
-      };
-      
-      // In a real system, this would be sent to the therapist's email
-      console.log('📧 Notification sent to therapist:', therapistNotification);
+      await EmailService.sendRescheduleNotification(
+        client.name,
+        client.email,
+        new Date(booking.date),
+        newDateTime,
+        rescheduleData.reason,
+        service.name
+      );
     }
 
     // Send confirmation to client
