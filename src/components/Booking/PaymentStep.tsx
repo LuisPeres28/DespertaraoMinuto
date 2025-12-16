@@ -40,6 +40,7 @@ export function PaymentStep({
   const [mbwayPaymentId, setMbwayPaymentId] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [bankTransferDetails, setBankTransferDetails] = useState<any>(null);
 
   const paymentMethods = PaymentService.getPaymentMethods();
 
@@ -117,10 +118,7 @@ export function PaymentStep({
     } else if (selectedMethod === 'bank_transfer') {
       try {
         const bankDetails = await PaymentService.generateBankTransferDetails(amount, 'temp-booking-id');
-        setPaymentResult({
-          success: false,
-          error: `Dados para Transferência Bancária:\n\nIBAN: ${bankDetails.iban}\nBanco: ${bankDetails.bankName}\nTitular: ${bankDetails.accountHolder}\nReferência: ${bankDetails.reference}\nValor: €${amount}\n\nApós a transferência, o seu agendamento será confirmado automaticamente.`
-        });
+        setBankTransferDetails(bankDetails);
         setIsProcessing(false);
       } catch (error) {
         setPaymentResult({ success: false, error: 'Erro ao gerar dados bancários' });
@@ -455,6 +453,43 @@ export function PaymentStep({
           </div>
         ))}
       </div>
+
+      {/* Bank Transfer Details */}
+      {bankTransferDetails && (
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <span className="text-3xl">🏦</span>
+            <span className="font-bold text-blue-900 text-lg">Dados para Transferência Bancária</span>
+          </div>
+          <div className="space-y-3 text-blue-900">
+            <div className="bg-white p-3 rounded-lg">
+              <p className="text-xs text-blue-600 font-medium mb-1">IBAN</p>
+              <p className="font-mono text-sm font-bold">{bankTransferDetails.iban}</p>
+            </div>
+            <div className="bg-white p-3 rounded-lg">
+              <p className="text-xs text-blue-600 font-medium mb-1">Banco</p>
+              <p className="text-sm font-semibold">{bankTransferDetails.bankName}</p>
+            </div>
+            <div className="bg-white p-3 rounded-lg">
+              <p className="text-xs text-blue-600 font-medium mb-1">Titular</p>
+              <p className="text-sm font-semibold">{bankTransferDetails.accountHolder}</p>
+            </div>
+            <div className="bg-white p-3 rounded-lg">
+              <p className="text-xs text-blue-600 font-medium mb-1">Referência</p>
+              <p className="font-mono text-sm font-bold">{bankTransferDetails.reference}</p>
+            </div>
+            <div className="bg-white p-3 rounded-lg">
+              <p className="text-xs text-blue-600 font-medium mb-1">Valor</p>
+              <p className="text-xl font-bold text-blue-700">€{amount.toFixed(2)}</p>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+            <p className="text-sm text-blue-800">
+              ✅ Após efetuar a transferência, o seu agendamento será confirmado automaticamente.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {(paymentResult?.error || couponValidationError) && (
