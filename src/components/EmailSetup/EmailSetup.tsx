@@ -4,16 +4,15 @@ import { Mail, Key, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 export function EmailSetup() {
   const [serviceId, setServiceId] = useState('service_eqp55ju');
   const [templateId, setTemplateId] = useState('template_qwhxunh');
-  const [publicKey, setPublicKey] = useState('760566696417-10jkflpar8h9u7nei0v2idv5p2rbtpgq.apps.googleusercontent.com');
-  const [privateKey, setPrivateKey] = useState('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');
+  const [publicKey, setPublicKey] = useState('yxdL1IoXHXaC3Q-Cw');
+  const [privateKey, setPrivateKey] = useState('IDsqDpiM12CvEx1R0fKMt');
   const [isConfigured, setIsConfigured] = useState(false);
 
   const handleSave = () => {
-    // Save configuration to localStorage
     localStorage.setItem('emailjs_service_id', serviceId);
     localStorage.setItem('emailjs_template_id', templateId);
     localStorage.setItem('emailjs_public_key', publicKey);
-    localStorage.setItem('google_oauth_private_key', privateKey);
+    localStorage.setItem('emailjs_private_key', privateKey);
     setIsConfigured(true);
   };
 
@@ -101,7 +100,7 @@ export function EmailSetup() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Google OAuth Client ID (Public Key)
+                EmailJS Public Key
               </label>
               <div className="relative">
                 <Key className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
@@ -109,7 +108,7 @@ export function EmailSetup() {
                   type="text"
                   value={publicKey}
                   onChange={(e) => setPublicKey(e.target.value)}
-                  placeholder="760566696417-xxxxxxxxx.apps.googleusercontent.com"
+                  placeholder="yxdL1IoXHXaC3Q-Cw"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -117,7 +116,7 @@ export function EmailSetup() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Google OAuth Client Secret (Private Key)
+                EmailJS Private Key
               </label>
               <div className="relative">
                 <Key className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
@@ -125,7 +124,7 @@ export function EmailSetup() {
                   type="password"
                   value={privateKey}
                   onChange={(e) => setPrivateKey(e.target.value)}
-                  placeholder="GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx"
+                  placeholder="IDsqDpiM12CvEx1R0fKMt"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>

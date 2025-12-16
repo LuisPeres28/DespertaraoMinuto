@@ -9,14 +9,13 @@ export interface EmailTemplate {
 export class EmailService {
   static async initialize() {
     const publicKey = localStorage.getItem('emailjs_public_key');
-    const googlePrivateKey = localStorage.getItem('google_oauth_private_key');
+    const privateKey = localStorage.getItem('emailjs_private_key');
     if (publicKey) {
       emailjs.init(publicKey);
     }
-    
-    // Initialize Google OAuth if available
-    if (googlePrivateKey) {
-      console.log('✅ Google OAuth credentials configured');
+
+    if (privateKey) {
+      console.log('✅ EmailJS credentials configured');
     }
   }
 
@@ -129,15 +128,15 @@ euestoudesperto@gmail.com
       const serviceId = localStorage.getItem('emailjs_service_id');
       const templateId = localStorage.getItem('emailjs_template_id');
       const publicKey = localStorage.getItem('emailjs_public_key');
-      const googlePrivateKey = localStorage.getItem('google_oauth_private_key');
+      const privateKey = localStorage.getItem('emailjs_private_key');
 
-      if (!serviceId || !templateId || !publicKey || !googlePrivateKey) {
+      if (!serviceId || !templateId || !publicKey || !privateKey) {
         console.log('📧 EmailJS not configured. Email details for manual sending:');
         console.log('From: euestoudesperto@gmail.com');
         console.log('To:', to);
         console.log('Subject:', template.subject);
         console.log('Body:', template.body);
-        console.log('💡 Configure Google OAuth credentials in Email Setup for automatic sending');
+        console.log('💡 Configure EmailJS credentials in Email Setup for automatic sending');
         return true;
       }
 
