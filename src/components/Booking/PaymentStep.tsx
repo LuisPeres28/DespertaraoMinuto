@@ -113,7 +113,6 @@ export function PaymentStep({
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'multibanco') {
-      // For Multibanco, generate reference and show it
       try {
         const reference = await PaymentService.generateMultibancoReference(amount, 'temp-booking-id');
         setPaymentResult({
@@ -123,6 +122,18 @@ export function PaymentStep({
         setIsProcessing(false);
       } catch (error) {
         setPaymentResult({ success: false, error: 'Erro ao gerar referência Multibanco' });
+        setIsProcessing(false);
+      }
+    } else if (selectedMethod === 'bank_transfer') {
+      try {
+        const bankDetails = await PaymentService.generateBankTransferDetails(amount, 'temp-booking-id');
+        setPaymentResult({
+          success: false,
+          error: `Dados para Transferência Bancária:\n\nIBAN: ${bankDetails.iban}\nSWIFT/BIC: ${bankDetails.swift}\nBanco: ${bankDetails.bankName}\nTitular: ${bankDetails.accountHolder}\nReferência: ${bankDetails.reference}\nValor: €${amount}\n\nApós a transferência, o seu agendamento será confirmado automaticamente.`
+        });
+        setIsProcessing(false);
+      } catch (error) {
+        setPaymentResult({ success: false, error: 'Erro ao gerar dados bancários' });
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'coupon') {
@@ -280,16 +291,19 @@ export function PaymentStep({
           <div key={method.id}>
             <button
               onClick={() => setSelectedMethod(method.id)}
-              className={`w-full p-4 border-2 rounded-xl text-left transition-all min-h-[60px] ${
+              className={`w-full p-4 border-2 rounded-xl text-left transition-all ${
                 selectedMethod === method.id
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
               style={{ touchAction: 'manipulation' }}
             >
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">{method.icon}</span>
-                <span className="font-medium text-base">{method.name}</span>
+              <div className="flex items-start space-x-3">
+                <span className="text-3xl mt-1">{method.icon}</span>
+                <div className="flex-1">
+                  <div className="font-semibold text-base text-gray-900">{method.name}</div>
+                  <div className="text-sm text-gray-600 mt-1">{method.description}</div>
+                </div>
               </div>
             </button>
 
@@ -356,6 +370,32 @@ export function PaymentStep({
 
                 <p className="text-xs text-green-700 mt-2">
                   ✅ <strong>Sistema Real:</strong> Pagamento processado via Easypay (operador oficial MB WAY)
+                </p>
+              </div>
+            )}
+
+            {/* Multibanco Info */}
+            {selectedMethod === 'multibanco' && method.id === 'multibanco' && (
+              <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-2xl">🏧</span>
+                  <span className="font-medium text-orange-900">Pagamento via Multibanco</span>
+                </div>
+                <p className="text-sm text-orange-800">
+                  Ao clicar em "Gerar Referência", receberá uma entidade e referência para efetuar o pagamento em qualquer terminal ATM Multibanco.
+                </p>
+              </div>
+            )}
+
+            {/* Bank Transfer Info */}
+            {selectedMethod === 'bank_transfer' && method.id === 'bank_transfer' && (
+              <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-2xl">🏦</span>
+                  <span className="font-medium text-blue-900">Transferência Bancária</span>
+                </div>
+                <p className="text-sm text-blue-800">
+                  Ao clicar em "Gerar Dados Bancários", receberá os dados completos (IBAN, SWIFT, referência) para efetuar a transferência. O agendamento será confirmado após receção do pagamento.
                 </p>
               </div>
             )}
@@ -460,6 +500,8 @@ export function PaymentStep({
               <CreditCard className="w-4 h-4 mr-2" />
               {selectedMethod === 'coupon' ? 'Validar Cupão' :
                selectedMethod === 'mbway' ? 'Pagar com MB WAY' :
+               selectedMethod === 'multibanco' ? 'Gerar Referência Multibanco' :
+               selectedMethod === 'bank_transfer' ? 'Gerar Dados Bancários' :
                `Pagar €${amount}`}
             </>
           )}

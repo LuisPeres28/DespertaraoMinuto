@@ -11,8 +11,30 @@ export class PaymentService {
   // 1. LISTAR MÉTODOS (Sem async para não dar erro de ecrã branco)
   static getPaymentMethods() {
     return [
-      { id: 'mbway', label: 'MB Way', icon: 'smartphone' },
-      { id: 'multibanco', label: 'Multibanco', icon: 'credit-card' }
+      {
+        id: 'mbway',
+        name: 'MB WAY',
+        icon: '📱',
+        description: 'Pagamento instantâneo via app MB WAY'
+      },
+      {
+        id: 'multibanco',
+        name: 'Multibanco',
+        icon: '🏧',
+        description: 'Referência Multibanco para pagamento em ATM'
+      },
+      {
+        id: 'bank_transfer',
+        name: 'Transferência Bancária',
+        icon: '🏦',
+        description: 'Transferência bancária direta'
+      },
+      {
+        id: 'coupon',
+        name: 'Cupão / Vale',
+        icon: '🎫',
+        description: 'Use um cupão de desconto ou vale'
+      }
     ];
   }
 
@@ -81,6 +103,27 @@ export class PaymentService {
       id: transactionId, booking_id: bookingId, amount, method: "multibanco", status: "pending", transaction_id: reference
     });
     return { entity: "11249", reference, amount };
+  }
+
+  static async generateBankTransferDetails(amount: number, bookingId: string) {
+    const reference = `DESPERTO-${Date.now()}`;
+    const transactionId = `BANK_${Date.now()}`;
+    await supabase.from("payments").insert({
+      id: transactionId,
+      booking_id: bookingId,
+      amount,
+      method: "bank_transfer",
+      status: "pending",
+      transaction_id: reference
+    });
+    return {
+      iban: "PT50 0035 0000 00000000000 00",
+      swift: "CGDIPTPL",
+      bankName: "Caixa Geral de Depósitos",
+      accountHolder: "Desperto - Terapias",
+      reference,
+      amount
+    };
   }
 
   static async checkMBWayPaymentStatus(paymentId: string): Promise<PaymentResult> {
