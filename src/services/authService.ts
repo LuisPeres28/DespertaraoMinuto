@@ -68,6 +68,13 @@ export class AuthService {
         };
       }
 
+      // Set user context for RLS before making queries
+      try {
+        await supabase.rpc('set_current_user', { user_id_input: authenticatedUser.user_id });
+      } catch (error) {
+        console.error('Error setting user context:', error);
+      }
+
       // Verificar se 2FA está ativado
       const { data: twoFactor } = await supabase
         .from('two_factor_auth_settings')
