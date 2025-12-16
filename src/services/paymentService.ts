@@ -92,7 +92,6 @@ export class PaymentService {
   }
 
   static async generateBankTransferDetails(amount: number, bookingId: string) {
-    const reference = `DESPERTO-${Date.now()}`;
     const transactionId = `BANK_${Date.now()}`;
     await supabase.from("payments").insert({
       id: transactionId,
@@ -100,13 +99,12 @@ export class PaymentService {
       amount,
       method: "bank_transfer",
       status: "pending",
-      transaction_id: reference
+      transaction_id: transactionId
     });
     return {
       iban: "PT50 0193 0000 1050 6185 1975 9",
       bankName: "Banco CTT",
       accountHolder: "Luis Peres",
-      reference,
       amount
     };
   }

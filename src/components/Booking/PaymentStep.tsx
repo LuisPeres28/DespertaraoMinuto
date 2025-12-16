@@ -474,10 +474,6 @@ export function PaymentStep({
               <p className="text-sm font-semibold">{bankTransferDetails.accountHolder}</p>
             </div>
             <div className="bg-white p-3 rounded-lg">
-              <p className="text-xs text-blue-600 font-medium mb-1">Referência</p>
-              <p className="font-mono text-sm font-bold">{bankTransferDetails.reference}</p>
-            </div>
-            <div className="bg-white p-3 rounded-lg">
               <p className="text-xs text-blue-600 font-medium mb-1">Valor</p>
               <p className="text-xl font-bold text-blue-700">€{amount.toFixed(2)}</p>
             </div>

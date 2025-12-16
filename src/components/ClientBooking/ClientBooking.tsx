@@ -896,7 +896,7 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
 
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Telefone
+                    Telefone *
                   </label>
                   <div className="relative">
                     <Phone className="w-5 h-5 absolute left-3 top-3 text-neutral-400" />
@@ -906,6 +906,7 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                       onChange={(e) => setClientInfo(prev => ({ ...prev, phone: e.target.value }))}
                       className="w-full pl-10 pr-4 py-4 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-desperto-gold focus:border-transparent text-base min-h-[48px]"
                       placeholder="+351 xxx xxx xxx"
+                      required
                     />
                   </div>
                 </div>
@@ -937,7 +938,7 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                 </button>
                 <button
                   onClick={() => setStep(5)}
-                  disabled={!clientInfo.name || !clientInfo.email}
+                  disabled={!clientInfo.name || !clientInfo.email || !clientInfo.phone}
                   className="w-full lg:w-auto px-8 py-4 bg-desperto-gold text-white rounded-xl font-semibold hover:bg-desperto-gold/90 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors shadow-lg text-lg min-h-[48px]"
                   style={{ touchAction: 'manipulation' }}
                 >
