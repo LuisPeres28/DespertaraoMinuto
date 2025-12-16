@@ -7,12 +7,17 @@ export interface EmailTemplate {
 }
 
 export class EmailService {
+  private static readonly DEFAULT_PUBLIC_KEY = 'yxdL1IoXHXaC3Q-Cw';
+  private static readonly DEFAULT_PRIVATE_KEY = 'IDsqDpiM12CvEx1R0fKMt';
+  private static readonly DEFAULT_SERVICE_ID = 'service_eqp55ju';
+  private static readonly DEFAULT_TEMPLATE_ID = 'template_qwhxunh';
+
   static async initialize() {
-    const publicKey = localStorage.getItem('emailjs_public_key');
-    const privateKey = localStorage.getItem('emailjs_private_key');
-    if (publicKey) {
-      emailjs.init(publicKey);
-    }
+    const publicKey = localStorage.getItem('emailjs_public_key') || this.DEFAULT_PUBLIC_KEY;
+    const privateKey = localStorage.getItem('emailjs_private_key') || this.DEFAULT_PRIVATE_KEY;
+
+    emailjs.init(publicKey);
+    console.log('✅ EmailJS initialized successfully');
 
     if (privateKey) {
       console.log('✅ EmailJS credentials configured');
@@ -125,22 +130,14 @@ euestoudesperto@gmail.com
 
   static async sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
     try {
-      const serviceId = localStorage.getItem('emailjs_service_id');
-      const templateId = localStorage.getItem('emailjs_template_id');
-      const publicKey = localStorage.getItem('emailjs_public_key');
-      const privateKey = localStorage.getItem('emailjs_private_key');
+      const serviceId = localStorage.getItem('emailjs_service_id') || this.DEFAULT_SERVICE_ID;
+      const templateId = localStorage.getItem('emailjs_template_id') || this.DEFAULT_TEMPLATE_ID;
+      const publicKey = localStorage.getItem('emailjs_public_key') || this.DEFAULT_PUBLIC_KEY;
 
-      if (!serviceId || !templateId || !publicKey || !privateKey) {
-        console.log('📧 EmailJS not configured. Email details for manual sending:');
-        console.log('From: euestoudesperto@gmail.com');
-        console.log('To:', to);
-        console.log('Subject:', template.subject);
-        console.log('Body:', template.body);
-        console.log('💡 Configure EmailJS credentials in Email Setup for automatic sending');
-        return true;
-      }
+      console.log('📧 Sending email to:', to);
+      console.log('📧 Using Service ID:', serviceId);
+      console.log('📧 Using Template ID:', templateId);
 
-      // Try to send real email using EmailJS
       const result = await emailjs.send(
         serviceId,
         templateId,

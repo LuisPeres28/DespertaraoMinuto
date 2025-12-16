@@ -45,6 +45,10 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
     }
   }, []);
 
+  // Initialize EmailJS
+  useEffect(() => {
+    EmailService.initialize();
+  }, []);
 
 
     const handleLogin = async (email: string, password: string) => {
