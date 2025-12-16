@@ -84,6 +84,37 @@ export class PaymentService {
   }
 
   static async checkMBWayPaymentStatus(paymentId: string): Promise<PaymentResult> {
-     return { success: false };
+    try {
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(`${url}/functions/v1/easypay-mbway`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          action: "check",
+          paymentId
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.paid) {
+        await supabase
+          .from("payments")
+          .update({ status: "completed" })
+          .eq("transaction_id", paymentId);
+
+        return { success: true };
+      }
+
+      return { success: false };
+    } catch (err) {
+      console.error("Error checking payment status:", err);
+      return { success: false };
+    }
   }
 }

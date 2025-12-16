@@ -191,23 +191,8 @@ export function PaymentStep({
         setIsProcessing(false);
       }
     } else {
-      // For other payments, just confirm
-      try {
-        const result = await PaymentService.processPayment(amount, selectedMethod, 'temp-booking-id');
-        
-        if (result.success && result.paymentIntent) {
-          setPaymentResult({ success: true });
-          window.setTimeout(() => {
-            onPaymentSuccess(result.paymentIntent!.id);
-          }, 1500);
-        } else {
-          setPaymentResult({ success: false, error: result.error });
-        }
-      } catch (error) {
-        setPaymentResult({ success: false, error: 'Erro inesperado. Tente novamente.' });
-      } finally {
-        setIsProcessing(false);
-      }
+      setPaymentResult({ success: false, error: 'Método de pagamento não suportado.' });
+      setIsProcessing(false);
     }
   };
 
@@ -474,7 +459,7 @@ export function PaymentStep({
             <>
               <CreditCard className="w-4 h-4 mr-2" />
               {selectedMethod === 'coupon' ? 'Validar Cupão' :
-               selectedMethod === 'mbway' ? 'Pagar com MB WAY (Stripe)' :
+               selectedMethod === 'mbway' ? 'Pagar com MB WAY' :
                `Pagar €${amount}`}
             </>
           )}
