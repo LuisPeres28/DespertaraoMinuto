@@ -17,8 +17,8 @@ Deno.serve(async (req: Request) => {
   try {
     const { action, amount, phoneNumber, paymentId } = await req.json();
 
-    const accountId = "bb8d2297-82c6-48c7-9033-b03d131931a3";
-    const apiKey = "084a6b14-c7e5-430a-ad82-b7d8924aa3f1";
+    const accountId = "002948d9-596e-4a75-868b-c2f39801e377";
+    const apiKey = "b7ae0f00-0662-4fee-97e3-93fe5227b7af";
 
     if (action === "create") {
       const phone = phoneNumber.replace(/[^0-9]/g, "").slice(-9);
@@ -46,8 +46,8 @@ Deno.serve(async (req: Request) => {
       const response = await fetch("https://api.easypay.pt/2.0/single", {
         method: "POST",
         headers: {
-          "AccountId": "bb8d2297-82c6-48c7-9033-b03d131931a3",
-          "ApiKey": "084a6b14-c7e5-430a-ad82-b7d8924aa3f1",
+          "AccountId": "002948d9-596e-4a75-868b-c2f39801e377",
+          "ApiKey": "b7ae0f00-0662-4fee-97e3-93fe5227b7af",
           "Content-Type": "application/json"
         },
         body: body
