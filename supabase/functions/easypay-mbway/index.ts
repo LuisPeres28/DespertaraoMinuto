@@ -43,7 +43,7 @@ Deno.serve(async (req: Request) => {
 
       console.log("Request body:", body);
 
-      const response = await fetch("https://api.easypay.pt/2.0/single", {
+      const response = await fetch("https://api.prod.easypay.pt/2.0/single", {
         method: "POST",
         headers: {
           "AccountId": "002948d9-596e-4a75-868b-c2f39801e377",
@@ -78,7 +78,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "check") {
-      const response = await fetch(`https://api.easypay.pt/2.0/single/${paymentId}`, {
+      const response = await fetch(`https://api.prod.easypay.pt/2.0/single/${paymentId}`, {
         method: "GET",
         headers: {
           "AccountId": accountId,
