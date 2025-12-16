@@ -112,16 +112,23 @@ export function PaymentStep({
       } finally {
         setIsProcessing(false);
       }
-    } else if (selectedMethod === 'multibanco') {
+    } else if (selectedMethod === 'credit_card') {
       try {
-        const reference = await PaymentService.generateMultibancoReference(amount, 'temp-booking-id');
-        setPaymentResult({
-          success: false,
-          error: `Referência Multibanco gerada:\n\nEntidade: ${reference.entity}\nReferência: ${reference.reference}\nValor: €${amount}\n\nApós o pagamento, o seu agendamento será confirmado automaticamente.`
-        });
+        const result = await PaymentService.processCreditCardPayment(amount, 'temp-booking-id');
+
+        if (result.success && result.paymentIntent?.checkoutUrl) {
+          // Redirecionar para o link de pagamento Easypay
+          window.open(result.paymentIntent.checkoutUrl, '_blank');
+          setPaymentResult({
+            success: false,
+            error: 'Abrimos uma nova janela com o pagamento seguro Easypay. Complete o pagamento e volte aqui para confirmar.'
+          });
+        } else {
+          setPaymentResult({ success: false, error: result.error || 'Erro ao processar pagamento com cartão' });
+        }
         setIsProcessing(false);
       } catch (error) {
-        setPaymentResult({ success: false, error: 'Erro ao gerar referência Multibanco' });
+        setPaymentResult({ success: false, error: 'Erro ao processar pagamento com cartão' });
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'bank_transfer') {
@@ -374,15 +381,18 @@ export function PaymentStep({
               </div>
             )}
 
-            {/* Multibanco Info */}
-            {selectedMethod === 'multibanco' && method.id === 'multibanco' && (
-              <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+            {/* Credit Card Info */}
+            {selectedMethod === 'credit_card' && method.id === 'credit_card' && (
+              <div className="mt-3 p-4 bg-purple-50 border border-purple-200 rounded-xl">
                 <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-2xl">🏧</span>
-                  <span className="font-medium text-orange-900">Pagamento via Multibanco</span>
+                  <span className="text-2xl">💳</span>
+                  <span className="font-medium text-purple-900">Pagamento com Cartão</span>
                 </div>
-                <p className="text-sm text-orange-800">
-                  Ao clicar em "Gerar Referência", receberá uma entidade e referência para efetuar o pagamento em qualquer terminal ATM Multibanco.
+                <p className="text-sm text-purple-800">
+                  Ao clicar em "Pagar com Cartão", será redirecionado para a página segura da Easypay onde poderá inserir os dados do seu cartão de crédito ou débito.
+                </p>
+                <p className="text-xs text-purple-700 mt-2">
+                  ✅ <strong>Sistema Real:</strong> Pagamento processado via Easypay (PCI-DSS Certificado)
                 </p>
               </div>
             )}
@@ -500,7 +510,7 @@ export function PaymentStep({
               <CreditCard className="w-4 h-4 mr-2" />
               {selectedMethod === 'coupon' ? 'Validar Cupão' :
                selectedMethod === 'mbway' ? 'Pagar com MB WAY' :
-               selectedMethod === 'multibanco' ? 'Gerar Referência Multibanco' :
+               selectedMethod === 'credit_card' ? 'Pagar com Cartão' :
                selectedMethod === 'bank_transfer' ? 'Gerar Dados Bancários' :
                `Pagar €${amount}`}
             </>

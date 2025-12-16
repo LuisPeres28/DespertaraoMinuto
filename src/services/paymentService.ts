@@ -18,10 +18,10 @@ export class PaymentService {
         description: 'Pagamento instantâneo via app MB WAY'
       },
       {
-        id: 'multibanco',
-        name: 'Multibanco',
-        icon: '🏧',
-        description: 'Referência Multibanco para pagamento em ATM'
+        id: 'credit_card',
+        name: 'Cartão de Crédito/Débito',
+        icon: '💳',
+        description: 'Pagamento seguro com cartão via Easypay'
       },
       {
         id: 'bank_transfer',
@@ -96,13 +96,48 @@ export class PaymentService {
     }
   }
 
-  static async generateMultibancoReference(amount: number, bookingId: string) {
-    const reference = Math.floor(100000000 + Math.random() * 900000000).toString();
-    const transactionId = `MB_${Date.now()}_${reference}`;
-    await supabase.from("payments").insert({
-      id: transactionId, booking_id: bookingId, amount, method: "multibanco", status: "pending", transaction_id: reference
-    });
-    return { entity: "11249", reference, amount };
+  static async processCreditCardPayment(amount: number, bookingId: string): Promise<PaymentResult> {
+    console.log("💳 A iniciar pagamento com Cartão de Crédito via Easypay...");
+
+    try {
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(`${url}/functions/v1/easypay-credit-card`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          amount: amount,
+          bookingId: bookingId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || "Erro ao processar pagamento" };
+      }
+
+      const data = await response.json();
+
+      if (data.checkoutUrl) {
+        return {
+          success: true,
+          paymentIntent: {
+            id: data.paymentId,
+            checkoutUrl: data.checkoutUrl
+          }
+        };
+      }
+
+      return { success: false, error: "Erro ao gerar link de pagamento" };
+
+    } catch (err) {
+      console.error(err);
+      return { success: false, error: "Erro interno no pagamento com cartão." };
+    }
   }
 
   static async generateBankTransferDetails(amount: number, bookingId: string) {
