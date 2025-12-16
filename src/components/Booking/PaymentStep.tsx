@@ -52,6 +52,27 @@ export function PaymentStep({
     }
     return password;
   };
+
+  // Auto-generate bank transfer details when selected
+  useEffect(() => {
+    if (selectedMethod === 'bank_transfer' && !bankTransferDetails) {
+      const generateBankDetails = async () => {
+        try {
+          const bankDetails = await PaymentService.generateBankTransferDetails(amount, 'temp-booking-id');
+          setBankTransferDetails(bankDetails);
+        } catch (error) {
+          console.error('Error generating bank details:', error);
+          setPaymentResult({ success: false, error: 'Erro ao gerar dados bancários' });
+        }
+      };
+      generateBankDetails();
+    }
+    // Reset bank details when switching to another method
+    if (selectedMethod !== 'bank_transfer' && bankTransferDetails) {
+      setBankTransferDetails(null);
+    }
+  }, [selectedMethod, amount, bankTransferDetails]);
+
   const handlePayment = async () => {
     if (!selectedMethod) return;
 
@@ -113,15 +134,6 @@ export function PaymentStep({
         setPaymentResult({ success: false, error: 'Erro ao processar MB WAY. Tente novamente.' });
         setProcessingMBWay(false);
       } finally {
-        setIsProcessing(false);
-      }
-    } else if (selectedMethod === 'bank_transfer') {
-      try {
-        const bankDetails = await PaymentService.generateBankTransferDetails(amount, 'temp-booking-id');
-        setBankTransferDetails(bankDetails);
-        setIsProcessing(false);
-      } catch (error) {
-        setPaymentResult({ success: false, error: 'Erro ao gerar dados bancários' });
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'coupon') {
@@ -374,19 +386,6 @@ export function PaymentStep({
               </div>
             )}
 
-            {/* Bank Transfer Info */}
-            {selectedMethod === 'bank_transfer' && method.id === 'bank_transfer' && (
-              <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-2xl">🏦</span>
-                  <span className="font-medium text-blue-900">Transferência Bancária</span>
-                </div>
-                <p className="text-sm text-blue-800">
-                  Ao clicar em "Gerar Dados Bancários", receberá os dados completos (IBAN, titular, referência) para efetuar a transferência. O agendamento será confirmado após receção do pagamento.
-                </p>
-              </div>
-            )}
-
             {/* Coupon Password Input */}
             {selectedMethod === 'coupon' && method.id === 'coupon' && (
               <div className="mt-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
@@ -502,34 +501,36 @@ export function PaymentStep({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <button
-          onClick={handlePayment}
-          disabled={
-            !selectedMethod ||
-            isProcessing ||
-            (selectedMethod === 'coupon' && !inputCouponPassword.trim()) ||
-            (selectedMethod === 'mbway' && !mbwayPhone.trim())
-          }
-          className="w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center font-semibold text-base min-h-[48px]"
-          style={{ touchAction: 'manipulation' }}
-        >
-          {isProcessing || processingMBWay ? (
-            <>
-              <Loader className="w-4 h-4 mr-2 animate-spin" />
-              {processingMBWay ? 'Processando MB WAY...' : 'Processando...'}
-            </>
-          ) : (
-            <>
-              <CreditCard className="w-4 h-4 mr-2" />
-              {selectedMethod === 'coupon' ? 'Validar Cupão' :
-               selectedMethod === 'mbway' ? 'Pagar com MB WAY' :
-               selectedMethod === 'bank_transfer' ? 'Gerar Dados Bancários' :
-               `Pagar €${amount}`}
-            </>
-          )}
-        </button>
-      </div>
+      {/* Hide button for bank transfer when details are already shown */}
+      {!(selectedMethod === 'bank_transfer' && bankTransferDetails) && (
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={handlePayment}
+            disabled={
+              !selectedMethod ||
+              isProcessing ||
+              (selectedMethod === 'coupon' && !inputCouponPassword.trim()) ||
+              (selectedMethod === 'mbway' && !mbwayPhone.trim())
+            }
+            className="w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center font-semibold text-base min-h-[48px]"
+            style={{ touchAction: 'manipulation' }}
+          >
+            {isProcessing || processingMBWay ? (
+              <>
+                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                {processingMBWay ? 'Processando MB WAY...' : 'Processando...'}
+              </>
+            ) : (
+              <>
+                <CreditCard className="w-4 h-4 mr-2" />
+                {selectedMethod === 'coupon' ? 'Validar Cupão' :
+                 selectedMethod === 'mbway' ? 'Pagar com MB WAY' :
+                 `Pagar €${amount}`}
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
