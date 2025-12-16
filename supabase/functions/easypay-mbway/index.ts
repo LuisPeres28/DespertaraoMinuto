@@ -72,7 +72,8 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({
         success: true,
         paymentId: data.id,
-        phoneNumber: phoneNumber
+        phoneNumber: phoneNumber,
+        qrCodeUrl: data.method?.url || null
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });

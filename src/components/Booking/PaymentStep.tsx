@@ -39,6 +39,7 @@ export function PaymentStep({
   const [processingMBWay, setProcessingMBWay] = useState(false);
   const [mbwayPaymentId, setMbwayPaymentId] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   const paymentMethods = PaymentService.getPaymentMethods();
 
@@ -70,6 +71,7 @@ export function PaymentStep({
 
         if (result.success && result.paymentIntent) {
           setMbwayPaymentId(result.paymentIntent.id);
+          setQrCodeUrl(result.paymentIntent.qrCodeUrl);
           setProcessingMBWay(false);
 
           // Start checking payment status
@@ -110,25 +112,6 @@ export function PaymentStep({
         setPaymentResult({ success: false, error: 'Erro ao processar MB WAY. Tente novamente.' });
         setProcessingMBWay(false);
       } finally {
-        setIsProcessing(false);
-      }
-    } else if (selectedMethod === 'credit_card') {
-      try {
-        const result = await PaymentService.processCreditCardPayment(amount, 'temp-booking-id');
-
-        if (result.success && result.paymentIntent?.checkoutUrl) {
-          // Redirecionar para o link de pagamento Easypay
-          window.open(result.paymentIntent.checkoutUrl, '_blank');
-          setPaymentResult({
-            success: false,
-            error: 'Abrimos uma nova janela com o pagamento seguro Easypay. Complete o pagamento e volte aqui para confirmar.'
-          });
-        } else {
-          setPaymentResult({ success: false, error: result.error || 'Erro ao processar pagamento com cartão' });
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        setPaymentResult({ success: false, error: 'Erro ao processar pagamento com cartão' });
         setIsProcessing(false);
       }
     } else if (selectedMethod === 'bank_transfer') {
@@ -364,6 +347,18 @@ export function PaymentStep({
                         Pedido enviado para o seu telemóvel!
                       </span>
                     </div>
+
+                    {qrCodeUrl && (
+                      <div className="mb-4 p-3 bg-white rounded-lg text-center">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Ou escaneie este QR Code com a app MB WAY:</p>
+                        <img
+                          src={qrCodeUrl}
+                          alt="QR Code MB WAY"
+                          className="mx-auto w-48 h-48 border-2 border-gray-300 rounded"
+                        />
+                      </div>
+                    )}
+
                     <div className="text-sm text-green-800 space-y-2">
                       <p className="font-medium">📩 Abra a app MB WAY e aprove o pagamento de €{amount.toFixed(2)}</p>
                       <p className="text-xs">🕒 A aguardar aprovação...</p>
@@ -377,22 +372,6 @@ export function PaymentStep({
 
                 <p className="text-xs text-green-700 mt-2">
                   ✅ <strong>Sistema Real:</strong> Pagamento processado via Easypay (operador oficial MB WAY)
-                </p>
-              </div>
-            )}
-
-            {/* Credit Card Info */}
-            {selectedMethod === 'credit_card' && method.id === 'credit_card' && (
-              <div className="mt-3 p-4 bg-purple-50 border border-purple-200 rounded-xl">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-2xl">💳</span>
-                  <span className="font-medium text-purple-900">Pagamento com Cartão</span>
-                </div>
-                <p className="text-sm text-purple-800">
-                  Ao clicar em "Pagar com Cartão", será redirecionado para a página segura da Easypay onde poderá inserir os dados do seu cartão de crédito ou débito.
-                </p>
-                <p className="text-xs text-purple-700 mt-2">
-                  ✅ <strong>Sistema Real:</strong> Pagamento processado via Easypay (PCI-DSS Certificado)
                 </p>
               </div>
             )}
@@ -510,7 +489,6 @@ export function PaymentStep({
               <CreditCard className="w-4 h-4 mr-2" />
               {selectedMethod === 'coupon' ? 'Validar Cupão' :
                selectedMethod === 'mbway' ? 'Pagar com MB WAY' :
-               selectedMethod === 'credit_card' ? 'Pagar com Cartão' :
                selectedMethod === 'bank_transfer' ? 'Gerar Dados Bancários' :
                `Pagar €${amount}`}
             </>
