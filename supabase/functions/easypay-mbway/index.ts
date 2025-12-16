@@ -27,14 +27,15 @@ Deno.serve(async (req: Request) => {
       console.log("Amount:", amount);
       console.log("Phone:", "351" + phone);
 
-      // CRITICAL: No 'url' field in body - only these fields
+      // CRITICAL: Use 'mbw' as method (not 'mbway')
       const body = JSON.stringify({
         type: "sale",
-        method: "mbway",
+        method: "mbw",
         value: amount,
         currency: "EUR",
-        mbway: {
-          phone: "351" + phone
+        customer: {
+          phone: "351" + phone,
+          phone_indicative: "351"
         },
         capture: {
           descriptive: "Desperto"
