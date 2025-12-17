@@ -291,8 +291,8 @@ export interface Database {
     Functions: {
       authenticate_user: {
         Args: {
-          username_input: string
-          password_input: string
+          p_identifier: string
+          p_password: string
         }
         Returns: {
           user_id: string

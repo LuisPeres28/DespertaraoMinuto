@@ -31,11 +31,19 @@ export class AuthService {
       }
 
       // USAR FUNÇÃO DO SUPABASE para autenticar com bcrypt
+      console.log('🔍 Chamando authenticate_user com:', { p_identifier: username, p_password: '***' });
       const { data: authResult, error: authError } = await supabase
         .rpc('authenticate_user', {
           p_identifier: username,
           p_password: password
         });
+
+      console.log('📊 Resultado authenticate_user:', {
+        authResult,
+        authError: authError?.message,
+        hasResult: !!authResult,
+        resultLength: authResult?.length
+      });
 
       if (authError || !authResult || authResult.length === 0) {
         // Tentar encontrar o user para incrementar failed attempts
