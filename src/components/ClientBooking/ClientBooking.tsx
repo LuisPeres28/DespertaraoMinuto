@@ -224,20 +224,21 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
     const allBookings = generateRecurringBookings(baseBooking);
     setBookings(prev => [...prev, ...allBookings]);
 
-    // Send confirmation email
+    // Send confirmation email using EmailJS template
     const therapist = therapists.find(t => t.id === selectedTherapist)!;
-    
+
     try {
-      const emailTemplate = EmailService.generateConfirmationEmail(
-        baseBooking, 
-        client, 
-        selectedServiceDetails, 
-        therapist,
-        paymentId?.startsWith('coupon_') ? generatedCouponPassword : undefined
+      const location = 'Google Meet (o link será enviado por email)';
+
+      await EmailService.sendClientConfirmationEmail(
+        client.email,
+        client.name,
+        bookingDateTime,
+        selectedTime,
+        location
       );
-      await EmailService.sendEmail(client.email, emailTemplate);
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error('Error sending confirmation email:', error);
     }
 
     setStep(6); // Go to success

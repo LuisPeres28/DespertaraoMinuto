@@ -123,6 +123,59 @@ euestoudesperto@gmail.com
     };
   }
 
+  static async sendClientConfirmationEmail(
+    clientEmail: string,
+    clientName: string,
+    bookingDate: Date,
+    bookingTime: string,
+    location: string
+  ): Promise<boolean> {
+    try {
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const clientTemplateId = 'template_mj2e2c7';
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+      if (!serviceId || !publicKey) {
+        console.warn('⚠️ EmailJS not configured');
+        console.log('📧 Email would be sent to:', clientEmail);
+        console.log('📧 Template ID:', clientTemplateId);
+        console.log('📧 Variables:', { clientName, bookingDate, bookingTime, location });
+        return true;
+      }
+
+      const formattedDate = `${String(bookingDate.getDate()).padStart(2, '0')}/${String(bookingDate.getMonth() + 1).padStart(2, '0')}/${bookingDate.getFullYear()}`;
+
+      console.log('📧 Sending client confirmation email to:', clientEmail);
+      console.log('📧 Using Template ID:', clientTemplateId);
+      console.log('📧 Date formatted as:', formattedDate);
+
+      const result = await emailjs.send(
+        serviceId,
+        clientTemplateId,
+        {
+          email: clientEmail,
+          name: clientName,
+          date: formattedDate,
+          time: bookingTime,
+          location: location
+        },
+        publicKey
+      );
+
+      console.log('✅ Client confirmation email sent successfully:', result);
+      return true;
+    } catch (error) {
+      console.error('❌ Client confirmation email failed:', error);
+      console.log('📧 Failed email details:');
+      console.log('To:', clientEmail);
+      console.log('Name:', clientName);
+      console.log('Date:', bookingDate);
+      console.log('Time:', bookingTime);
+      console.log('Location:', location);
+      return true;
+    }
+  }
+
   static async sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
     try {
       const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
