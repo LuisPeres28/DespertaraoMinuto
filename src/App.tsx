@@ -50,6 +50,11 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
     EmailService.initialize();
   }, []);
 
+  // TEMPORARY: Display Supabase keys on page load
+  useEffect(() => {
+    alert("URL: " + import.meta.env.VITE_SUPABASE_URL + "\nKEY: " + import.meta.env.VITE_SUPABASE_ANON_KEY);
+  }, []);
+
 
     const handleLogin = async (email: string, password: string) => {
     const result = await signIn(email, password);
