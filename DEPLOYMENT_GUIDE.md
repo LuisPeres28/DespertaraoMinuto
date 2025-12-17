@@ -1,8 +1,8 @@
 # Guia de Deployment - Desperto
 
-## Problema Resolvido
+## IMPORTANTE: Por que o login não funciona em produção?
 
-A aplicação não funcionava fora da Bolt.new porque tinha credenciais hardcoded antigas como fallback. Agora as variáveis de ambiente são obrigatórias.
+O ficheiro `.env` **NÃO é enviado** quando publicas a aplicação por razões de segurança. Tens que configurar as variáveis de ambiente **DIRETAMENTE na plataforma de hosting** (Netlify, Vercel, etc.).
 
 ## Como Publicar a Aplicação
 
@@ -18,14 +18,23 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 ### 2. Plataformas de Deployment
 
 #### Netlify
-1. Vai a **Site settings > Environment variables**
-2. Adiciona cada variável (nome e valor)
-3. Redeploy o site
+1. Vai a https://app.netlify.com
+2. Seleciona o teu site
+3. Vai a **Site settings → Environment variables**
+4. Clica em "Add a variable"
+5. Adiciona `VITE_SUPABASE_URL` com o valor acima
+6. Adiciona `VITE_SUPABASE_ANON_KEY` com o valor acima
+7. Clica "Save"
+8. Vai a **Deploys → Trigger deploy → Clear cache and deploy site**
 
 #### Vercel
-1. Vai a **Settings > Environment Variables**
-2. Adiciona cada variável
-3. Redeploy
+1. Vai a https://vercel.com/dashboard
+2. Seleciona o teu projeto
+3. Vai a **Settings → Environment Variables**
+4. Adiciona `VITE_SUPABASE_URL` com o valor acima
+5. Adiciona `VITE_SUPABASE_ANON_KEY` com o valor acima
+6. Clica "Save"
+7. Vai a **Deployments** → clica nos 3 pontos → "Redeploy"
 
 #### Outras Plataformas
 Procura por "Environment Variables" ou "Build Environment" nas configurações do projeto.
@@ -47,15 +56,16 @@ dist
 Podes usar estas credenciais para testar após deployment:
 
 ### Admin
-- Username: `admin`
-- Password: `admin123`
-
-### Terapeuta
-- Username: `christina` ou `luis`
-- Password: `therapist123`
+- Email: `euestoudesperto@gmail.com`
+- Password: `Dhvif2m1`
 
 ### Cliente
-- Qualquer cliente que tenhas criado na base de dados
+- Email: `cliente@teste.com`
+- Password: `123456`
+
+### Terapeuta
+- Email: `luisperes28@gmail.com`
+- Password: `Dhvif2m0`
 
 ## Verificar se Está a Funcionar
 
