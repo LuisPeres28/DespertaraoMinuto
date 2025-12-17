@@ -1,21 +1,28 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://0ec90b57d6e95fcbda19832f.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJib2x0IiwicmVmIjoiMGVjOTBiNTdkNmU5NWZjYmRhMTk4MzJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4ODE1NzQsImV4cCI6MTc1ODg4MTU3NH0.9I8-U0x86Ak8t2DGaIk0HfvTSLsAyzdnz-Nw00mMkKw'
-
-console.log('🔧 Supabase Configuration:', {
-  url: supabaseUrl ? 'Loaded' : 'Missing',
-  key: supabaseAnonKey ? 'Loaded' : 'Missing',
-  fromEnv: !!import.meta.env.VITE_SUPABASE_URL
-})
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Missing Supabase environment variables')
-} else {
-  console.log('✅ Supabase client initialized successfully')
+  console.error('❌ CRITICAL: Missing Supabase environment variables!')
+  console.error('VITE_SUPABASE_URL:', supabaseUrl ? 'Present' : 'MISSING')
+  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Present' : 'MISSING')
+  throw new Error('Missing required Supabase environment variables. Please check your .env file.')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+console.log('✅ Supabase Configuration Loaded:', {
+  url: supabaseUrl.substring(0, 30) + '...',
+  keyLength: supabaseAnonKey.length,
+  fromEnv: true
+})
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false
+  }
+})
 
 // Database types
 export interface Database {
