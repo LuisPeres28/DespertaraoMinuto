@@ -233,18 +233,6 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
   return (
     <AppProvider>
       <div className="min-h-screen bg-gray-50">
-        {/* TEMPORARY: Display Supabase keys */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-100 border-b-4 border-yellow-500 p-6 text-center">
-          <h2 className="text-xl font-bold mb-2 text-gray-900">SUPABASE KEYS (TEMPORARY)</h2>
-          <div className="bg-white p-4 rounded-lg shadow-sm max-w-4xl mx-auto">
-            <p className="font-mono text-sm mb-2 break-all">
-              <strong>URL:</strong> {import.meta.env.VITE_SUPABASE_URL}
-            </p>
-            <p className="font-mono text-sm break-all">
-              <strong>KEY:</strong> {import.meta.env.VITE_SUPABASE_ANON_KEY}
-            </p>
-          </div>
-        </div>
         {/* Sidebar only for staff users */}
         {isStaffUser && (
           <div className="flex">
