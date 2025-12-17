@@ -141,26 +141,17 @@ euestoudesperto@gmail.com
   ): Promise<boolean> {
     console.log('🚀 === STARTING EMAIL SEND PROCESS ===');
 
-    alert('🟢 STARTING: Email process initiated');
-
     try {
       // HARDCODED CREDENTIALS - Bypass environment variables
       const serviceId = "service_eqp55ju";
       const templateId = "template_w3awkf1";
       const publicKey = "yxdL1IoXHXaC3Q-Cw";
 
-      console.log('📋 STEP 1: Using hardcoded credentials');
-      alert(`🔵 STEP 1: Loaded credentials\nService: ${serviceId}\nTemplate: ${templateId}`);
+      console.log('📋 Using hardcoded credentials');
 
       // Initialize EmailJS
-      try {
-        emailjs.init(publicKey);
-        console.log('✅ EmailJS initialized');
-        alert('🟢 STEP 2: EmailJS initialized successfully');
-      } catch (initError: any) {
-        alert(`❌ CRASH at init(): ${initError.message || 'Unknown init error'}`);
-        throw initError;
-      }
+      emailjs.init(publicKey);
+      console.log('✅ EmailJS initialized');
 
       // Create clean params with EXPLICIT STRING conversion
       const dateDay = String(bookingDate.getDate()).padStart(2, '0');
@@ -177,46 +168,48 @@ euestoudesperto@gmail.com
         message: String("Nova marcação via Website")
       };
 
-      console.log('📋 STEP 3: Clean params created:', cleanParams);
-      alert(`🟢 STEP 3: Params ready\nEmail: ${cleanParams.to_email}\nName: ${cleanParams.to_name}\nDate: ${cleanParams.date}\nTime: ${cleanParams.time}`);
+      console.log('📋 Clean params created:', cleanParams);
 
-      // Send email with strict error handling
-      console.log('📋 STEP 4: Calling emailjs.send()...');
-      alert('🟡 STEP 4: Calling emailjs.send() now...');
+      // Create timeout promise (4 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('TIMEOUT'));
+        }, 4000);
+      });
 
-      let result;
-      try {
-        result = await emailjs.send(
-          serviceId,
-          templateId,
-          cleanParams
-        );
-        console.log('✅ emailjs.send() returned:', result);
-      } catch (sendError: any) {
-        alert(`❌ CRASH at send(): ${sendError.message || 'Unknown send error'}`);
-        console.error('Send error details:', sendError);
-        throw sendError;
-      }
+      // Create email send promise
+      const sendPromise = emailjs.send(
+        serviceId,
+        templateId,
+        cleanParams
+      );
 
-      console.log('✅ STEP 4 COMPLETE: Email sent!', result);
-      alert(`✅ SUCESSO: Email enviado!\nStatus: ${result.status}\nText: ${result.text || 'OK'}`);
+      console.log('📋 Calling emailjs.send() with timeout protection...');
+
+      // Race between send and timeout
+      const result = await Promise.race([sendPromise, timeoutPromise]);
+
+      console.log('✅ Email sent successfully!', result);
+      alert('✅ SUCESSO! Email enviado.');
       return true;
 
     } catch (error: any) {
-      console.error('❌ ERRO CAPTURADO:', error);
+      console.error('❌ Email error:', error);
 
-      const errorMessage = error?.message || error?.text || 'Unknown error';
-      const errorStatus = error?.status || 'No status';
+      const errorMessage = error?.message || 'Unknown error';
 
-      alert(`❌ CRASH: ${errorMessage}\nStatus: ${errorStatus}\nName: ${error?.name || 'Unknown'}`);
-
-      console.error('Full error object:', {
-        name: error?.name,
-        message: error?.message,
-        text: error?.text,
-        status: error?.status,
-        stack: error?.stack
-      });
+      if (errorMessage === 'TIMEOUT') {
+        console.warn('⏱️ Email send timed out - likely blocked by firewall/antivirus');
+        alert('⚠️ ALERTA: O envio foi bloqueado pelo seu Antivírus ou Rede. Tente no telemóvel.');
+      } else {
+        console.error('Error details:', {
+          name: error?.name,
+          message: error?.message,
+          text: error?.text,
+          status: error?.status
+        });
+        alert('⚠️ ALERTA: O envio foi bloqueado pelo seu Antivírus ou Rede. Tente no telemóvel.');
+      }
 
       return false;
     }
