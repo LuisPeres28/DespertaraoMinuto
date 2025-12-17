@@ -142,35 +142,23 @@ euestoudesperto@gmail.com
     console.log('🚀 === STARTING EMAIL SEND PROCESS ===');
 
     try {
-      // STEP 1: Initialize EmailJS explicitly
-      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-      console.log('📋 STEP 1: Initializing EmailJS...');
-      console.log('Public Key exists:', !!publicKey);
+      // HARDCODED CREDENTIALS - Bypass environment variables
+      const serviceId = "service_eqp55ju";
+      const templateId = "template_w3awkf1";
+      const publicKey = "yxdL1IoXHXaC3Q-Cw";
 
-      if (!publicKey) {
-        alert('❌ ERRO CRÍTICO: Public Key não encontrada!');
-        return false;
-      }
-
-      emailjs.init(publicKey);
-      console.log('✅ STEP 1 COMPLETE: EmailJS initialized');
-
-      // STEP 2: Load environment variables
-      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_w3awkf1';
-
-      console.log('📋 STEP 2: Loading config...');
+      console.log('📋 STEP 1: Using hardcoded credentials');
       console.log('Service ID:', serviceId);
       console.log('Template ID:', templateId);
+      console.log('Public Key:', publicKey);
 
-      alert(`🔍 CONFIG LOADED:\nTemplate: ${templateId}\nService: ${serviceId}`);
+      alert(`🔍 HARDCODED CONFIG:\nService: ${serviceId}\nTemplate: ${templateId}\nKey: ${publicKey}`);
 
-      if (!serviceId || !templateId) {
-        alert(`❌ ERRO: Configuração incompleta!\nService: ${serviceId}\nTemplate: ${templateId}`);
-        return false;
-      }
+      // STEP 1: Initialize EmailJS explicitly
+      emailjs.init(publicKey);
+      console.log('✅ EmailJS initialized');
 
-      // STEP 3: Prepare email data
+      // STEP 2: Prepare email data
       const formattedDate = `${String(bookingDate.getDate()).padStart(2, '0')}/${String(bookingDate.getMonth() + 1).padStart(2, '0')}/${bookingDate.getFullYear()}`;
 
       const emailData = {
@@ -181,19 +169,18 @@ euestoudesperto@gmail.com
         location: location
       };
 
-      console.log('📋 STEP 3: Email data prepared:', emailData);
+      console.log('📋 STEP 2: Email data prepared:', emailData);
 
-      // STEP 4: Send email with strict error handling
-      console.log('📋 STEP 4: Calling emailjs.send()...');
+      // STEP 3: Send email with strict error handling
+      console.log('📋 STEP 3: Calling emailjs.send()...');
 
       const result = await emailjs.send(
         serviceId,
         templateId,
-        emailData,
-        publicKey
+        emailData
       );
 
-      console.log('✅ STEP 4 COMPLETE: Email sent!', result);
+      console.log('✅ STEP 3 COMPLETE: Email sent!', result);
       alert(`✅ SUCESSO: Email enviado! Verifique o histórico.\nStatus: ${result.status}\nText: ${result.text}`);
       return true;
 
