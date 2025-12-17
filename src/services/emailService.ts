@@ -142,7 +142,7 @@ euestoudesperto@gmail.com
     try {
       // FORCE FRESH READ FROM ENVIRONMENT VARIABLES
       const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_w3awkf1';
       const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
       console.log('🔍 EmailJS Config Check:');
@@ -151,7 +151,7 @@ euestoudesperto@gmail.com
       console.log('Public Key:', publicKey);
 
       // Show template ID in alert for debugging
-      alert(`🔍 Using Template: ${templateId || 'NOT SET'}\nService: ${serviceId || 'NOT SET'}`);
+      alert(`🔍 Using Template: ${templateId}\nService: ${serviceId || 'NOT SET'}`);
 
       if (!serviceId || !publicKey || !templateId) {
         const errorMsg = `⚠️ EmailJS não configurado!\nService ID: ${serviceId ? '✓' : '✗'}\nTemplate ID: ${templateId ? '✓' : '✗'}\nPublic Key: ${publicKey ? '✓' : '✗'}`;
