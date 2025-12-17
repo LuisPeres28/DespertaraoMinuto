@@ -33,8 +33,8 @@ export class AuthService {
       // USAR FUNÇÃO DO SUPABASE para autenticar com bcrypt
       const { data: authResult, error: authError } = await supabase
         .rpc('authenticate_user', {
-          username_input: username,
-          password_input: password
+          p_identifier: username,
+          p_password: password
         });
 
       if (authError || !authResult || authResult.length === 0) {
