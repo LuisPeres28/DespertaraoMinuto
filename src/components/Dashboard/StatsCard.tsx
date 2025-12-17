@@ -15,7 +15,7 @@ export function StatsCard({ title, value, change, changeType, icon: Icon, color 
     blue: 'from-blue-500 to-blue-600',
     green: 'from-green-500 to-green-600',
     purple: 'from-purple-500 to-purple-600',
-    orange: 'from-orange-500 to-orange-600'
+    orange: 'from-desperto-gold to-primary-600'
   };
 
   const changeClasses = {

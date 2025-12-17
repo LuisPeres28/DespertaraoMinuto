@@ -258,12 +258,12 @@ export function TherapistNotes() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-xs sm:text-sm font-medium">Notas Privadas</p>
-              <p className="text-xl sm:text-3xl font-bold text-orange-600 mt-1">
+              <p className="text-xl sm:text-3xl font-bold text-desperto-gold mt-1">
                 {visibleNotes.filter(note => note.isPrivate).length}
               </p>
             </div>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <EyeOff className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600" />
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
+              <EyeOff className="w-4 h-4 sm:w-6 sm:h-6 text-desperto-gold" />
             </div>
           </div>
         </div>

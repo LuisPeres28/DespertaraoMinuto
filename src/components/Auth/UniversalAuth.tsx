@@ -103,7 +103,7 @@ export function UniversalAuth({ onLogin, onRegister, onClose, title = "Entrar na
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[95vh] overflow-y-auto">
         {/* Header */}
-        <div className="relative p-8 bg-gradient-to-br from-amber-500 via-yellow-600 to-orange-500 text-white">
+        <div className="relative p-8 bg-gradient-to-br from-desperto-gold via-primary-500 to-primary-700 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
@@ -239,7 +239,7 @@ export function UniversalAuth({ onLogin, onRegister, onClose, title = "Entrar na
                 <button
                   type="button"
                   onClick={() => setShowPasswordRecovery(true)}
-                  className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                  className="text-sm text-desperto-gold hover:text-primary-600 font-medium"
                 >
                   Esqueceu a password?
                 </button>
@@ -250,7 +250,7 @@ export function UniversalAuth({ onLogin, onRegister, onClose, title = "Entrar na
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:from-amber-600 hover:to-orange-600 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+              className="w-full py-4 bg-gradient-to-r from-desperto-gold to-primary-600 text-white rounded-xl font-bold hover:from-primary-600 hover:to-primary-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
             >
               {loading ? 'Processando...' : isLogin ? 'Entrar' : 'Criar Conta'}
             </button>
@@ -267,7 +267,7 @@ export function UniversalAuth({ onLogin, onRegister, onClose, title = "Entrar na
                   setError('');
                   setSuccess('');
                 }}
-                className="text-amber-600 hover:text-amber-700 font-semibold"
+                className="text-desperto-gold hover:text-primary-600 font-semibold"
               >
                 {isLogin ? 'Criar Conta' : 'Entrar'}
               </button>
