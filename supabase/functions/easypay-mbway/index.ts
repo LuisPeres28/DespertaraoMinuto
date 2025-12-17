@@ -17,8 +17,17 @@ Deno.serve(async (req: Request) => {
   try {
     const { action, amount, phoneNumber, paymentId } = await req.json();
 
-    const accountId = "002948d9-596e-4a75-868b-c2f39801e377";
-    const apiKey = "b7ae0f00-0662-4fee-97e3-93fe5227b7af";
+    const accountId = Deno.env.get("EASYPAY_ACCOUNT_ID");
+    const apiKey = Deno.env.get("EASYPAY_API_KEY");
+
+    if (!accountId || !apiKey) {
+      return new Response(JSON.stringify({
+        error: "Contact administrator to configure Easypay"
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
 
     if (action === "create") {
       const phone = phoneNumber.replace(/[^0-9]/g, "").slice(-9);
@@ -47,8 +56,8 @@ Deno.serve(async (req: Request) => {
       const response = await fetch("https://api.prod.easypay.pt/2.0/single", {
         method: "POST",
         headers: {
-          "AccountId": "002948d9-596e-4a75-868b-c2f39801e377",
-          "ApiKey": "b7ae0f00-0662-4fee-97e3-93fe5227b7af",
+          "AccountId": accountId,
+          "ApiKey": apiKey,
           "Content-Type": "application/json"
         },
         body: body
