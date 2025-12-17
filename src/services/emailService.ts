@@ -141,6 +141,8 @@ euestoudesperto@gmail.com
   ): Promise<boolean> {
     console.log('🚀 === STARTING EMAIL SEND PROCESS ===');
 
+    alert('🟢 STARTING: Email process initiated');
+
     try {
       // HARDCODED CREDENTIALS - Bypass environment variables
       const serviceId = "service_eqp55ju";
@@ -148,59 +150,74 @@ euestoudesperto@gmail.com
       const publicKey = "yxdL1IoXHXaC3Q-Cw";
 
       console.log('📋 STEP 1: Using hardcoded credentials');
-      console.log('Service ID:', serviceId);
-      console.log('Template ID:', templateId);
-      console.log('Public Key:', publicKey);
+      alert(`🔵 STEP 1: Loaded credentials\nService: ${serviceId}\nTemplate: ${templateId}`);
 
-      alert(`🔍 HARDCODED CONFIG:\nService: ${serviceId}\nTemplate: ${templateId}\nKey: ${publicKey}`);
+      // Initialize EmailJS
+      try {
+        emailjs.init(publicKey);
+        console.log('✅ EmailJS initialized');
+        alert('🟢 STEP 2: EmailJS initialized successfully');
+      } catch (initError: any) {
+        alert(`❌ CRASH at init(): ${initError.message || 'Unknown init error'}`);
+        throw initError;
+      }
 
-      // STEP 1: Initialize EmailJS explicitly
-      emailjs.init(publicKey);
-      console.log('✅ EmailJS initialized');
+      // Create clean params with EXPLICIT STRING conversion
+      const dateDay = String(bookingDate.getDate()).padStart(2, '0');
+      const dateMonth = String(bookingDate.getMonth() + 1).padStart(2, '0');
+      const dateYear = String(bookingDate.getFullYear());
+      const formattedDate = `${dateDay}/${dateMonth}/${dateYear}`;
 
-      // STEP 2: Prepare email data
-      const formattedDate = `${String(bookingDate.getDate()).padStart(2, '0')}/${String(bookingDate.getMonth() + 1).padStart(2, '0')}/${bookingDate.getFullYear()}`;
-
-      const emailData = {
-        email: clientEmail,
-        name: clientName,
-        date: formattedDate,
-        time: bookingTime,
-        location: location
+      const cleanParams = {
+        to_email: String(clientEmail),
+        to_name: String(clientName),
+        date: String(formattedDate),
+        time: String(bookingTime),
+        location: String(location),
+        message: String("Nova marcação via Website")
       };
 
-      console.log('📋 STEP 2: Email data prepared:', emailData);
+      console.log('📋 STEP 3: Clean params created:', cleanParams);
+      alert(`🟢 STEP 3: Params ready\nEmail: ${cleanParams.to_email}\nName: ${cleanParams.to_name}\nDate: ${cleanParams.date}\nTime: ${cleanParams.time}`);
 
-      // STEP 3: Send email with strict error handling
-      console.log('📋 STEP 3: Calling emailjs.send()...');
+      // Send email with strict error handling
+      console.log('📋 STEP 4: Calling emailjs.send()...');
+      alert('🟡 STEP 4: Calling emailjs.send() now...');
 
-      const result = await emailjs.send(
-        serviceId,
-        templateId,
-        emailData
-      );
+      let result;
+      try {
+        result = await emailjs.send(
+          serviceId,
+          templateId,
+          cleanParams
+        );
+        console.log('✅ emailjs.send() returned:', result);
+      } catch (sendError: any) {
+        alert(`❌ CRASH at send(): ${sendError.message || 'Unknown send error'}`);
+        console.error('Send error details:', sendError);
+        throw sendError;
+      }
 
-      console.log('✅ STEP 3 COMPLETE: Email sent!', result);
-      alert(`✅ SUCESSO: Email enviado! Verifique o histórico.\nStatus: ${result.status}\nText: ${result.text}`);
+      console.log('✅ STEP 4 COMPLETE: Email sent!', result);
+      alert(`✅ SUCESSO: Email enviado!\nStatus: ${result.status}\nText: ${result.text || 'OK'}`);
       return true;
 
     } catch (error: any) {
       console.error('❌ ERRO CAPTURADO:', error);
-      console.error('Error name:', error?.name);
-      console.error('Error message:', error?.message);
-      console.error('Error text:', error?.text);
-      console.error('Error status:', error?.status);
-      console.error('Full error object:', JSON.stringify(error, null, 2));
 
-      const errorDetails = {
-        name: error?.name || 'Unknown',
-        message: error?.message || 'No message',
-        text: error?.text || 'No text',
-        status: error?.status || 'No status',
-        full: JSON.stringify(error)
-      };
+      const errorMessage = error?.message || error?.text || 'Unknown error';
+      const errorStatus = error?.status || 'No status';
 
-      alert(`❌ ERRO NO ENVIO:\n${JSON.stringify(errorDetails, null, 2)}`);
+      alert(`❌ CRASH: ${errorMessage}\nStatus: ${errorStatus}\nName: ${error?.name || 'Unknown'}`);
+
+      console.error('Full error object:', {
+        name: error?.name,
+        message: error?.message,
+        text: error?.text,
+        status: error?.status,
+        stack: error?.stack
+      });
+
       return false;
     }
   }
