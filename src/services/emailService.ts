@@ -139,72 +139,81 @@ euestoudesperto@gmail.com
     bookingTime: string,
     location: string
   ): Promise<boolean> {
+    console.log('🚀 === STARTING EMAIL SEND PROCESS ===');
+
     try {
-      // FORCE FRESH READ FROM ENVIRONMENT VARIABLES
-      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_w3awkf1';
+      // STEP 1: Initialize EmailJS explicitly
       const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+      console.log('📋 STEP 1: Initializing EmailJS...');
+      console.log('Public Key exists:', !!publicKey);
 
-      console.log('🔍 EmailJS Config Check:');
-      console.log('Service ID:', serviceId);
-      console.log('Template ID:', templateId);
-      console.log('Public Key:', publicKey);
-
-      // Show template ID in alert for debugging
-      alert(`🔍 Using Template: ${templateId}\nService: ${serviceId || 'NOT SET'}`);
-
-      if (!serviceId || !publicKey || !templateId) {
-        const errorMsg = `⚠️ EmailJS não configurado!\nService ID: ${serviceId ? '✓' : '✗'}\nTemplate ID: ${templateId ? '✓' : '✗'}\nPublic Key: ${publicKey ? '✓' : '✗'}`;
-        console.warn(errorMsg);
-        alert(errorMsg);
-        return true;
+      if (!publicKey) {
+        alert('❌ ERRO CRÍTICO: Public Key não encontrada!');
+        return false;
       }
 
-      // Ensure EmailJS is initialized
       emailjs.init(publicKey);
-      console.log('✅ EmailJS initialized with public key');
+      console.log('✅ STEP 1 COMPLETE: EmailJS initialized');
 
+      // STEP 2: Load environment variables
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_w3awkf1';
+
+      console.log('📋 STEP 2: Loading config...');
+      console.log('Service ID:', serviceId);
+      console.log('Template ID:', templateId);
+
+      alert(`🔍 CONFIG LOADED:\nTemplate: ${templateId}\nService: ${serviceId}`);
+
+      if (!serviceId || !templateId) {
+        alert(`❌ ERRO: Configuração incompleta!\nService: ${serviceId}\nTemplate: ${templateId}`);
+        return false;
+      }
+
+      // STEP 3: Prepare email data
       const formattedDate = `${String(bookingDate.getDate()).padStart(2, '0')}/${String(bookingDate.getMonth() + 1).padStart(2, '0')}/${bookingDate.getFullYear()}`;
 
-      console.log('📧 Sending client confirmation email to:', clientEmail);
-      console.log('📧 Using Service ID:', serviceId);
-      console.log('📧 Using Template ID:', templateId);
-      console.log('📧 Date formatted as:', formattedDate);
-      console.log('📧 Template params:', {
+      const emailData = {
         email: clientEmail,
         name: clientName,
         date: formattedDate,
         time: bookingTime,
         location: location
-      });
+      };
+
+      console.log('📋 STEP 3: Email data prepared:', emailData);
+
+      // STEP 4: Send email with strict error handling
+      console.log('📋 STEP 4: Calling emailjs.send()...');
 
       const result = await emailjs.send(
         serviceId,
         templateId,
-        {
-          email: clientEmail,
-          name: clientName,
-          date: formattedDate,
-          time: bookingTime,
-          location: location
-        },
+        emailData,
         publicKey
       );
 
-      console.log('✅ Client confirmation email sent successfully:', result);
-      alert(`✅ Email enviado com sucesso!\nTemplate usado: ${templateId}`);
+      console.log('✅ STEP 4 COMPLETE: Email sent!', result);
+      alert(`✅ SUCESSO: Email enviado! Verifique o histórico.\nStatus: ${result.status}\nText: ${result.text}`);
       return true;
-    } catch (error: any) {
-      console.error('❌ Client confirmation email failed:', error);
-      console.log('📧 Failed email details:');
-      console.log('To:', clientEmail);
-      console.log('Name:', clientName);
-      console.log('Date:', bookingDate);
-      console.log('Time:', bookingTime);
-      console.log('Location:', location);
 
-      const errorMessage = error?.text || error?.message || JSON.stringify(error);
-      alert('❌ Erro ao enviar email: ' + errorMessage);
+    } catch (error: any) {
+      console.error('❌ ERRO CAPTURADO:', error);
+      console.error('Error name:', error?.name);
+      console.error('Error message:', error?.message);
+      console.error('Error text:', error?.text);
+      console.error('Error status:', error?.status);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
+
+      const errorDetails = {
+        name: error?.name || 'Unknown',
+        message: error?.message || 'No message',
+        text: error?.text || 'No text',
+        status: error?.status || 'No status',
+        full: JSON.stringify(error)
+      };
+
+      alert(`❌ ERRO NO ENVIO:\n${JSON.stringify(errorDetails, null, 2)}`);
       return false;
     }
   }
