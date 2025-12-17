@@ -9,14 +9,23 @@ export interface EmailTemplate {
 export class EmailService {
   static async initialize() {
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+
+    console.log('🔧 Initializing EmailJS...');
+    console.log('Service ID:', serviceId ? '✓ Configured' : '✗ Missing');
+    console.log('Template ID:', templateId ? '✓ Configured' : '✗ Missing');
+    console.log('Public Key:', publicKey ? '✓ Configured' : '✗ Missing');
 
     if (!publicKey) {
       console.warn('⚠️ VITE_EMAILJS_PUBLIC_KEY not configured');
+      alert('⚠️ EmailJS não está configurado corretamente. Verifique as variáveis de ambiente.');
       return;
     }
 
     emailjs.init(publicKey);
     console.log('✅ EmailJS initialized successfully');
+    console.log('✅ Ready to send emails using Service:', serviceId);
   }
 
   static generateConfirmationEmail(
@@ -135,19 +144,35 @@ euestoudesperto@gmail.com
       const clientTemplateId = 'template_mj2e2c7';
       const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
+      console.log('🔍 EmailJS Config Check:');
+      console.log('Service ID:', serviceId);
+      console.log('Template ID:', clientTemplateId);
+      console.log('Public Key:', publicKey);
+
       if (!serviceId || !publicKey) {
-        console.warn('⚠️ EmailJS not configured');
-        console.log('📧 Email would be sent to:', clientEmail);
-        console.log('📧 Template ID:', clientTemplateId);
-        console.log('📧 Variables:', { clientName, bookingDate, bookingTime, location });
+        const errorMsg = `⚠️ EmailJS não configurado! Service ID: ${serviceId ? '✓' : '✗'}, Public Key: ${publicKey ? '✓' : '✗'}`;
+        console.warn(errorMsg);
+        alert(errorMsg);
         return true;
       }
+
+      // Ensure EmailJS is initialized
+      emailjs.init(publicKey);
+      console.log('✅ EmailJS initialized with public key');
 
       const formattedDate = `${String(bookingDate.getDate()).padStart(2, '0')}/${String(bookingDate.getMonth() + 1).padStart(2, '0')}/${bookingDate.getFullYear()}`;
 
       console.log('📧 Sending client confirmation email to:', clientEmail);
+      console.log('📧 Using Service ID:', serviceId);
       console.log('📧 Using Template ID:', clientTemplateId);
       console.log('📧 Date formatted as:', formattedDate);
+      console.log('📧 Template params:', {
+        email: clientEmail,
+        name: clientName,
+        date: formattedDate,
+        time: bookingTime,
+        location: location
+      });
 
       const result = await emailjs.send(
         serviceId,
@@ -163,8 +188,9 @@ euestoudesperto@gmail.com
       );
 
       console.log('✅ Client confirmation email sent successfully:', result);
+      alert('✅ Email enviado com sucesso para o cliente!');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Client confirmation email failed:', error);
       console.log('📧 Failed email details:');
       console.log('To:', clientEmail);
@@ -172,7 +198,10 @@ euestoudesperto@gmail.com
       console.log('Date:', bookingDate);
       console.log('Time:', bookingTime);
       console.log('Location:', location);
-      return true;
+
+      const errorMessage = error?.text || error?.message || JSON.stringify(error);
+      alert('❌ Erro ao enviar email: ' + errorMessage);
+      return false;
     }
   }
 
