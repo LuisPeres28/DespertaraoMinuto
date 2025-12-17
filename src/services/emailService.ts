@@ -140,17 +140,21 @@ euestoudesperto@gmail.com
     location: string
   ): Promise<boolean> {
     try {
+      // FORCE FRESH READ FROM ENVIRONMENT VARIABLES
       const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-      const clientTemplateId = 'template_mj2e2c7';
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
       const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
       console.log('🔍 EmailJS Config Check:');
       console.log('Service ID:', serviceId);
-      console.log('Template ID:', clientTemplateId);
+      console.log('Template ID:', templateId);
       console.log('Public Key:', publicKey);
 
-      if (!serviceId || !publicKey) {
-        const errorMsg = `⚠️ EmailJS não configurado! Service ID: ${serviceId ? '✓' : '✗'}, Public Key: ${publicKey ? '✓' : '✗'}`;
+      // Show template ID in alert for debugging
+      alert(`🔍 Using Template: ${templateId || 'NOT SET'}\nService: ${serviceId || 'NOT SET'}`);
+
+      if (!serviceId || !publicKey || !templateId) {
+        const errorMsg = `⚠️ EmailJS não configurado!\nService ID: ${serviceId ? '✓' : '✗'}\nTemplate ID: ${templateId ? '✓' : '✗'}\nPublic Key: ${publicKey ? '✓' : '✗'}`;
         console.warn(errorMsg);
         alert(errorMsg);
         return true;
@@ -164,7 +168,7 @@ euestoudesperto@gmail.com
 
       console.log('📧 Sending client confirmation email to:', clientEmail);
       console.log('📧 Using Service ID:', serviceId);
-      console.log('📧 Using Template ID:', clientTemplateId);
+      console.log('📧 Using Template ID:', templateId);
       console.log('📧 Date formatted as:', formattedDate);
       console.log('📧 Template params:', {
         email: clientEmail,
@@ -176,7 +180,7 @@ euestoudesperto@gmail.com
 
       const result = await emailjs.send(
         serviceId,
-        clientTemplateId,
+        templateId,
         {
           email: clientEmail,
           name: clientName,
@@ -188,7 +192,7 @@ euestoudesperto@gmail.com
       );
 
       console.log('✅ Client confirmation email sent successfully:', result);
-      alert('✅ Email enviado com sucesso para o cliente!');
+      alert(`✅ Email enviado com sucesso!\nTemplate usado: ${templateId}`);
       return true;
     } catch (error: any) {
       console.error('❌ Client confirmation email failed:', error);
