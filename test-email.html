@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de Email - Desperto</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #555;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #059669;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      display: none;
+    }
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #ef4444;
+    }
+    .logs {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+    }
+    .log-success { color: #059669; }
+    .log-error { color: #dc2626; }
+    .log-info { color: #0284c7; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🧪 Teste de Envio de Email</h1>
+    <p>Use este formulário para testar o envio de emails do sistema Desperto.</p>
+
+    <form id="testForm">
+      <label for="email">Email de Destino:</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="exemplo@email.com"
+        required
+      />
+
+      <label for="name">Nome:</label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        placeholder="João Silva"
+        required
+      />
+
+      <button type="submit" id="sendBtn">
+        📧 Enviar Email de Teste
+      </button>
+    </form>
+
+    <div id="status" class="status"></div>
+
+    <div class="logs" id="logs">
+      <strong>📋 Console de Logs:</strong>
+      <div id="logEntries"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+
+    // Credenciais hardcoded (mesmo do código de produção)
+    const SERVICE_ID = 'service_eqp55ju';
+    const TEMPLATE_ID = 'template_w3awkf1';
+    const PUBLIC_KEY = 'yxdL1IoXHXaC3Q-Cw';
+
+    const logContainer = document.getElementById('logEntries');
+    const statusDiv = document.getElementById('status');
+
+    function addLog(message, type = 'info') {
+      const logEntry = document.createElement('div');
+      logEntry.className = `log-entry log-${type}`;
+      logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logContainer.appendChild(logEntry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function showStatus(message, isSuccess) {
+      statusDiv.textContent = message;
+      statusDiv.className = `status ${isSuccess ? 'success' : 'error'}`;
+      statusDiv.style.display = 'block';
+    }
+
+    // Initialize EmailJS
+    addLog('🔧 Inicializando EmailJS...', 'info');
+    emailjs.init(PUBLIC_KEY);
+    addLog('✅ EmailJS inicializado com sucesso', 'success');
+    addLog(`📋 Service ID: ${SERVICE_ID}`, 'info');
+    addLog(`📋 Template ID: ${TEMPLATE_ID}`, 'info');
+
+    // Handle form submission
+    document.getElementById('testForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const sendBtn = document.getElementById('sendBtn');
+      const email = document.getElementById('email').value;
+      const name = document.getElementById('name').value;
+
+      sendBtn.disabled = true;
+      sendBtn.textContent = '⏳ Enviando...';
+      statusDiv.style.display = 'none';
+
+      addLog('📧 Preparando envio de email...', 'info');
+
+      try {
+        // Prepare data (same format as production code)
+        const bookingDate = new Date();
+        const dateDay = String(bookingDate.getDate()).padStart(2, '0');
+        const dateMonth = String(bookingDate.getMonth() + 1).padStart(2, '0');
+        const dateYear = String(bookingDate.getFullYear());
+        const formattedDate = `${dateDay}/${dateMonth}/${dateYear}`;
+        const formattedTime = bookingDate.toLocaleTimeString('pt-PT', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        const params = {
+          to_email: String(email),
+          to_name: String(name),
+          date: String(formattedDate),
+          time: String(formattedTime),
+          location: String('Google Meet (teste)'),
+          message: String('Este é um email de teste do sistema Desperto')
+        };
+
+        addLog(`📤 Enviando para: ${email}`, 'info');
+        addLog(`👤 Nome: ${name}`, 'info');
+        addLog(`📅 Data: ${formattedDate} às ${formattedTime}`, 'info');
+
+        // Create timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('TIMEOUT')), 4000);
+        });
+
+        // Send email with timeout
+        const sendPromise = emailjs.send(SERVICE_ID, TEMPLATE_ID, params);
+        const result = await Promise.race([sendPromise, timeoutPromise]);
+
+        addLog('✅ EMAIL ENVIADO COM SUCESSO!', 'success');
+        addLog(`📨 Status: ${result.status}`, 'success');
+        addLog(`📨 Text: ${result.text}`, 'success');
+
+        showStatus('✅ Email enviado com sucesso! Verifique a caixa de entrada.', true);
+
+      } catch (error) {
+        addLog(`❌ ERRO: ${error.message}`, 'error');
+
+        if (error.message === 'TIMEOUT') {
+          addLog('⏱️ Timeout - Possível bloqueio por firewall/antivírus', 'error');
+          showStatus('⚠️ Envio bloqueado. Tente desativar antivírus ou usar outro dispositivo.', false);
+        } else {
+          addLog(`📋 Detalhes: ${JSON.stringify(error)}`, 'error');
+          showStatus(`❌ Erro: ${error.message}`, false);
+        }
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = '📧 Enviar Email de Teste';
+      }
+    });
+  </script>
+</body>
+</html>
