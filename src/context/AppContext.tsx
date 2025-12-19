@@ -42,7 +42,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase.from("bookings").select("*").order("booking_date", { ascending: false }),
         supabase.from("user_profiles").select("*"),
         supabase.from("services").select("*"),
-        supabase.from("users").select("*").eq("user_type", "therapist"),
+        supabase.from("users")
+          .select(`
+            *,
+            user_profiles (
+              full_name,
+              bio,
+              avatar_url,
+              specialties
+            )
+          `)
+          .eq("user_type", "therapist"),
         supabase.from("payments").select("*"),
         supabase.from("coupons").select("*"),
       ]);
@@ -50,7 +60,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (bookingsRes.data) setBookings(bookingsRes.data);
       if (clientsRes.data) setClients(clientsRes.data);
       if (servicesRes.data) setServices(servicesRes.data);
-      if (therapistsRes.data) setTherapists(therapistsRes.data);
+
+      if (therapistsRes.data) {
+        const formattedTherapists = therapistsRes.data.map((therapist: any) => {
+          const profile = Array.isArray(therapist.user_profiles)
+            ? therapist.user_profiles[0]
+            : therapist.user_profiles;
+
+          return {
+            id: therapist.id,
+            name: profile?.full_name || therapist.username,
+            email: therapist.email,
+            bio: profile?.bio || '',
+            image: profile?.avatar_url || '/Luis.jpg',
+            specialties: profile?.specialties || [],
+            available: therapist.is_active,
+            isAdmin: therapist.user_type === 'admin',
+            status: therapist.is_active ? 'active' : 'suspended'
+          };
+        });
+        setTherapists(formattedTherapists);
+      }
+
       if (paymentsRes.data) setPayments(paymentsRes.data);
       if (couponsRes.data) setCoupons(couponsRes.data);
     } catch (error) {
