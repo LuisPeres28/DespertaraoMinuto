@@ -52,17 +52,31 @@ export function useSupabaseAuth() {
         };
       }
 
-      if (!data || data.success !== true || !data.user) {
+      let result = data;
+
+      // Se data é uma string, fazer parse
+      if (typeof data === 'string') {
+        try {
+          result = JSON.parse(data);
+        } catch (e) {
+          console.error("Erro ao fazer parse do JSON:", e);
+          return {
+            success: false,
+            error: "Erro ao processar resposta",
+          };
+        }
+      }
+
+      if (!result || result.success !== true || !result.user) {
         return {
           success: false,
-          error: data?.error || "Credenciais incorretas",
+          error: result?.error || "Credenciais incorretas",
         };
       }
 
-      const dbUser = data.user;
+      const dbUser = result.user;
 
       if (!dbUser.id) {
-        console.error("User sem ID:", dbUser);
         return {
           success: false,
           error: "Utilizador inválido",
@@ -73,8 +87,8 @@ export function useSupabaseAuth() {
         id: dbUser.id,
         email: dbUser.email,
         username: dbUser.username,
-        role: dbUser.role,
-        userType: dbUser.user_type || dbUser.role,
+        role: dbUser.user_type,
+        userType: dbUser.user_type,
         fullName: dbUser.full_name || dbUser.username,
       };
 
