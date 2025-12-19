@@ -1,134 +1,75 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import { AuthService } from '../services/authService'
+import { supabase } from "@/lib/supabase";
 
-export interface User {
-  id: string
-  username: string
-  email: string
-  userType: 'client' | 'therapist' | 'admin'
-  fullName: string
-}
+type LoginResponse = {
+  success: boolean;
+  error?: string;
+  user?: {
+    id: string;
+    email: string;
+    username: string;
+    role: string;
+  };
+};
 
-export function useSupabaseAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+export async function loginUser(
+  identifier: string,
+  password: string
+): Promise<LoginResponse> {
+  try {
+    // 1️⃣ Chamar a função RPC no Supabase
+    const { data, error } = await supabase.rpc("authenticate_user", {
+      p_identifier: identifier,
+      p_password: password,
+    });
 
-  useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('desperto_user')
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser)
-        setUser(userData)
-        // Set user context for RLS
-        if (supabase) {
-          supabase.rpc('set_current_user', { user_id_input: userData.id }).then(
-            () => {},
-            (error) => console.error('Error setting user context:', error)
-          )
-        }
-      } catch (error) {
-        console.error('Error parsing saved user:', error)
-        localStorage.removeItem('desperto_user')
-      }
+    if (error) {
+      console.error("Erro RPC:", error);
+      return {
+        success: false,
+        error: "Erro interno do servidor",
+      };
     }
-    setLoading(false)
-  }, [])
 
-  const signIn = async (username: string, password: string) => {
-    try {
-      setLoading(true)
-      
-      console.log('🔐 Tentativa de login:', { username, password })
-      
-      // Use the new AuthService
-      const result = await AuthService.login(username, password)
-      console.log('📡 Resposta do servidor:', result)
-
-      if (result.success) {
-        const userData = result.user
-        console.log('✅ Login bem-sucedido:', userData)
-        setUser(userData)
-        localStorage.setItem('desperto_user', JSON.stringify(userData))
-
-        // Set user context for RLS
-        if (supabase) {
-          try {
-            await supabase.rpc('set_current_user', { user_id_input: userData.id })
-          } catch (error) {
-            console.error('Error setting user context:', error)
-          }
-        }
-
-        return { success: true, user: userData }
-      } else if (result.requiresTwoFactor) {
-        console.log('🔐 2FA requerido')
-        return { success: false, error: result.error, requiresTwoFactor: true }
-      } else if (result.isLocked) {
-        console.log('🔒 Conta bloqueada')
-        return { success: false, error: result.error, isLocked: true, lockoutUntil: result.lockoutUntil }
-      } else {
-        console.log('❌ Login falhado:', result.error)
-        return { success: false, error: result.error || 'Login failed' }
-      }
-    } catch (error: any) {
-      console.error('Login error:', error)
-      console.log('🚨 Erro de rede ou servidor:', error.message)
-      return { success: false, error: error.message || 'Network error' }
-    } finally {
-      setLoading(false)
+    // 2️⃣ Verificação básica da resposta
+    if (!data || data.success !== true || !data.user) {
+      return {
+        success: false,
+        error: data?.error || "Credenciais incorretas",
+      };
     }
-  }
 
-  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
-    try {
-      setLoading(true)
+    // 3️⃣ EXTRAIR O USER CORRETAMENTE (AQUI ESTAVA O ERRO)
+    const user = data.user;
 
-      console.log('📝 Tentativa de registo:', { email, fullName })
-
-      // Use AuthService to register user
-      const result = await AuthService.signUp(email, password, fullName, phone)
-      console.log('📡 Resposta do servidor:', result)
-
-      if (result.success) {
-        const userData = result.user
-        console.log('✅ Registo bem-sucedido:', userData)
-        setUser(userData)
-        localStorage.setItem('desperto_user', JSON.stringify(userData))
-
-        // Set user context for RLS
-        if (supabase) {
-          try {
-            await supabase.rpc('set_current_user', { user_id_input: userData.id })
-          } catch (error) {
-            console.error('Error setting user context:', error)
-          }
-        }
-
-        return { success: true, user: userData }
-      } else {
-        return { success: false, error: result.error || 'Registration failed' }
-      }
-    } catch (error: any) {
-      console.error('Registration error:', error)
-      return { success: false, error: error.message || 'Network error' }
-    } finally {
-      setLoading(false)
+    if (!user.id) {
+      console.error("User sem ID:", user);
+      return {
+        success: false,
+        error: "Utilizador inválido",
+      };
     }
-  }
 
-  const signOut = async () => {
-    setUser(null)
-    localStorage.removeItem('desperto_user')
-  }
+    // 4️⃣ Guardar sessão/localStorage (ajusta se usares outro método)
+    localStorage.setItem(
+      "desperto_user",
+      JSON.stringify({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      })
+    );
 
-  return {
-    user,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    isAuthenticated: !!user
+    // 5️⃣ Retorno final
+    return {
+      success: true,
+      user,
+    };
+  } catch (err) {
+    console.error("Erro inesperado no login:", err);
+    return {
+      success: false,
+      error: "Erro inesperado",
+    };
   }
 }
