@@ -90,16 +90,16 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
         {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-[#8B7355] to-[#7A6349] text-white">
+        <div className="p-6 bg-[#6B6538] text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5" />
+                <LogIn className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Área do Cliente</h2>
-                <p className="text-[#F4E5B7] text-sm">
-                  {showPasswordRecovery ? 'Recuperar Password' : isLogin ? 'Entre na sua conta' : 'Crie a sua conta'}
+                <h2 className="text-xl font-bold">{showPasswordRecovery ? 'Recuperar Password' : isLogin ? 'Entrar' : 'Criar Conta'}</h2>
+                <p className="text-white/80 text-sm">
+                  {showPasswordRecovery ? 'Recupere a sua password' : isLogin ? 'Aceda à sua conta Desperto' : 'Crie a sua conta Desperto'}
                 </p>
               </div>
             </div>
@@ -134,76 +134,66 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
             </div>
           ) : (
             <>
-              {/* Toggle Login/Register */}
-              <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
-                <button
-                  onClick={() => setIsLogin(true)}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    isLogin
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Entrar
-                </button>
-                <button
-                  onClick={() => setIsLogin(false)}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    !isLogin
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Registar
-                </button>
-              </div>
-
-              {/* Registration Info */}
-              {!isLogin && (
-                <div className="mb-6 p-4 bg-[#F5F1E8] border border-[#E5D5B7] rounded-lg">
-                  <h4 className="font-medium text-[#8B7355] mb-2">📝 Criar Nova Conta de Cliente</h4>
-                  <p className="text-sm text-[#7A6349] mb-3">
-                    Preencha todos os campos para criar a sua conta gratuita na Desperto.
-                  </p>
-                  <div className="bg-white border border-[#E5D5B7] rounded-lg p-3 mb-3">
-                    <h5 className="font-medium text-[#8B7355] mb-2">✨ Benefícios da sua conta:</h5>
-                    <ul className="text-sm text-[#7A6349] space-y-1">
-                      <li>✅ Agendamento rápido e fácil</li>
-                      <li>✅ Histórico completo de consultas</li>
-                      <li>✅ Reagendamento online</li>
-                      <li>✅ Lembretes automáticos por email</li>
-                      <li>✅ Dados preenchidos automaticamente</li>
-                    </ul>
-                  </div>
-                  <div className="text-xs text-[#8B7355]">
-                    <p>💡 <strong>Dica:</strong> Use um email válido para receber confirmações de agendamento</p>
-                  </div>
-                </div>
-              )}
-
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Username/Email Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {isLogin ? 'Email ou Username' : 'Username'}
-                  </label>
-                  <div className="relative">
-                    <User className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
-                    <input
-                      type="text"
-                      value={formData.username}
-                      onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
-                      placeholder={isLogin ? "seu@email.com ou username" : "username"}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Registration Fields */}
-                {!isLogin && (
+                {isLogin ? (
                   <>
+                    {/* Login Form - Simple */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email *
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                        <input
+                          type="text"
+                          value={formData.username}
+                          onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B6538] focus:border-transparent"
+                          placeholder="seu@email.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Password *
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={formData.password}
+                          onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                          className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B6538] focus:border-transparent"
+                          placeholder="Sua password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Forgot Password Link */}
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordRecovery(true)}
+                        className="text-[#6B6538] hover:text-[#5A5530] text-sm font-medium"
+                      >
+                        Esqueceu a password?
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Registration Form - Full */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Nome Completo *
@@ -214,7 +204,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                           type="text"
                           value={formData.fullName}
                           onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B6538] focus:border-transparent"
                           placeholder="O seu nome completo"
                           required
                         />
@@ -231,8 +221,25 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B6538] focus:border-transparent"
                           placeholder="seu@email.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Username *
+                      </label>
+                      <div className="relative">
+                        <User className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                        <input
+                          type="text"
+                          value={formData.username}
+                          onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B6538] focus:border-transparent"
+                          placeholder="username"
                           required
                         />
                       </div>
@@ -248,38 +255,37 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                           type="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B6538] focus:border-transparent"
                           placeholder="+351 xxx xxx xxx"
                         />
                       </div>
                     </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Password *
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={formData.password}
+                          onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                          className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B6538] focus:border-transparent"
+                          placeholder="Sua password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
                   </>
                 )}
-
-                {/* Password Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
-                      placeholder="123456"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
 
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -290,41 +296,39 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-[#8B7355] text-white rounded-lg font-semibold hover:bg-[#7A6349] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+                  className="w-full px-4 py-3 bg-[#6B6538] text-white rounded-lg font-semibold hover:bg-[#5A5530] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <>
-                      {isLogin ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
-                      <span>{isLogin ? 'Entrar' : 'Registar'}</span>
-                    </>
+                    <span>{isLogin ? 'Entrar' : 'Criar Conta'}</span>
                   )}
                 </button>
               </form>
 
-              {/* Password Recovery - Always Visible */}
-              <div className="mt-4 text-center">
-                <button
-                  onClick={() => setShowPasswordRecovery(true)}
-                  className="text-[#8B7355] hover:text-[#7A6349] text-sm font-medium"
-                >
-                  Esqueci a minha password
-                </button>
-              </div>
-
-              {/* Test Credentials */}
-              <div className="mt-6 p-4 bg-[#F5F1E8] border border-[#E5D5B7] rounded-lg">
-                <div className="flex items-center space-x-2 mb-2">
-                  <UserPlus className="w-4 h-4 text-[#8B7355]" />
-                  <h4 className="font-medium text-[#8B7355]">Novo Cliente?</h4>
-                </div>
-                <div className="text-sm text-[#7A6349]">
-                  <p>Clique em "Registar" acima para criar a sua conta gratuita.</p>
-                  <p className="text-xs text-[#8B7355] mt-1">
-                    ✅ Registo rápido e seguro • ✅ Dados protegidos • ✅ Acesso imediato
+              {/* Toggle to Registration/Login */}
+              <div className="mt-6 text-center text-sm text-gray-600">
+                {isLogin ? (
+                  <p>
+                    Não tem conta?{' '}
+                    <button
+                      onClick={() => setIsLogin(false)}
+                      className="text-[#6B6538] hover:text-[#5A5530] font-semibold"
+                    >
+                      Criar Conta
+                    </button>
                   </p>
-                </div>
+                ) : (
+                  <p>
+                    Já tem conta?{' '}
+                    <button
+                      onClick={() => setIsLogin(true)}
+                      className="text-[#6B6538] hover:text-[#5A5530] font-semibold"
+                    >
+                      Entrar
+                    </button>
+                  </p>
+                )}
               </div>
             </>
           )}
