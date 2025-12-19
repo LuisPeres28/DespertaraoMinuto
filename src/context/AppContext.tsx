@@ -102,3 +102,5 @@ export function useAppContext() {
   }
   return context;
 }
+
+export const useApp = useAppContext;
