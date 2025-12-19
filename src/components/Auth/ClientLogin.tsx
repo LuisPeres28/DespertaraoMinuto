@@ -90,7 +90,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
         {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-green-500 to-green-600 text-white">
+        <div className="p-6 bg-gradient-to-r from-[#8B7355] to-[#7A6349] text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -98,7 +98,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
               </div>
               <div>
                 <h2 className="text-xl font-bold">Área do Cliente</h2>
-                <p className="text-green-100 text-sm">
+                <p className="text-[#F4E5B7] text-sm">
                   {showPasswordRecovery ? 'Recuperar Password' : isLogin ? 'Entre na sua conta' : 'Crie a sua conta'}
                 </p>
               </div>
@@ -160,14 +160,14 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
 
               {/* Registration Info */}
               {!isLogin && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-medium text-green-900 mb-2">📝 Criar Nova Conta de Cliente</h4>
-                  <p className="text-sm text-green-800 mb-3">
+                <div className="mb-6 p-4 bg-[#F5F1E8] border border-[#E5D5B7] rounded-lg">
+                  <h4 className="font-medium text-[#8B7355] mb-2">📝 Criar Nova Conta de Cliente</h4>
+                  <p className="text-sm text-[#7A6349] mb-3">
                     Preencha todos os campos para criar a sua conta gratuita na Desperto.
                   </p>
-                  <div className="bg-white border border-green-200 rounded-lg p-3 mb-3">
-                    <h5 className="font-medium text-green-900 mb-2">✨ Benefícios da sua conta:</h5>
-                    <ul className="text-sm text-green-700 space-y-1">
+                  <div className="bg-white border border-[#E5D5B7] rounded-lg p-3 mb-3">
+                    <h5 className="font-medium text-[#8B7355] mb-2">✨ Benefícios da sua conta:</h5>
+                    <ul className="text-sm text-[#7A6349] space-y-1">
                       <li>✅ Agendamento rápido e fácil</li>
                       <li>✅ Histórico completo de consultas</li>
                       <li>✅ Reagendamento online</li>
@@ -175,7 +175,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                       <li>✅ Dados preenchidos automaticamente</li>
                     </ul>
                   </div>
-                  <div className="text-xs text-green-600">
+                  <div className="text-xs text-[#8B7355]">
                     <p>💡 <strong>Dica:</strong> Use um email válido para receber confirmações de agendamento</p>
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                       type="text"
                       value={formData.username}
                       onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
                       placeholder={isLogin ? "seu@email.com ou username" : "username"}
                       required
                     />
@@ -214,7 +214,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                           type="text"
                           value={formData.fullName}
                           onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
                           placeholder="O seu nome completo"
                           required
                         />
@@ -231,7 +231,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
                           placeholder="seu@email.com"
                           required
                         />
@@ -248,7 +248,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                           type="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
                           placeholder="+351 xxx xxx xxx"
                         />
                       </div>
@@ -267,7 +267,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
                       placeholder="123456"
                       required
                     />
@@ -290,7 +290,7 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+                  className="w-full px-4 py-3 bg-[#8B7355] text-white rounded-lg font-semibold hover:bg-[#7A6349] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -307,21 +307,21 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
               <div className="mt-4 text-center">
                 <button
                   onClick={() => setShowPasswordRecovery(true)}
-                  className="text-green-600 hover:text-green-800 text-sm font-medium"
+                  className="text-[#8B7355] hover:text-[#7A6349] text-sm font-medium"
                 >
                   Esqueci a minha password
                 </button>
               </div>
 
               {/* Test Credentials */}
-              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="mt-6 p-4 bg-[#F5F1E8] border border-[#E5D5B7] rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
-                  <UserPlus className="w-4 h-4 text-green-600" />
-                  <h4 className="font-medium text-green-900">Novo Cliente?</h4>
+                  <UserPlus className="w-4 h-4 text-[#8B7355]" />
+                  <h4 className="font-medium text-[#8B7355]">Novo Cliente?</h4>
                 </div>
-                <div className="text-sm text-green-800">
+                <div className="text-sm text-[#7A6349]">
                   <p>Clique em "Registar" acima para criar a sua conta gratuita.</p>
-                  <p className="text-xs text-green-600 mt-1">
+                  <p className="text-xs text-[#8B7355] mt-1">
                     ✅ Registo rápido e seguro • ✅ Dados protegidos • ✅ Acesso imediato
                   </p>
                 </div>
