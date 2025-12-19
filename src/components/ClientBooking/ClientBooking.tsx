@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, User, Mail, Phone, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, User, Mail, Phone, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AvailabilityService, TimeSlot } from '../../services/availabilityService';
 import { EmailService } from '../../services/emailService';
@@ -252,7 +252,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
 
   return (
     <div className="min-h-screen bg-[#F5F1E8]">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -274,7 +273,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-4">
             {[1, 2, 3, 4, 5, 6].map((stepNum) => (
@@ -308,9 +306,7 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
           </div>
         </div>
 
-        {/* Content Card */}
         <div className="bg-white rounded-2xl shadow-sm p-8">
-          {/* Step 1: Therapist Selection */}
           {step === 1 && (
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
@@ -364,7 +360,11 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                 <button
                   onClick={() => selectedTherapist && setStep(2)}
                   disabled={!selectedTherapist}
-                  className="px-12 py-3 bg-gray-300 text-gray-500 rounded-lg font-medium disabled:cursor-not-allowed transition-colors"
+                  className={`px-12 py-3 rounded-lg font-medium transition-colors ${
+                    selectedTherapist
+                      ? 'bg-[#8B7355] text-white hover:bg-[#7A6349]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   Continuar
                 </button>
@@ -372,7 +372,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
             </div>
           )}
 
-          {/* Step 2: Service Selection */}
           {step === 2 && (
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
@@ -418,7 +417,11 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                 <button
                   onClick={() => selectedService && setStep(3)}
                   disabled={!selectedService}
-                  className="px-12 py-3 bg-[#8B7355] text-white rounded-lg font-medium hover:bg-[#7A6349] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className={`px-12 py-3 rounded-lg font-medium transition-colors ${
+                    selectedService
+                      ? 'bg-[#8B7355] text-white hover:bg-[#7A6349]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   Continuar
                 </button>
@@ -426,7 +429,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
             </div>
           )}
 
-          {/* Step 3: Date and Time */}
           {step === 3 && (
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
@@ -551,7 +553,11 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                 <button
                   onClick={() => selectedDate && selectedTime && setStep(4)}
                   disabled={!selectedDate || !selectedTime}
-                  className="px-12 py-3 bg-[#8B7355] text-white rounded-lg font-medium hover:bg-[#7A6349] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className={`px-12 py-3 rounded-lg font-medium transition-colors ${
+                    selectedDate && selectedTime
+                      ? 'bg-[#8B7355] text-white hover:bg-[#7A6349]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   Continuar
                 </button>
@@ -559,7 +565,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
             </div>
           )}
 
-          {/* Step 4: Client Information */}
           {step === 4 && (
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
@@ -645,7 +650,11 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                 <button
                   onClick={() => setStep(5)}
                   disabled={!clientInfo.name || !clientInfo.email || !clientInfo.phone}
-                  className="px-12 py-3 bg-[#8B7355] text-white rounded-lg font-medium hover:bg-[#7A6349] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className={`px-12 py-3 rounded-lg font-medium transition-colors ${
+                    clientInfo.name && clientInfo.email && clientInfo.phone
+                      ? 'bg-[#8B7355] text-white hover:bg-[#7A6349]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   Continuar
                 </button>
@@ -653,7 +662,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
             </div>
           )}
 
-          {/* Step 5: Payment */}
           {step === 5 && selectedServiceDetails && (
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
@@ -684,7 +692,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
             </div>
           )}
 
-          {/* Step 6: Success */}
           {step === 6 && (
             <div className="text-center">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
