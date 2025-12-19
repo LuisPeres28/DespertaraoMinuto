@@ -5,89 +5,80 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { useSupabaseAuth, AuthUser } from "@/hooks/useSupabaseAuth";
+import { supabase } from "@/lib/supabase";
 
 type AppContextType = {
-  user: AuthUser | null;
-  isAuthenticated: boolean;
-  loadingAuth: boolean;
-  signIn: (identifier: string, password: string) => Promise<{
-    success: boolean;
-    error?: string;
-  }>;
-  signOut: () => void;
+  bookings: any[];
+  clients: any[];
+  services: any[];
+  therapists: any[];
+  payments: any[];
+  coupons: any[];
+  setBookings: (bookings: any[]) => void;
+  setClients: (clients: any[]) => void;
+  setServices: (services: any[]) => void;
+  setTherapists: (therapists: any[]) => void;
+  setPayments: (payments: any[]) => void;
+  setCoupons: (coupons: any[]) => void;
+  refreshData: () => Promise<void>;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { signIn: supabaseSignIn } = useSupabaseAuth();
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [therapists, setTherapists] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
 
-  const [user, setUser] = useLocalStorage<AuthUser | null>("auth_user", null);
-  const [loadingAuth, setLoadingAuth] = useState(false);
-
-  const isAuthenticated = !!user;
-
-  const signIn = async (identifier: string, password: string) => {
-    setLoadingAuth(true);
-
+  const loadData = async () => {
     try {
-      const result = await supabaseSignIn(identifier, password);
+      const [bookingsRes, clientsRes, servicesRes, therapistsRes, paymentsRes, couponsRes] = await Promise.all([
+        supabase.from("bookings").select("*").order("booking_date", { ascending: false }),
+        supabase.from("user_profiles").select("*"),
+        supabase.from("services").select("*"),
+        supabase.from("users").select("*").eq("user_type", "therapist"),
+        supabase.from("payments").select("*"),
+        supabase.from("coupons").select("*"),
+      ]);
 
-      if (!result.success || !result.user) {
-        setUser(null);
-        return {
-          success: false,
-          error: result.error || "Erro ao autenticar",
-        };
-      }
-
-      // 🔑 AQUI ESTAVA O ERRO ANTIGO (user_id)
-      // O RPC devolve `id`
-      const authenticatedUser: AuthUser = {
-        id: result.user.id,
-        email: result.user.email,
-        username: result.user.username,
-        role: result.user.role,
-      };
-
-      setUser(authenticatedUser);
-
-      return { success: true };
-    } catch (err) {
-      console.error("Erro inesperado no signIn:", err);
-      setUser(null);
-      return {
-        success: false,
-        error: "Erro inesperado",
-      };
-    } finally {
-      setLoadingAuth(false);
+      if (bookingsRes.data) setBookings(bookingsRes.data);
+      if (clientsRes.data) setClients(clientsRes.data);
+      if (servicesRes.data) setServices(servicesRes.data);
+      if (therapistsRes.data) setTherapists(therapistsRes.data);
+      if (paymentsRes.data) setPayments(paymentsRes.data);
+      if (couponsRes.data) setCoupons(couponsRes.data);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
     }
   };
 
-  const signOut = () => {
-    setUser(null);
+  const refreshData = async () => {
+    await loadData();
   };
 
   useEffect(() => {
-    // apenas para garantir consistência no arranque
-    if (!user) return;
-    if (!user.id) {
-      console.warn("User inválido no storage, a limpar sessão");
-      setUser(null);
-    }
+    loadData();
   }, []);
 
   return (
     <AppContext.Provider
       value={{
-        user,
-        isAuthenticated,
-        loadingAuth,
-        signIn,
-        signOut,
+        bookings,
+        clients,
+        services,
+        therapists,
+        payments,
+        coupons,
+        setBookings,
+        setClients,
+        setServices,
+        setTherapists,
+        setPayments,
+        setCoupons,
+        refreshData,
       }}
     >
       {children}
