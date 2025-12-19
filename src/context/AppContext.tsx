@@ -14,12 +14,14 @@ type AppContextType = {
   therapists: any[];
   payments: any[];
   coupons: any[];
+  therapistInvitations: any[];
   setBookings: (bookings: any[]) => void;
   setClients: (clients: any[]) => void;
   setServices: (services: any[]) => void;
   setTherapists: (therapists: any[]) => void;
   setPayments: (payments: any[]) => void;
   setCoupons: (coupons: any[]) => void;
+  setTherapistInvitations: (invitations: any[]) => void;
   refreshData: () => Promise<void>;
 };
 
@@ -32,6 +34,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [therapists, setTherapists] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
+  const [therapistInvitations, setTherapistInvitations] = useState<any[]>([]);
 
   const loadData = async () => {
     try {
@@ -72,12 +75,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         therapists,
         payments,
         coupons,
+        therapistInvitations,
         setBookings,
         setClients,
         setServices,
         setTherapists,
         setPayments,
         setCoupons,
+        setTherapistInvitations,
         refreshData,
       }}
     >
