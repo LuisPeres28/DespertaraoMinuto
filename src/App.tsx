@@ -259,22 +259,9 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
         
         {/* Layout for clients and unauthenticated users */}
         {!isStaffUser && !isClientUser && (
-          <>
-            <Header
-              activeTab={activeTab}
-              user={user}
-              onStaffLogin={handleAdminLoginRequest}
-              onLogout={handleLogout}
-              isStaffUser={isStaffUser}
-              authenticatedClient={authenticatedClient}
-              onClientLogin={() => setShowAdminLoginModal(true)}
-              onClientLogout={handleClientLogout}
-              onShowHistory={() => setShowClientHistory(true)}
-            />
-            <main className="p-6">
-              {renderContent()}
-            </main>
-          </>
+          <main>
+            {renderContent()}
+          </main>
         )}
 
         {/* Layout for logged in clients - no header, full dashboard */}
