@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste EmailJS - Desperto</title>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .config {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        #log {
+            background: #222;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de EmailJS - Desperto</h1>
+
+        <div class="config">
+            <strong>📋 Configuração Atual:</strong><br>
+            Service ID: service_eqp55ju<br>
+            Template ID: template_w3awkf1<br>
+            Public Key: yxdL1IoXHXaC3Q-Cw
+        </div>
+
+        <div class="input-group">
+            <label for="testEmail">Email de Teste:</label>
+            <input type="email" id="testEmail" placeholder="seu@email.com" value="euestoudesperto@gmail.com">
+        </div>
+
+        <div class="input-group">
+            <label for="testName">Nome de Teste:</label>
+            <input type="text" id="testName" placeholder="Seu Nome" value="Teste Desperto">
+        </div>
+
+        <button onclick="testEmailJS()" id="testBtn">🚀 Testar Envio</button>
+        <button onclick="checkQuota()">📊 Verificar Quota</button>
+        <button onclick="clearLog()">🗑️ Limpar Log</button>
+
+        <div id="status"></div>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const SERVICE_ID = 'service_eqp55ju';
+        const TEMPLATE_ID = 'template_w3awkf1';
+        const PUBLIC_KEY = 'yxdL1IoXHXaC3Q-Cw';
+
+        // Initialize EmailJS
+        emailjs.init(PUBLIC_KEY);
+        log('✅ EmailJS inicializado com sucesso');
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString('pt-PT');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('status').innerHTML = '';
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function testEmailJS() {
+            const testBtn = document.getElementById('testBtn');
+            const email = document.getElementById('testEmail').value;
+            const name = document.getElementById('testName').value;
+
+            if (!email) {
+                showStatus('❌ Por favor, insira um email válido', 'error');
+                return;
+            }
+
+            testBtn.disabled = true;
+            showStatus('⏳ Enviando email de teste...', 'info');
+            log('🚀 Iniciando teste de envio...');
+            log(`📧 Para: ${email}`);
+            log(`👤 Nome: ${name}`);
+
+            try {
+                const today = new Date();
+                const dateStr = today.toLocaleDateString('pt-PT');
+                const timeStr = today.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                const templateParams = {
+                    to_email: email,
+                    to_name: name,
+                    date: dateStr,
+                    time: timeStr,
+                    location: 'Desperto - Coaching ao Minuto',
+                    message: 'Este é um email de teste para verificar a configuração do EmailJS.'
+                };
+
+                log('📋 Parâmetros preparados');
+                log('⏱️ Enviando... (timeout em 10s)');
+
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('TIMEOUT')), 10000);
+                });
+
+                const sendPromise = emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
+
+                const result = await Promise.race([sendPromise, timeoutPromise]);
+
+                log('✅ Email enviado com sucesso!');
+                log(`📊 Status: ${result.status}`);
+                log(`📝 Text: ${result.text}`);
+                showStatus('✅ SUCESSO! Email enviado. Verifique a caixa de entrada.', 'success');
+
+            } catch (error) {
+                log(`❌ ERRO: ${error.message}`, 'error');
+
+                if (error.message === 'TIMEOUT') {
+                    showStatus('⏱️ TIMEOUT: O envio demorou mais de 10 segundos. Pode estar bloqueado.', 'warning');
+                    log('💡 Possível causa: Firewall/Antivírus bloqueando');
+                } else if (error.status === 403) {
+                    showStatus('🚫 ERRO 403: Acesso negado. Verifique a Public Key.', 'error');
+                    log('💡 Solução: Regenerar Public Key no EmailJS Dashboard');
+                } else if (error.status === 400) {
+                    showStatus('⚠️ ERRO 400: Template ou parâmetros inválidos.', 'error');
+                    log('💡 Solução: Verificar template no EmailJS Dashboard');
+                } else if (error.status === 402) {
+                    showStatus('💳 ERRO 402: Quota excedida! Upgrade necessário.', 'error');
+                    log('💡 Solução: Fazer upgrade do plano EmailJS');
+                } else {
+                    showStatus(`❌ ERRO: ${error.message}`, 'error');
+                    log(`📊 Status: ${error.status || 'N/A'}`);
+                    log(`📝 Text: ${error.text || 'N/A'}`);
+                }
+
+                console.error('Error completo:', error);
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        function checkQuota() {
+            showStatus('ℹ️ Para verificar a quota, aceda ao painel EmailJS: https://dashboard.emailjs.com/admin', 'info');
+            log('📊 Informação sobre quota:');
+            log('- Plano Free: 200 emails/mês');
+            log('- Plano Basic: 1,000 emails/mês ($9.50/mês)');
+            log('- Plano Pro: 5,000 emails/mês ($24.50/mês)');
+            log('🔗 Dashboard: https://dashboard.emailjs.com/admin');
+            window.open('https://dashboard.emailjs.com/admin', '_blank');
+        }
+
+        // Test on load
+        log('🔧 Sistema pronto para teste');
+        log('📧 Service ID: ' + SERVICE_ID);
+        log('📄 Template ID: ' + TEMPLATE_ID);
+        log('🔑 Public Key: ' + PUBLIC_KEY.substring(0, 10) + '...');
+        showStatus('ℹ️ Insira um email e clique em "Testar Envio"', 'info');
+    </script>
+</body>
+</html>
