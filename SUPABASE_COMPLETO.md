@@ -22,13 +22,13 @@
 
 ### URL do Projeto
 ```
-https://dnswlrvleqvsueawxzfy.supabase.co
+https://scztvsxakexamtsmsrou.supabase.co
 ```
 
 ### Chaves de API
 **Anon Key (Pública):**
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuc3dscnZsZXF2c3VlYXd4emZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODEyMjIsImV4cCI6MjA3NDk1NzIyMn0.bsg6sfD9d2CT5EiiGWOKtl1FeaeN1DnDYiUtLeqkOmQ
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjenR2c3hha2V4YW10c21zcm91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MDU4MjAsImV4cCI6MjA3MzE4MTgyMH0.gCyw20IRy1aPculhxndz9lBFpoZJbg1yiQ8gV2qNQpk
 ```
 
 ### Configuração EmailJS
