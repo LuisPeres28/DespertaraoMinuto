@@ -41,11 +41,10 @@ export class AuthService {
       console.log('📊 Resultado authenticate_user:', {
         authResult,
         authError: authError?.message,
-        hasResult: !!authResult,
-        resultLength: authResult?.length
+        success: authResult?.success
       });
 
-      if (authError || !authResult || authResult.length === 0) {
+      if (authError || !authResult || !authResult.success) {
         // Tentar encontrar o user para incrementar failed attempts
         const { data: users } = await supabase
           .from('users')
@@ -61,10 +60,10 @@ export class AuthService {
           };
         }
 
-        return { success: false, error: 'Credenciais incorretas' };
+        return { success: false, error: authResult?.error || 'Credenciais incorretas' };
       }
 
-      const authenticatedUser = authResult[0];
+      const authenticatedUser = authResult.user;
 
       // Verificar tipo de utilizador se especificado
       if (userType && authenticatedUser.user_type !== userType) {
@@ -78,7 +77,7 @@ export class AuthService {
 
       // Set user context for RLS before making queries
       try {
-        await supabase.rpc('set_current_user', { user_id_input: authenticatedUser.user_id });
+        await supabase.rpc('set_current_user', { user_id_input: authenticatedUser.id });
       } catch (error) {
         console.error('Error setting user context:', error);
       }
@@ -87,7 +86,7 @@ export class AuthService {
       const { data: twoFactor } = await supabase
         .from('two_factor_auth_settings')
         .select('*')
-        .eq('user_id', authenticatedUser.user_id)
+        .eq('user_id', authenticatedUser.id)
         .eq('enabled', true)
         .limit(1);
 
@@ -101,12 +100,12 @@ export class AuthService {
       }
 
       // Login bem-sucedido
-      await this.handleSuccessfulLogin(authenticatedUser.user_id);
+      await this.handleSuccessfulLogin(authenticatedUser.id);
 
       return {
         success: true,
         user: {
-          id: authenticatedUser.user_id,
+          id: authenticatedUser.id,
           username: authenticatedUser.username,
           email: authenticatedUser.email,
           userType: authenticatedUser.user_type,
