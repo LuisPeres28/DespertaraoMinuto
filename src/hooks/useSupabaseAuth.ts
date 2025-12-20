@@ -1,176 +1,127 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { AuthService } from '../services/authService'
 
-export type AuthUser = {
-  id: string;
-  email: string;
-  username: string;
-  role: string;
-  userType?: string;
-  fullName?: string;
-};
-
-export type AuthResponse = {
-  success: boolean;
-  error?: string;
-  user?: AuthUser;
-};
+export interface User {
+  id: string
+  username: string
+  email: string
+  userType: 'client' | 'therapist' | 'admin'
+  fullName: string
+}
 
 export function useSupabaseAuth() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("desperto_user");
+    // Check for existing session
+    const savedUser = localStorage.getItem('desperto_user')
     if (savedUser) {
       try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-      } catch (error) {
-        console.error("Erro ao carregar utilizador:", error);
-        localStorage.removeItem("desperto_user");
-      }
-    }
-    setLoading(false);
-  }, []);
-
-  const signIn = async (
-    identifier: string,
-    password: string
-  ): Promise<AuthResponse> => {
-    try {
-      const { data, error } = await supabase.rpc("authenticate_user", {
-        p_identifier: identifier,
-        p_password: password,
-      });
-
-      if (error) {
-        console.error("Erro RPC:", error);
-        return {
-          success: false,
-          error: "Erro interno do servidor",
-        };
-      }
-
-      let result = data;
-
-      // Se data é uma string, fazer parse
-      if (typeof data === 'string') {
-        try {
-          result = JSON.parse(data);
-        } catch (e) {
-          console.error("Erro ao fazer parse do JSON:", e);
-          return {
-            success: false,
-            error: "Erro ao processar resposta",
-          };
+        const userData = JSON.parse(savedUser)
+        setUser(userData)
+        // Set user context for RLS
+        if (supabase) {
+          supabase.rpc('set_current_user', { user_id_input: userData.id }).then(
+            () => {},
+            (error) => console.error('Error setting user context:', error)
+          )
         }
+      } catch (error) {
+        console.error('Error parsing saved user:', error)
+        localStorage.removeItem('desperto_user')
       }
-
-      if (!result || result.success !== true || !result.user) {
-        return {
-          success: false,
-          error: result?.error || "Credenciais incorretas",
-        };
-      }
-
-      const dbUser = result.user;
-
-      if (!dbUser.id) {
-        return {
-          success: false,
-          error: "Utilizador inválido",
-        };
-      }
-
-      const authenticatedUser: AuthUser = {
-        id: dbUser.id,
-        email: dbUser.email,
-        username: dbUser.username,
-        role: dbUser.user_type,
-        userType: dbUser.user_type,
-        fullName: dbUser.full_name || dbUser.username,
-      };
-
-      localStorage.setItem("desperto_user", JSON.stringify(authenticatedUser));
-      setUser(authenticatedUser);
-
-      return {
-        success: true,
-        user: authenticatedUser,
-      };
-    } catch (err) {
-      console.error("Erro inesperado no login:", err);
-      return {
-        success: false,
-        error: "Erro inesperado",
-      };
     }
-  };
+    setLoading(false)
+  }, [])
 
-  const signUp = async (
-    username: string,
-    email: string,
-    password: string,
-    fullName: string,
-    phone?: string
-  ): Promise<AuthResponse> => {
+  const signIn = async (username: string, password: string) => {
     try {
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .insert({
-          username,
-          email,
-          password_hash: password,
-          user_type: "client",
-          phone_number: phone,
-        })
-        .select()
-        .single();
+      setLoading(true)
+      
+      console.log('🔐 Tentativa de login:', { username, password })
+      
+      // Use the new AuthService
+      const result = await AuthService.login(username, password)
+      console.log('📡 Resposta do servidor:', result)
 
-      if (userError) {
-        console.error("Registration error:", userError);
-        return {
-          success: false,
-          error: "Erro ao criar conta. Username ou email já existem.",
-        };
+      if (result.success) {
+        const userData = result.user
+        console.log('✅ Login bem-sucedido:', userData)
+        setUser(userData)
+        localStorage.setItem('desperto_user', JSON.stringify(userData))
+
+        // Set user context for RLS
+        if (supabase) {
+          try {
+            await supabase.rpc('set_current_user', { user_id_input: userData.id })
+          } catch (error) {
+            console.error('Error setting user context:', error)
+          }
+        }
+
+        return { success: true, user: userData }
+      } else if (result.requiresTwoFactor) {
+        console.log('🔐 2FA requerido')
+        return { success: false, error: result.error, requiresTwoFactor: true }
+      } else if (result.isLocked) {
+        console.log('🔒 Conta bloqueada')
+        return { success: false, error: result.error, isLocked: true, lockoutUntil: result.lockoutUntil }
+      } else {
+        console.log('❌ Login falhado:', result.error)
+        return { success: false, error: result.error || 'Login failed' }
       }
-
-      await supabase.from("user_profiles").insert({
-        user_id: userData.id,
-        full_name: fullName,
-        phone: phone,
-      });
-
-      const authenticatedUser: AuthUser = {
-        id: userData.id,
-        email: userData.email,
-        username: userData.username,
-        role: userData.user_type,
-        userType: userData.user_type,
-        fullName,
-      };
-
-      localStorage.setItem("desperto_user", JSON.stringify(authenticatedUser));
-      setUser(authenticatedUser);
-
-      return {
-        success: true,
-        user: authenticatedUser,
-      };
-    } catch (err) {
-      console.error("Erro inesperado no registo:", err);
-      return {
-        success: false,
-        error: "Erro inesperado",
-      };
+    } catch (error: any) {
+      console.error('Login error:', error)
+      console.log('🚨 Erro de rede ou servidor:', error.message)
+      return { success: false, error: error.message || 'Network error' }
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  const signOut = () => {
-    localStorage.removeItem("desperto_user");
-    setUser(null);
-  };
+  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
+    try {
+      setLoading(true)
+
+      console.log('📝 Tentativa de registo:', { email, fullName })
+
+      // Use AuthService to register user
+      const result = await AuthService.signUp(email, password, fullName, phone)
+      console.log('📡 Resposta do servidor:', result)
+
+      if (result.success) {
+        const userData = result.user
+        console.log('✅ Registo bem-sucedido:', userData)
+        setUser(userData)
+        localStorage.setItem('desperto_user', JSON.stringify(userData))
+
+        // Set user context for RLS
+        if (supabase) {
+          try {
+            await supabase.rpc('set_current_user', { user_id_input: userData.id })
+          } catch (error) {
+            console.error('Error setting user context:', error)
+          }
+        }
+
+        return { success: true, user: userData }
+      } else {
+        return { success: false, error: result.error || 'Registration failed' }
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error)
+      return { success: false, error: error.message || 'Network error' }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const signOut = async () => {
+    setUser(null)
+    localStorage.removeItem('desperto_user')
+  }
 
   return {
     user,
@@ -178,5 +129,6 @@ export function useSupabaseAuth() {
     signIn,
     signUp,
     signOut,
-  };
+    isAuthenticated: !!user
+  }
 }

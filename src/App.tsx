@@ -67,8 +67,9 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
   };
 
   const handleRegister = async (email: string, password: string, fullName: string, phone?: string) => {
-    const result = await signUp(email, email, password, fullName, phone);
+    const result = await signUp(email, password, fullName, phone);
     if (result.success) {
+      // Novos utilizadores são sempre clientes
       setActiveTab('client-booking');
       setShowAdminLoginModal(false);
     }
@@ -259,9 +260,22 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
         
         {/* Layout for clients and unauthenticated users */}
         {!isStaffUser && !isClientUser && (
-          <main>
-            {renderContent()}
-          </main>
+          <>
+            <Header 
+              activeTab={activeTab}
+              user={user}
+              onStaffLogin={handleAdminLoginRequest}
+              onLogout={handleLogout}
+              isStaffUser={isStaffUser}
+              authenticatedClient={authenticatedClient}
+              onClientLogin={() => setShowClientLoginModal(true)}
+              onClientLogout={handleClientLogout}
+              onShowHistory={() => setShowClientHistory(true)}
+            />
+            <main className="p-6">
+              {renderContent()}
+            </main>
+          </>
         )}
 
         {/* Layout for logged in clients - no header, full dashboard */}

@@ -88,24 +88,24 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-5 bg-[#6B6538] text-white rounded-t-3xl">
+        <div className="p-6 bg-gradient-to-r from-green-500 to-green-600 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <LogIn className="w-6 h-6" />
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold leading-tight">{showPasswordRecovery ? 'Recuperar Password' : isLogin ? 'Entrar' : 'Criar Conta'}</h2>
-                <p className="text-white/90 text-sm mt-0.5">
-                  {showPasswordRecovery ? 'Recupere a sua password' : isLogin ? 'Aceda à sua conta Desperto' : 'Crie a sua conta Desperto'}
+                <h2 className="text-xl font-bold">Área do Cliente</h2>
+                <p className="text-green-100 text-sm">
+                  {showPasswordRecovery ? 'Recuperar Password' : isLogin ? 'Entre na sua conta' : 'Crie a sua conta'}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-white/90 hover:text-white p-1 transition-colors"
+              className="text-white/80 hover:text-white p-1"
             >
               <X className="w-5 h-5" />
             </button>
@@ -134,77 +134,87 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
             </div>
           ) : (
             <>
+              {/* Toggle Login/Register */}
+              <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
+                <button
+                  onClick={() => setIsLogin(true)}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    isLogin
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Entrar
+                </button>
+                <button
+                  onClick={() => setIsLogin(false)}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    !isLogin
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Registar
+                </button>
+              </div>
+
+              {/* Registration Info */}
+              {!isLogin && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-medium text-green-900 mb-2">📝 Criar Nova Conta de Cliente</h4>
+                  <p className="text-sm text-green-800 mb-3">
+                    Preencha todos os campos para criar a sua conta gratuita na Desperto.
+                  </p>
+                  <div className="bg-white border border-green-200 rounded-lg p-3 mb-3">
+                    <h5 className="font-medium text-green-900 mb-2">✨ Benefícios da sua conta:</h5>
+                    <ul className="text-sm text-green-700 space-y-1">
+                      <li>✅ Agendamento rápido e fácil</li>
+                      <li>✅ Histórico completo de consultas</li>
+                      <li>✅ Reagendamento online</li>
+                      <li>✅ Lembretes automáticos por email</li>
+                      <li>✅ Dados preenchidos automaticamente</li>
+                    </ul>
+                  </div>
+                  <div className="text-xs text-green-600">
+                    <p>💡 <strong>Dica:</strong> Use um email válido para receber confirmações de agendamento</p>
+                  </div>
+                </div>
+              )}
+
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                {isLogin ? (
-                  <>
-                    {/* Login Form - Simple */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">
-                        Email *
-                      </label>
-                      <div className="relative">
-                        <Mail className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                          type="text"
-                          value={formData.username}
-                          onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                          className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6B6538] focus:border-transparent text-gray-600 placeholder-gray-400"
-                          placeholder="seu@email.com"
-                          required
-                        />
-                      </div>
-                    </div>
+                {/* Username/Email Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {isLogin ? 'Email ou Username' : 'Username'}
+                  </label>
+                  <div className="relative">
+                    <User className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder={isLogin ? "seu@email.com ou username" : "username"}
+                      required
+                    />
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">
-                        Password *
-                      </label>
-                      <div className="relative">
-                        <Lock className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          value={formData.password}
-                          onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                          className="w-full pl-12 pr-12 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6B6538] focus:border-transparent text-gray-600 placeholder-gray-400"
-                          placeholder="Sua password"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Forgot Password Link */}
-                    <div className="text-right">
-                      <button
-                        type="button"
-                        onClick={() => setShowPasswordRecovery(true)}
-                        className="text-[#8B7355] hover:text-[#6B6538] text-sm transition-colors"
-                      >
-                        Esqueceu a password?
-                      </button>
-                    </div>
-                  </>
-                ) : (
+                {/* Registration Fields */}
+                {!isLogin && (
                   <>
-                    {/* Registration Form - Full */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Nome Completo *
                       </label>
                       <div className="relative">
-                        <User className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <User className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
                         <input
                           type="text"
                           value={formData.fullName}
                           onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                          className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6B6538] focus:border-transparent text-gray-600 placeholder-gray-400"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           placeholder="O seu nome completo"
                           required
                         />
@@ -212,16 +222,16 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Email *
                       </label>
                       <div className="relative">
-                        <Mail className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Mail className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
                         <input
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                          className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6B6538] focus:border-transparent text-gray-600 placeholder-gray-400"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           placeholder="seu@email.com"
                           required
                         />
@@ -229,63 +239,47 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">
-                        Username *
-                      </label>
-                      <div className="relative">
-                        <User className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                          type="text"
-                          value={formData.username}
-                          onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                          className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6B6538] focus:border-transparent text-gray-600 placeholder-gray-400"
-                          placeholder="username"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Telefone (opcional)
                       </label>
                       <div className="relative">
-                        <Phone className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Phone className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
                         <input
                           type="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                          className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6B6538] focus:border-transparent text-gray-600 placeholder-gray-400"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           placeholder="+351 xxx xxx xxx"
                         />
                       </div>
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">
-                        Password *
-                      </label>
-                      <div className="relative">
-                        <Lock className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          value={formData.password}
-                          onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                          className="w-full pl-12 pr-12 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6B6538] focus:border-transparent text-gray-600 placeholder-gray-400"
-                          placeholder="Sua password"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
                   </>
                 )}
+
+                {/* Password Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="123456"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
 
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -296,39 +290,41 @@ export function ClientLogin({ onLogin, onClose }: ClientLoginProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-4 py-3.5 bg-[#6B6538] text-white rounded-xl font-medium hover:bg-[#5A5530] disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-sm"
+                  className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <span>{isLogin ? 'Entrar' : 'Criar Conta'}</span>
+                    <>
+                      {isLogin ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                      <span>{isLogin ? 'Entrar' : 'Registar'}</span>
+                    </>
                   )}
                 </button>
               </form>
 
-              {/* Toggle to Registration/Login */}
-              <div className="mt-5 text-center text-sm">
-                {isLogin ? (
-                  <p className="text-gray-600">
-                    Não tem conta?{' '}
-                    <button
-                      onClick={() => setIsLogin(false)}
-                      className="text-[#8B7355] hover:text-[#6B6538] font-medium transition-colors"
-                    >
-                      Criar Conta
-                    </button>
+              {/* Password Recovery - Always Visible */}
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setShowPasswordRecovery(true)}
+                  className="text-green-600 hover:text-green-800 text-sm font-medium"
+                >
+                  Esqueci a minha password
+                </button>
+              </div>
+
+              {/* Test Credentials */}
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <UserPlus className="w-4 h-4 text-green-600" />
+                  <h4 className="font-medium text-green-900">Novo Cliente?</h4>
+                </div>
+                <div className="text-sm text-green-800">
+                  <p>Clique em "Registar" acima para criar a sua conta gratuita.</p>
+                  <p className="text-xs text-green-600 mt-1">
+                    ✅ Registo rápido e seguro • ✅ Dados protegidos • ✅ Acesso imediato
                   </p>
-                ) : (
-                  <p className="text-gray-600">
-                    Já tem conta?{' '}
-                    <button
-                      onClick={() => setIsLogin(true)}
-                      className="text-[#8B7355] hover:text-[#6B6538] font-medium transition-colors"
-                    >
-                      Entrar
-                    </button>
-                  </p>
-                )}
+                </div>
               </div>
             </>
           )}
