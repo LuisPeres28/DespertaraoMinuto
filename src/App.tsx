@@ -19,6 +19,7 @@ import { UniversalAuth } from './components/Auth/UniversalAuth';
 import { ClientHistory } from './components/ClientBooking/ClientHistory';
 import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
 import { SystemCheck } from './components/Diagnostics/SystemCheck';
+import { SplashScreen } from './components/SplashScreen/SplashScreen';
 
 // Production environment - no hardcoded test users
 let defaultUsers: any[] = [];
@@ -31,6 +32,7 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(null);
   const [showClientHistory, setShowClientHistory] = useState(false);
   const [showClientBookingForm, setShowClientBookingForm] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Check for client authentication
   useEffect(() => {
@@ -232,6 +234,9 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
 
   return (
     <AppProvider>
+      {showSplash && (
+        <SplashScreen onComplete={() => setShowSplash(false)} />
+      )}
       <div className="min-h-screen bg-gray-50">
         {/* Sidebar only for staff users */}
         {isStaffUser && (
@@ -261,14 +266,14 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
         {/* Layout for clients and unauthenticated users */}
         {!isStaffUser && !isClientUser && (
           <>
-            <Header 
+            <Header
               activeTab={activeTab}
               user={user}
               onStaffLogin={handleAdminLoginRequest}
               onLogout={handleLogout}
               isStaffUser={isStaffUser}
               authenticatedClient={authenticatedClient}
-              onClientLogin={() => setShowClientLoginModal(true)}
+              onClientLogin={() => setShowAdminLoginModal(true)}
               onClientLogout={handleClientLogout}
               onShowHistory={() => setShowClientHistory(true)}
             />
