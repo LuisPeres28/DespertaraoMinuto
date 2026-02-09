@@ -1,30 +1,23 @@
-# Configuração do Netlify para o projeto Desperto
-
 [build]
-  # Comando de build
-  command = "npm run build"
+command = "npx vite build"
+publish = "dist"
 
-  # Diretório com os ficheiros para publicar
-  publish = "dist"
-
-# Redirecionamentos para SPA (Single Page Application)
-# Garante que todas as rotas funcionam corretamente
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+from = "/*"
+to = "/index.html"
+status = 200
 
-# Headers de segurança
 [[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    X-XSS-Protection = "1; mode=block"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+for = "/*"
 
-# Cache para assets estáticos
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+X-XSS-Protection = "1; mode=block"
+Referrer-Policy = "strict-origin-when-cross-origin"
+
 [[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+for = "/assets/*"
+
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
