@@ -19,7 +19,6 @@ import { UniversalAuth } from './components/Auth/UniversalAuth';
 import { ClientHistory } from './components/ClientBooking/ClientHistory';
 import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
 import { SystemCheck } from './components/Diagnostics/SystemCheck';
-import { SplashScreen } from './components/SplashScreen/SplashScreen';
 
 // Production environment - no hardcoded test users
 let defaultUsers: any[] = [];
@@ -31,10 +30,6 @@ function App() {
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(null);
   const [showClientHistory, setShowClientHistory] = useState(false);
   const [showClientBookingForm, setShowClientBookingForm] = useState(false);
-  const [showSplash, setShowSplash] = useState(() => {
-    const skipSplash = localStorage.getItem('desperto_skip_splash');
-    return skipSplash !== 'true';
-  });
 
   // Check for client authentication
   useEffect(() => {
@@ -225,10 +220,7 @@ function App() {
 
   return (
     <AppProvider>
-      {showSplash && (
-        <SplashScreen onComplete={() => setShowSplash(false)} />
-      )}
-      {!showSplash && <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
         {/* Sidebar only for staff users */}
         {isStaffUser && (
           <div className="flex">
@@ -306,7 +298,7 @@ function App() {
           />
         )}
 
-      </div>}
+      </div>
     </AppProvider>
   );
 }
