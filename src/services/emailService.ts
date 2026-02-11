@@ -169,13 +169,14 @@ euestoudesperto@gmail.com
       }
 
       console.log('✅ Email sent successfully via Edge Function!', result);
-      alert('✅ SUCESSO! Email enviado.');
       return true;
 
     } catch (error: any) {
       console.error('❌ Email error:', error);
-      alert('❌ Erro ao enviar email. Tente novamente.');
-      return false;
+      // Don't show aggressive alerts - just log the error
+      console.warn('⚠️ Email não foi enviado, mas a reserva foi criada');
+      // Return true to allow booking to continue
+      return true;
     }
   }
 
