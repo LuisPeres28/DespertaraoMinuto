@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -6,28 +6,38 @@ interface SplashScreenProps {
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [showSkip, setShowSkip] = useState(false);
 
   useEffect(() => {
-    // Safety timeout - always complete after 10 seconds maximum
+    console.log('🎬 SplashScreen montado');
+
+    // Show skip button immediately
+    setShowSkip(true);
+
+    // Safety timeout - always complete after 5 seconds maximum
     const safetyTimeout = setTimeout(() => {
-      console.log('Splash screen timeout reached, loading app');
+      console.log('⏱️ Splash screen timeout - carregando app');
       onComplete();
-    }, 10000);
+    }, 5000);
 
     const video = videoRef.current;
     if (!video) {
+      console.log('❌ Vídeo não encontrado - pulando splash');
       clearTimeout(safetyTimeout);
       onComplete();
       return;
     }
 
+    console.log('▶️ Tentando reproduzir vídeo');
+
     const handleVideoEnd = () => {
+      console.log('✅ Vídeo terminou');
       clearTimeout(safetyTimeout);
       onComplete();
     };
 
-    const handleVideoError = () => {
-      console.warn('Splash video failed to load, skipping to app');
+    const handleVideoError = (e: Event) => {
+      console.warn('❌ Erro ao carregar vídeo:', e);
       clearTimeout(safetyTimeout);
       onComplete();
     };
@@ -35,11 +45,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
     video.addEventListener('ended', handleVideoEnd);
     video.addEventListener('error', handleVideoError);
 
-    video.play().catch((error) => {
-      console.warn('Autoplay failed, skipping to app:', error);
-      clearTimeout(safetyTimeout);
-      onComplete();
-    });
+    video.play()
+      .then(() => console.log('▶️ Vídeo reproduzindo'))
+      .catch((error) => {
+        console.warn('❌ Autoplay falhou:', error);
+        clearTimeout(safetyTimeout);
+        onComplete();
+      });
 
     return () => {
       clearTimeout(safetyTimeout);
@@ -59,6 +71,15 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       >
         <source src="/intro.mp4.mp4" type="video/mp4" />
       </video>
+
+      {showSkip && (
+        <button
+          onClick={onComplete}
+          className="absolute bottom-8 right-8 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full backdrop-blur-sm transition-all duration-300 border border-white/20 hover:scale-105"
+        >
+          Pular
+        </button>
+      )}
     </div>
   );
 };

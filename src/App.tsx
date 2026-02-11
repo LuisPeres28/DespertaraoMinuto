@@ -25,14 +25,17 @@ import { SplashScreen } from './components/SplashScreen/SplashScreen';
 let defaultUsers: any[] = [];
 
 function App() {
+  console.log('🚀 App iniciando...');
 
-const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
+  const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('client-booking');
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(null);
   const [showClientHistory, setShowClientHistory] = useState(false);
   const [showClientBookingForm, setShowClientBookingForm] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+
+  console.log('📊 Estado da App:', { user: !!user, loading, showSplash });
 
   // Check for client authentication
   useEffect(() => {
@@ -235,9 +238,12 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
   return (
     <AppProvider>
       {showSplash && (
-        <SplashScreen onComplete={() => setShowSplash(false)} />
+        <SplashScreen onComplete={() => {
+          console.log('✅ SplashScreen completo');
+          setShowSplash(false);
+        }} />
       )}
-      <div className="min-h-screen bg-gray-50">
+      {!showSplash && <div className="min-h-screen bg-gray-50">
         {/* Sidebar only for staff users */}
         {isStaffUser && (
           <div className="flex">
@@ -315,7 +321,7 @@ const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
           />
         )}
 
-      </div>
+      </div>}
     </AppProvider>
   );
 }
