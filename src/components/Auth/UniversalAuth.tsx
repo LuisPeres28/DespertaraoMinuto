@@ -43,10 +43,8 @@ export function UniversalAuth({ onLogin, onRegister, onClose, title = "Entrar na
         console.log('📡 Resultado do login:', result);
 
         if (result.success && result.user) {
-          setSuccess('Login realizado com sucesso!');
-          setTimeout(() => {
-            onClose();
-          }, 300);
+          console.log('✅ Login successful, closing modal immediately');
+          onClose();
         } else {
           setError(result.error || 'Credenciais incorretas');
         }
@@ -70,10 +68,8 @@ export function UniversalAuth({ onLogin, onRegister, onClose, title = "Entrar na
         console.log('📡 Resultado do registo:', result);
 
         if (result.success && result.user) {
-          setSuccess('Conta criada com sucesso!');
-          setTimeout(() => {
-            onClose();
-          }, 300);
+          console.log('✅ Registration successful, closing modal immediately');
+          onClose();
         } else {
           setError(result.error || 'Erro ao criar conta');
         }

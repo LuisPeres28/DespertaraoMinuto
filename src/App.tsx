@@ -50,28 +50,47 @@ function App() {
     });
   }, []);
 
+  // Ensure modal is closed when user logs in
+  useEffect(() => {
+    if (user && showAdminLoginModal) {
+      console.log('👤 User detected, ensuring login modal is closed');
+      setShowAdminLoginModal(false);
+    }
+  }, [user, showAdminLoginModal]);
 
 
-    const handleLogin = async (email: string, password: string) => {
+
+  const handleLogin = async (email: string, password: string) => {
+    console.log('🔐 App handleLogin called');
     const result = await signIn(email, password);
+    console.log('📊 SignIn result:', result);
+
     if (result.success) {
+      console.log('✅ Login successful, closing modal and setting active tab');
+      // Close modal immediately
+      setShowAdminLoginModal(false);
+
       // Set view mode based on user type
       if (result.user.userType === 'admin' || result.user.userType === 'therapist') {
         setActiveTab('dashboard');
       } else if (result.user.userType === 'client') {
         setActiveTab('client-booking');
       }
-      setShowAdminLoginModal(false);
     }
     return result;
   };
 
   const handleRegister = async (email: string, password: string, fullName: string, phone?: string) => {
+    console.log('📝 App handleRegister called');
     const result = await signUp(email, password, fullName, phone);
+    console.log('📊 SignUp result:', result);
+
     if (result.success) {
+      console.log('✅ Registration successful, closing modal');
+      // Close modal immediately
+      setShowAdminLoginModal(false);
       // Novos utilizadores são sempre clientes
       setActiveTab('client-booking');
-      setShowAdminLoginModal(false);
     }
     return result;
   };
@@ -288,8 +307,8 @@ function App() {
           />
         )}
         
-        {/* Universal Login/Register Modal */}
-        {showAdminLoginModal && (
+        {/* Universal Login/Register Modal - Don't show if user is already logged in */}
+        {showAdminLoginModal && !user && (
           <UniversalAuth
             onLogin={handleLogin}
             onRegister={handleRegister}
