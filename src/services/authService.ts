@@ -77,7 +77,7 @@ export class AuthService {
 
       // Set user context for RLS before making queries
       try {
-        await supabase.rpc('set_current_user', { user_id_input: authenticatedUser.id });
+        await supabase.rpc('set_current_user', { user_id: authenticatedUser.id });
       } catch (error) {
         console.error('Error setting user context:', error);
       }

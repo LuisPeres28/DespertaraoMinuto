@@ -308,7 +308,7 @@ export interface Database {
       }
       set_current_user: {
         Args: {
-          user_id_input: string
+          user_id: string
         }
         Returns: void
       }

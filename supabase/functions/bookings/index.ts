@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
     const userId = authHeader.replace('Bearer ', '')
     
     // Set user context for RLS
-    await supabase.rpc('set_current_user', { user_id_input: userId })
+    await supabase.rpc('set_current_user', { user_id: userId })
 
     if (req.method === 'GET') {
       // List bookings

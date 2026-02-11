@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
       const user = authData[0]
 
       // Set user context for RLS
-      await supabase.rpc('set_current_user', { user_id_input: user.user_id })
+      await supabase.rpc('set_current_user', { user_id: user.user_id })
 
       return new Response(
         JSON.stringify({
@@ -132,7 +132,7 @@ Deno.serve(async (req: Request) => {
       const user = authData[0]
 
       // Set user context for RLS
-      await supabase.rpc('set_current_user', { user_id_input: user.user_id })
+      await supabase.rpc('set_current_user', { user_id: user.user_id })
 
       return new Response(
         JSON.stringify({

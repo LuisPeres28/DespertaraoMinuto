@@ -22,7 +22,7 @@ export function useSupabaseAuth() {
         setUser(userData)
 
         if (supabase) {
-          supabase.rpc('set_current_user', { user_id_input: userData.id }).catch(() => {})
+          supabase.rpc('set_current_user', { user_id: userData.id }).catch(() => {})
         }
       }
     } catch (error) {
@@ -44,7 +44,7 @@ export function useSupabaseAuth() {
         localStorage.setItem('desperto_user', JSON.stringify(userData))
 
         if (supabase) {
-          supabase.rpc('set_current_user', { user_id_input: userData.id }).catch(() => {})
+          supabase.rpc('set_current_user', { user_id: userData.id }).catch(() => {})
         }
 
         return { success: true, user: userData }
@@ -74,7 +74,7 @@ export function useSupabaseAuth() {
         localStorage.setItem('desperto_user', JSON.stringify(userData))
 
         if (supabase) {
-          supabase.rpc('set_current_user', { user_id_input: userData.id }).catch(() => {})
+          supabase.rpc('set_current_user', { user_id: userData.id }).catch(() => {})
         }
 
         return { success: true, user: userData }
