@@ -8,24 +8,26 @@ export interface EmailTemplate {
 
 export class EmailService {
   static async initialize() {
-    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+    try {
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
 
-    console.log('🔧 Initializing EmailJS...');
-    console.log('Service ID:', serviceId ? '✓ Configured' : '✗ Missing');
-    console.log('Template ID:', templateId ? '✓ Configured' : '✗ Missing');
-    console.log('Public Key:', publicKey ? '✓ Configured' : '✗ Missing');
+      console.log('🔧 Initializing EmailJS...');
+      console.log('Service ID:', serviceId ? '✓ Configured' : '✗ Missing');
+      console.log('Template ID:', templateId ? '✓ Configured' : '✗ Missing');
+      console.log('Public Key:', publicKey ? '✓ Configured' : '✗ Missing');
 
-    if (!publicKey) {
-      console.warn('⚠️ VITE_EMAILJS_PUBLIC_KEY not configured');
-      alert('⚠️ EmailJS não está configurado corretamente. Verifique as variáveis de ambiente.');
-      return;
+      if (!publicKey) {
+        console.warn('⚠️ VITE_EMAILJS_PUBLIC_KEY not configured');
+        return;
+      }
+
+      emailjs.init(publicKey);
+      console.log('✅ EmailJS initialized successfully');
+    } catch (error) {
+      console.error('Error initializing EmailJS:', error);
     }
-
-    emailjs.init(publicKey);
-    console.log('✅ EmailJS initialized successfully');
-    console.log('✅ Ready to send emails using Service:', serviceId);
   }
 
   static generateConfirmationEmail(

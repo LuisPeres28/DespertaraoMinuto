@@ -15,25 +15,28 @@ export function useSupabaseAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('desperto_user')
-    if (savedUser) {
+    const initializeAuth = async () => {
       try {
-        const userData = JSON.parse(savedUser)
-        setUser(userData)
-        // Set user context for RLS
-        if (supabase) {
-          supabase.rpc('set_current_user', { user_id_input: userData.id }).then(
-            () => {},
-            (error) => console.error('Error setting user context:', error)
-          )
+        const savedUser = localStorage.getItem('desperto_user')
+        if (savedUser) {
+          const userData = JSON.parse(savedUser)
+          setUser(userData)
+
+          if (supabase) {
+            supabase.rpc('set_current_user', { user_id_input: userData.id }).catch(
+              (error) => console.error('Error setting user context:', error)
+            )
+          }
         }
       } catch (error) {
-        console.error('Error parsing saved user:', error)
+        console.error('Error initializing auth:', error)
         localStorage.removeItem('desperto_user')
+      } finally {
+        setLoading(false)
       }
     }
-    setLoading(false)
+
+    initializeAuth()
   }, [])
 
   const signIn = async (username: string, password: string) => {

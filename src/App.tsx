@@ -25,8 +25,6 @@ import { SplashScreen } from './components/SplashScreen/SplashScreen';
 let defaultUsers: any[] = [];
 
 function App() {
-  console.log('🚀 App iniciando...');
-
   const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('client-booking');
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
@@ -37,8 +35,6 @@ function App() {
     const skipSplash = localStorage.getItem('desperto_skip_splash');
     return skipSplash !== 'true';
   });
-
-  console.log('📊 Estado da App:', { user: !!user, loading, showSplash });
 
   // Check for client authentication
   useEffect(() => {
@@ -53,9 +49,10 @@ function App() {
     }
   }, []);
 
-  // Initialize EmailJS
   useEffect(() => {
-    EmailService.initialize();
+    EmailService.initialize().catch(error => {
+      console.error('Error initializing email service:', error);
+    });
   }, []);
 
 
@@ -108,38 +105,26 @@ function App() {
   };
 
   const handleClientLogout = () => {
-    console.log('🚪 Cliente fazendo logout...');
     setAuthenticatedClient(null);
     localStorage.removeItem('clientAuth');
     setShowClientBookingForm(false);
 
-    // Se é um utilizador cliente logado, fazer logout completo
     if (user && user.userType === 'client') {
       signOut();
       setActiveTab('client-booking');
     }
-
-    console.log('✅ Logout de cliente completo');
   };
 
   const handleNewBooking = () => {
-    console.log('🎯 handleNewBooking chamado, estado atual:', {
-      showClientBookingForm,
-      isClientUser: !!isClientUser,
-      authenticatedClient: !!authenticatedClient
-    });
-    // Prevent multiple booking forms
     if (showClientBookingForm) return;
     setShowClientBookingForm(true);
   };
 
   const handleBackToDashboard = () => {
-    console.log('🎯 handleBackToDashboard chamado');
     setShowClientBookingForm(false);
   };
 
   const handleBookingComplete = () => {
-    console.log('🎯 handleBookingComplete chamado');
     setShowClientBookingForm(false);
   };
 
@@ -241,10 +226,7 @@ function App() {
   return (
     <AppProvider>
       {showSplash && (
-        <SplashScreen onComplete={() => {
-          console.log('✅ SplashScreen completo');
-          setShowSplash(false);
-        }} />
+        <SplashScreen onComplete={() => setShowSplash(false)} />
       )}
       {!showSplash && <div className="min-h-screen bg-gray-50">
         {/* Sidebar only for staff users */}

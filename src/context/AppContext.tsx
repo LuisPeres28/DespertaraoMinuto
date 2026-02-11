@@ -57,15 +57,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [coupons, setCoupons] = useLocalStorage<Coupon[]>('coupons', [], dateReviver);
   const [couponUsage, setCouponUsage] = useLocalStorage<CouponUsage[]>('couponUsage', [], dateReviver);
 
-  // Debug: Log current bookings
-  React.useEffect(() => {
-    console.log('📊 Current bookings in context:', bookings.map(b => ({
-      id: b.id,
-      therapistId: b.therapistId,
-      date: new Date(b.date).toLocaleString('pt-PT'),
-      status: b.status
-    })));
-  }, [bookings]);
 
   return (
     <AppContext.Provider
