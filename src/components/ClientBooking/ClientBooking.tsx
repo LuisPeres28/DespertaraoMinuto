@@ -3,6 +3,7 @@ import { Calendar, Clock, User, Mail, Phone, MessageSquare, ChevronLeft, Chevron
 import { useApp } from '../../context/AppContext';
 import { AvailabilityService, TimeSlot } from '../../services/availabilityService';
 import { EmailService } from '../../services/emailService';
+import { NotificationService } from '../../services/notificationService';
 import { CalendarService } from '../../services/calendarService';
 import { TimezoneService } from '../../services/timezoneService';
 import { PaymentStep } from '../Booking/PaymentStep';
@@ -224,21 +225,35 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
     const allBookings = generateRecurringBookings(baseBooking);
     setBookings(prev => [...prev, ...allBookings]);
 
-    // Send confirmation email using EmailJS template
+    // Get therapist for notifications
     const therapist = therapists.find(t => t.id === selectedTherapist)!;
 
     try {
-      const location = 'Google Meet (o link será enviado por email)';
+      console.log('📬 Sending notifications via new system...');
 
-      await EmailService.sendClientConfirmationEmail(
+      const notificationResult = await NotificationService.createBookingNotifications(
+        baseBooking.id,
+        client.id,
         client.email,
-        client.name,
-        bookingDateTime,
-        selectedTime,
-        location
+        client.phone,
+        selectedTherapist,
+        bookingDateTime
       );
+
+      if (notificationResult.success) {
+        console.log('✅ Notifications sent successfully');
+        if (notificationResult.emailSent) {
+          console.log('📧 Email confirmação enviado para cliente e admin');
+        }
+        if (notificationResult.smsSent) {
+          console.log('📱 SMS enviado para cliente');
+        }
+      } else {
+        console.warn('⚠️ Notifications failed but booking created:', notificationResult.message);
+      }
     } catch (error) {
-      console.error('Error sending confirmation email:', error);
+      console.error('❌ Error sending notifications:', error);
+      console.log('⚠️ Consulta criada mas notificações falharam');
     }
 
     setStep(6); // Go to success

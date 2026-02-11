@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Clock, X, RefreshCw, Mail, Phone, CheckCircle, AlertTriangle, Check, XCircle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { EmailService } from '../../services/emailService';
+import { NotificationService } from '../../services/notificationService';
 import { CalendarService } from '../../services/calendarService';
 
 interface BookingManagementProps {
@@ -45,8 +46,9 @@ export function BookingManagement({ bookingId, onClose }: BookingManagementProps
 
 
   const handleReschedule = async () => {
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTime || !client || !service) return;
 
+    const oldDateTime = new Date(booking.date);
     const newDateTime = new Date(selectedDate);
     const [hours, minutes] = selectedTime.split(':').map(Number);
     newDateTime.setHours(hours, minutes, 0, 0);
@@ -59,21 +61,27 @@ export function BookingManagement({ bookingId, onClose }: BookingManagementProps
 
     setBookings(prev => prev.map(b => b.id === bookingId ? updatedBooking : b));
 
-    // Send confirmation email
-    const emailTemplate = EmailService.generateConfirmationEmail(
-      updatedBooking,
-      client,
-      service,
-      therapist
-    );
-    
-    await EmailService.sendEmail(client.email, emailTemplate);
+    try {
+      await NotificationService.sendRescheduleNotification(
+        booking.id,
+        booking.clientId,
+        client.email,
+        oldDateTime,
+        newDateTime,
+        'Reagendado pelo sistema'
+      );
+      console.log('✅ Notificação de reagendamento enviada');
+    } catch (error) {
+      console.error('❌ Erro ao enviar notificação de reagendamento:', error);
+    }
 
     setIsRescheduling(false);
     onClose();
   };
 
   const handleCancel = async () => {
+    if (!client || !service) return;
+
     const updatedBooking = {
       ...booking,
       status: 'cancelled' as const
@@ -81,27 +89,18 @@ export function BookingManagement({ bookingId, onClose }: BookingManagementProps
 
     setBookings(prev => prev.map(b => b.id === bookingId ? updatedBooking : b));
 
-    // Send cancellation email
-    const cancelTemplate = {
-      subject: 'Agendamento Cancelado',
-      body: `
-Olá ${client.name},
-
-O seu agendamento foi cancelado com sucesso.
-
-Detalhes do agendamento cancelado:
-- Serviço: ${service.name}
-- Data: ${new Date(booking.date).toLocaleDateString('pt-PT')}
-- Hora: ${new Date(booking.date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-
-Se desejar reagendar, pode fazê-lo através do nosso sistema de agendamento online.
-
-Obrigado,
-Equipa Desperto
-      `
-    };
-
-    await EmailService.sendEmail(client.email, cancelTemplate);
+    try {
+      await NotificationService.sendCancellationNotification(
+        booking.id,
+        booking.clientId,
+        client.email,
+        new Date(booking.date),
+        service.name
+      );
+      console.log('✅ Notificação de cancelamento enviada');
+    } catch (error) {
+      console.error('❌ Erro ao enviar notificação de cancelamento:', error);
+    }
 
     setIsCancelling(false);
     onClose();
