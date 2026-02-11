@@ -33,7 +33,10 @@ function App() {
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(null);
   const [showClientHistory, setShowClientHistory] = useState(false);
   const [showClientBookingForm, setShowClientBookingForm] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    const skipSplash = localStorage.getItem('desperto_skip_splash');
+    return skipSplash !== 'true';
+  });
 
   console.log('📊 Estado da App:', { user: !!user, loading, showSplash });
 

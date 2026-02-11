@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste App Desperto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .success { background: #d4edda; border-color: #28a745; }
+        .error { background: #f8d7da; border-color: #dc3545; }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        #console {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Diagnóstico Desperto</h1>
+
+    <div class="test" id="basic-test">
+        <h3>1. JavaScript Básico</h3>
+        <p id="js-status">Testando...</p>
+    </div>
+
+    <div class="test" id="video-test">
+        <h3>2. Vídeo Splash</h3>
+        <p id="video-status">Testando...</p>
+        <video id="test-video" width="300" style="display:none;">
+            <source src="/intro.mp4.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="test" id="supabase-test">
+        <h3>3. Supabase</h3>
+        <p id="supabase-status">Testando...</p>
+    </div>
+
+    <div class="test">
+        <h3>4. Ações</h3>
+        <button onclick="window.location.href='/'">Ir para App Principal</button>
+        <button onclick="skipSplash()">Pular Splash e Entrar</button>
+        <button onclick="clearStorage()">Limpar Cache</button>
+    </div>
+
+    <div class="test">
+        <h3>Console de Logs</h3>
+        <div id="console"></div>
+    </div>
+
+    <script>
+        const consoleDiv = document.getElementById('console');
+
+        function log(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            consoleDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${msg}</div>`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        // Test 1: JavaScript
+        try {
+            document.getElementById('js-status').textContent = 'JavaScript funcionando!';
+            document.getElementById('basic-test').classList.add('success');
+            log('JavaScript OK', 'success');
+        } catch (e) {
+            log('Erro JavaScript: ' + e.message, 'error');
+        }
+
+        // Test 2: Video
+        const video = document.getElementById('test-video');
+        video.addEventListener('loadedmetadata', () => {
+            document.getElementById('video-status').textContent = 'Vídeo carregado! Duração: ' + video.duration + 's';
+            document.getElementById('video-test').classList.add('success');
+            log('Vídeo OK - Duração: ' + video.duration + 's', 'success');
+        });
+
+        video.addEventListener('error', (e) => {
+            document.getElementById('video-status').textContent = 'Vídeo não encontrado ou erro ao carregar';
+            document.getElementById('video-test').classList.add('error');
+            log('Erro no vídeo: ' + e.message, 'error');
+        });
+
+        video.load();
+
+        // Test 3: Supabase
+        const supabaseUrl = 'https://dnswlrvleqvsueawxzfy.supabase.co';
+        fetch(supabaseUrl + '/rest/v1/', {
+            headers: {
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuc3dscnZsZXF2c3VlYXd4emZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODEyMjIsImV4cCI6MjA3NDk1NzIyMn0.bsg6sfD9d2CT5EiiGWOKtl1FeaeN1DnDYiUtLeqkOmQ'
+            }
+        })
+        .then(r => {
+            document.getElementById('supabase-status').textContent = 'Supabase conectado! Status: ' + r.status;
+            document.getElementById('supabase-test').classList.add('success');
+            log('Supabase OK - Status: ' + r.status, 'success');
+        })
+        .catch(e => {
+            document.getElementById('supabase-status').textContent = 'Erro ao conectar Supabase: ' + e.message;
+            document.getElementById('supabase-test').classList.add('error');
+            log('Erro Supabase: ' + e.message, 'error');
+        });
+
+        function skipSplash() {
+            log('Tentando pular splash...', 'info');
+            localStorage.setItem('desperto_skip_splash', 'true');
+            log('Splash marcado para pular', 'success');
+            window.location.href = '/';
+        }
+
+        function clearStorage() {
+            log('Limpando localStorage...', 'info');
+            localStorage.clear();
+            log('Cache limpo!', 'success');
+            alert('Cache limpo! Recarregue a página.');
+        }
+
+        // Capturar todos os logs do console
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            log(args.join(' '), 'info');
+            originalLog.apply(console, args);
+        };
+
+        console.error = function(...args) {
+            log(args.join(' '), 'error');
+            originalError.apply(console, args);
+        };
+
+        console.warn = function(...args) {
+            log(args.join(' '), 'error');
+            originalWarn.apply(console, args);
+        };
+    </script>
+</body>
+</html>

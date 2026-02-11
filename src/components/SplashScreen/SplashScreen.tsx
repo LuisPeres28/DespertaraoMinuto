@@ -14,11 +14,11 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
     // Show skip button immediately
     setShowSkip(true);
 
-    // Safety timeout - always complete after 5 seconds maximum
+    // Safety timeout - always complete after 1 second maximum
     const safetyTimeout = setTimeout(() => {
       console.log('⏱️ Splash screen timeout - carregando app');
       onComplete();
-    }, 5000);
+    }, 1000);
 
     const video = videoRef.current;
     if (!video) {
