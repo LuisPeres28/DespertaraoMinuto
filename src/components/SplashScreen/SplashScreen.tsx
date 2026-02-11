@@ -10,53 +10,16 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
   useEffect(() => {
     console.log('🎬 SplashScreen montado');
-
-    // Show skip button immediately
     setShowSkip(true);
 
-    // Safety timeout - always complete after 1 second maximum
-    const safetyTimeout = setTimeout(() => {
-      console.log('⏱️ Splash screen timeout - carregando app');
+    // Immediate skip after 100ms to ensure app loads quickly
+    const quickTimeout = setTimeout(() => {
+      console.log('⏱️ Quick timeout - carregando app');
       onComplete();
-    }, 1000);
-
-    const video = videoRef.current;
-    if (!video) {
-      console.log('❌ Vídeo não encontrado - pulando splash');
-      clearTimeout(safetyTimeout);
-      onComplete();
-      return;
-    }
-
-    console.log('▶️ Tentando reproduzir vídeo');
-
-    const handleVideoEnd = () => {
-      console.log('✅ Vídeo terminou');
-      clearTimeout(safetyTimeout);
-      onComplete();
-    };
-
-    const handleVideoError = (e: Event) => {
-      console.warn('❌ Erro ao carregar vídeo:', e);
-      clearTimeout(safetyTimeout);
-      onComplete();
-    };
-
-    video.addEventListener('ended', handleVideoEnd);
-    video.addEventListener('error', handleVideoError);
-
-    video.play()
-      .then(() => console.log('▶️ Vídeo reproduzindo'))
-      .catch((error) => {
-        console.warn('❌ Autoplay falhou:', error);
-        clearTimeout(safetyTimeout);
-        onComplete();
-      });
+    }, 100);
 
     return () => {
-      clearTimeout(safetyTimeout);
-      video.removeEventListener('ended', handleVideoEnd);
-      video.removeEventListener('error', handleVideoError);
+      clearTimeout(quickTimeout);
     };
   }, [onComplete]);
 
