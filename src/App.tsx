@@ -52,47 +52,68 @@ function App() {
 
   // Ensure modal is closed when user logs in
   useEffect(() => {
-    if (user && showAdminLoginModal) {
+    if (user) {
       console.log('👤 User detected, ensuring login modal is closed');
       setShowAdminLoginModal(false);
     }
-  }, [user, showAdminLoginModal]);
+  }, [user]);
 
 
 
   const handleLogin = async (email: string, password: string) => {
     console.log('🔐 App handleLogin called');
-    const result = await signIn(email, password);
-    console.log('📊 SignIn result:', result);
 
-    if (result.success) {
-      console.log('✅ Login successful, closing modal and setting active tab');
-      // Close modal immediately
-      setShowAdminLoginModal(false);
+    try {
+      const result = await signIn(email, password);
+      console.log('📊 SignIn result:', result);
 
-      // Set view mode based on user type
-      if (result.user.userType === 'admin' || result.user.userType === 'therapist') {
-        setActiveTab('dashboard');
-      } else if (result.user.userType === 'client') {
-        setActiveTab('client-booking');
+      if (result.success && result.user) {
+        console.log('✅ Login successful, closing modal and setting active tab');
+
+        // First close the modal
+        setShowAdminLoginModal(false);
+
+        // Then set view mode based on user type
+        setTimeout(() => {
+          if (result.user.userType === 'admin' || result.user.userType === 'therapist') {
+            setActiveTab('dashboard');
+          } else if (result.user.userType === 'client') {
+            setActiveTab('client-booking');
+          }
+        }, 100);
       }
+
+      return result;
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      return { success: false, error: 'Erro no login' };
     }
-    return result;
   };
 
   const handleRegister = async (email: string, password: string, fullName: string, phone?: string) => {
     console.log('📝 App handleRegister called');
-    const result = await signUp(email, password, fullName, phone);
-    console.log('📊 SignUp result:', result);
 
-    if (result.success) {
-      console.log('✅ Registration successful, closing modal');
-      // Close modal immediately
-      setShowAdminLoginModal(false);
-      // Novos utilizadores são sempre clientes
-      setActiveTab('client-booking');
+    try {
+      const result = await signUp(email, password, fullName, phone);
+      console.log('📊 SignUp result:', result);
+
+      if (result.success && result.user) {
+        console.log('✅ Registration successful, closing modal');
+
+        // First close the modal
+        setShowAdminLoginModal(false);
+
+        // Then set view mode
+        setTimeout(() => {
+          setActiveTab('client-booking');
+        }, 100);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('❌ Registration error:', error);
+      return { success: false, error: 'Erro no registo' };
     }
-    return result;
   };
 
 
@@ -105,7 +126,12 @@ function App() {
 
 
   const handleAdminLoginRequest = () => {
-    setShowAdminLoginModal(true);
+    console.log('🚪 Admin login requested, user state:', user ? 'logged in' : 'not logged in');
+    if (!user) {
+      setShowAdminLoginModal(true);
+    } else {
+      console.log('⚠️ User already logged in, ignoring login request');
+    }
   };
 
   const handleAdminLoginClose = () => {
