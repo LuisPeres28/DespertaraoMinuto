@@ -139,78 +139,52 @@ euestoudesperto@gmail.com
     bookingTime: string,
     location: string
   ): Promise<boolean> {
-    console.log('🚀 === STARTING EMAIL SEND PROCESS ===');
+    console.log('🚀 === STARTING EMAIL SEND PROCESS (via Edge Function) ===');
 
     try {
-      // HARDCODED CREDENTIALS - Bypass environment variables
-      const serviceId = "service_eqp55ju";
-      const templateId = "template_w3awkf1";
-      const publicKey = "yxdL1IoXHXaC3Q-Cw";
-
-      console.log('📋 Using hardcoded credentials');
-
-      // Initialize EmailJS
-      emailjs.init(publicKey);
-      console.log('✅ EmailJS initialized');
-
-      // Create clean params with EXPLICIT STRING conversion
       const dateDay = String(bookingDate.getDate()).padStart(2, '0');
       const dateMonth = String(bookingDate.getMonth() + 1).padStart(2, '0');
       const dateYear = String(bookingDate.getFullYear());
       const formattedDate = `${dateDay}/${dateMonth}/${dateYear}`;
 
-      const cleanParams = {
-        to_email: String(clientEmail),
-        to_name: String(clientName),
-        date: String(formattedDate),
-        time: String(bookingTime),
-        location: String(location),
-        message: String("Nova marcação via Website")
+      const emailData = {
+        to_email: clientEmail,
+        to_name: clientName,
+        date: formattedDate,
+        time: bookingTime,
+        location: location,
+        message: "Nova marcação via Website"
       };
 
-      console.log('📋 Clean params created:', cleanParams);
+      console.log('📋 Sending email via Edge Function:', emailData);
 
-      // Create timeout promise (4 seconds)
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('TIMEOUT'));
-        }, 4000);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const apiUrl = `${supabaseUrl}/functions/v1/send-email`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailData)
       });
 
-      // Create email send promise
-      const sendPromise = emailjs.send(
-        serviceId,
-        templateId,
-        cleanParams
-      );
+      const result = await response.json();
 
-      console.log('📋 Calling emailjs.send() with timeout protection...');
+      if (!response.ok) {
+        console.error('❌ Edge Function error:', result);
+        throw new Error(result.error || 'Failed to send email');
+      }
 
-      // Race between send and timeout
-      const result = await Promise.race([sendPromise, timeoutPromise]);
-
-      console.log('✅ Email sent successfully!', result);
+      console.log('✅ Email sent successfully via Edge Function!', result);
       alert('✅ SUCESSO! Email enviado.');
       return true;
 
     } catch (error: any) {
       console.error('❌ Email error:', error);
-
-      const errorMessage = error?.message || 'Unknown error';
-
-      if (errorMessage === 'TIMEOUT') {
-        console.warn('⏱️ Email send timed out - likely blocked by firewall/antivirus');
-        alert('⚠️ ALERTA: O envio foi bloqueado pelo seu Antivírus ou Rede. Tente no telemóvel.');
-      } else {
-        console.error('Error details:', {
-          name: error?.name,
-          message: error?.message,
-          text: error?.text,
-          status: error?.status
-        });
-        alert('⚠️ ALERTA: O envio foi bloqueado pelo seu Antivírus ou Rede. Tente no telemóvel.');
-      }
-
+      alert('❌ Erro ao enviar email. Tente novamente.');
       return false;
     }
   }
