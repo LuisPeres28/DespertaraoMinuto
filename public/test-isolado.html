@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Isolado - Supabase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .resultado {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ccc;
+        }
+        .sucesso { border-color: #4caf50; background: #e8f5e9; }
+        .erro { border-color: #f44336; background: #ffebee; }
+        .info { border-color: #2196f3; background: #e3f2fd; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #1976d2; }
+    </style>
+</head>
+<body>
+    <h1>Teste de Conexão Supabase (Isolado)</h1>
+    <button onclick="testar()">Executar Teste</button>
+    <div id="resultados"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        function log(tipo, titulo, dados = null) {
+            const div = document.createElement('div');
+            div.className = `resultado ${tipo}`;
+            div.innerHTML = `<strong>${titulo}</strong>`;
+            if (dados) {
+                div.innerHTML += `<pre>${JSON.stringify(dados, null, 2)}</pre>`;
+            }
+            document.getElementById('resultados').appendChild(div);
+        }
+
+        async function testar() {
+            document.getElementById('resultados').innerHTML = '';
+
+            log('info', '1. Verificando biblioteca Supabase...');
+            if (typeof window.supabase === 'undefined') {
+                log('erro', 'Biblioteca Supabase não carregada!');
+                return;
+            }
+            log('sucesso', 'Biblioteca carregada!');
+
+            log('info', '2. Criando cliente...');
+            const supabase = window.supabase.createClient(
+                'https://dnswlrvleqvsueawxzfy.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuc3dscnZsZXF2c3VlYXd4emZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODEyMjIsImV4cCI6MjA3NDk1NzIyMn0.bsg6sfD9d2CT5EiiGWOKtl1FeaeN1DnDYiUtLeqkOmQ'
+            );
+            log('sucesso', 'Cliente criado!');
+
+            log('info', '3. Testando contagem de utilizadores...');
+            try {
+                const { count, error } = await supabase
+                    .from('users')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) {
+                    log('erro', 'Erro ao contar utilizadores', error);
+                } else {
+                    log('sucesso', `Total de utilizadores: ${count}`);
+                }
+            } catch (e) {
+                log('erro', 'Exceção ao contar', { message: e.message });
+            }
+
+            log('info', '4. Testando autenticação...');
+            try {
+                const { data, error } = await supabase.rpc('authenticate_user', {
+                    p_identifier: 'euestoudesperto@gmail.com',
+                    p_password: 'Desperto2024!'
+                });
+
+                if (error) {
+                    log('erro', 'Erro na autenticação', error);
+                } else if (data && data.success) {
+                    log('sucesso', 'Login bem-sucedido!', {
+                        username: data.user.username,
+                        email: data.user.email,
+                        tipo: data.user.user_type
+                    });
+                } else {
+                    log('erro', 'Credenciais inválidas', data);
+                }
+            } catch (e) {
+                log('erro', 'Exceção na autenticação', { message: e.message });
+            }
+
+            log('info', '5. Buscar dados do utilizador direto...');
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('id, email, username, user_type')
+                    .eq('email', 'euestoudesperto@gmail.com')
+                    .maybeSingle();
+
+                if (error) {
+                    log('erro', 'Erro ao buscar', error);
+                } else if (data) {
+                    log('sucesso', 'Utilizador encontrado!', data);
+                } else {
+                    log('erro', 'Utilizador não existe na base de dados');
+                }
+            } catch (e) {
+                log('erro', 'Exceção na busca', { message: e.message });
+            }
+        }
+
+        // Auto-executar
+        window.addEventListener('load', () => {
+            setTimeout(testar, 1000);
+        });
+    </script>
+</body>
+</html>
