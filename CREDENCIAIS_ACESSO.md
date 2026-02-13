@@ -8,14 +8,26 @@
 - **Tipo:** Admin
 - **Acesso:** Todas as funcionalidades do sistema
 
-### Terapeuta
+### Terapeuta - Luis
 - **Email:** luisperes28@gmail.com
 - **Password:** Dhvif2m0
 - **Tipo:** Therapist
 - **Acesso:** Gestão de clientes, calendário, notas
 
-### Cliente
+### Terapeuta - Christina
+- **Email:** csloureiro88@gmail.com
+- **Password:** Dhvif2m2
+- **Tipo:** Therapist
+- **Acesso:** Gestão de clientes, calendário, notas
+
+### Cliente - Teste
 - **Email:** cliente@teste.com
+- **Password:** 123456
+- **Tipo:** Client
+- **Acesso:** Reservas, histórico pessoal
+
+### Cliente - Chris
+- **Email:** csloureiro@live.com.pt
 - **Password:** 123456
 - **Tipo:** Client
 - **Acesso:** Reservas, histórico pessoal
