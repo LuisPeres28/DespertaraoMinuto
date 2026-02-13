@@ -185,83 +185,109 @@ function App() {
   const isClientUser = user && user.userType === 'client';
 
   const renderContent = () => {
-    // If client is logged in, show client dashboard or booking form
-    if (isClientUser) {
-      if (showClientBookingForm) {
+    try {
+      // If client is logged in, show client dashboard or booking form
+      if (isClientUser) {
+        if (showClientBookingForm) {
+          return (
+            <ClientBooking
+              onComplete={handleBookingComplete}
+              initialClientData={user}
+              key="client-booking-form"
+            />
+          );
+        }
         return (
-          <ClientBooking 
-            onComplete={handleBookingComplete}
-            initialClientData={user}
-            key="client-booking-form"
+          <ClientDashboard
+            clientData={user}
+            onLogout={handleClientLogout}
+            onNewBooking={handleNewBooking}
           />
         );
       }
-      return (
-        <ClientDashboard
-          clientData={user}
-          onLogout={handleClientLogout}
-          onNewBooking={handleNewBooking}
-        />
-      );
-    }
 
-    // If authenticated client exists but not logged in as user, show client dashboard
-    if (authenticatedClient && !user) {
-      if (showClientBookingForm) {
+      // If authenticated client exists but not logged in as user, show client dashboard
+      if (authenticatedClient && !user) {
+        if (showClientBookingForm) {
+          return (
+            <ClientBooking
+              onComplete={handleBookingComplete}
+              initialClientData={authenticatedClient}
+              key="auth-client-booking-form"
+            />
+          );
+        }
         return (
-          <ClientBooking 
-            onComplete={handleBookingComplete}
-            initialClientData={authenticatedClient}
-            key="auth-client-booking-form"
+          <ClientDashboard
+            clientData={authenticatedClient}
+            onLogout={handleClientLogout}
+            onNewBooking={handleNewBooking}
           />
         );
       }
-      return (
-        <ClientDashboard
-          clientData={authenticatedClient}
-          onLogout={handleClientLogout}
-          onNewBooking={handleNewBooking}
-        />
-      );
-    }
 
-    // If no user or staff user, show admin content
-    switch (activeTab) {
-      case 'client-booking':
-        return <ClientBooking initialClientData={null} />;
-      case 'dashboard':
-        return <Dashboard onNavigate={setActiveTab} currentUser={user} />;
-      case 'calendar':
-        return <Calendar />;
-      case 'bookings':
-        return <BookingsList />;
-      case 'clients':
-        return <ClientsList />;
-      case 'payments':
-        return <PaymentsList />;
-      case 'coupons':
-        return <CouponManagement />;
-      case 'therapist-notes':
-        return <TherapistNotes />;
-      case 'system-check':
-        return <SystemCheck />;
-      case 'messages':
-        return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Mensagens Em Breve</h3>
-            <p className="text-gray-500">Sistema de comunicação automatizada estará disponível aqui</p>
+      // If no user or staff user, show admin content
+      switch (activeTab) {
+        case 'client-booking':
+          return <ClientBooking initialClientData={null} />;
+        case 'dashboard':
+          return <Dashboard onNavigate={setActiveTab} currentUser={user} />;
+        case 'calendar':
+          return <Calendar />;
+        case 'bookings':
+          return <BookingsList />;
+        case 'clients':
+          return <ClientsList />;
+        case 'payments':
+          return <PaymentsList />;
+        case 'coupons':
+          return <CouponManagement />;
+        case 'therapist-notes':
+          return <TherapistNotes />;
+        case 'system-check':
+          return <SystemCheck />;
+        case 'messages':
+          return (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Mensagens Em Breve</h3>
+              <p className="text-gray-500">Sistema de comunicação automatizada estará disponível aqui</p>
+            </div>
+          );
+        case 'settings':
+          return <Settings />;
+        case 'email-setup':
+          return <EmailSetup />;
+        case 'therapist-management':
+          return <TherapistManagement />;
+        default:
+          return <Dashboard onNavigate={setActiveTab} />;
+      }
+    } catch (error) {
+      console.error('Erro ao renderizar conteúdo:', error);
+      return (
+        <div className="min-h-screen bg-red-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Erro de Renderização</h2>
+            <p className="text-gray-700 mb-4">{error instanceof Error ? error.message : 'Erro desconhecido'}</p>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Limpar e Recarregar
+            </button>
           </div>
-        );
-      case 'settings':
-        return <Settings />;
-      case 'email-setup':
-        return <EmailSetup />;
-      case 'therapist-management':
-        return <TherapistManagement />;
-      default:
-        return <Dashboard onNavigate={setActiveTab} />;
+        </div>
+      );
     }
   };
+
+  // Debug logging
+  console.log('🔍 App render - user:', user?.email, 'type:', user?.userType);
+  console.log('🔍 App render - isStaffUser:', isStaffUser, 'isClientUser:', isClientUser);
+  console.log('🔍 App render - activeTab:', activeTab);
 
   return (
     <AppProvider>
@@ -273,7 +299,7 @@ function App() {
               <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
             <div className="flex-1">
-              <Header 
+              <Header
                 activeTab={activeTab}
                 user={user}
                 onStaffLogin={handleAdminLoginRequest}
@@ -290,9 +316,9 @@ function App() {
             </div>
           </div>
         )}
-        
+
         {/* Layout for clients and unauthenticated users */}
-        {!isStaffUser && !isClientUser && (
+        {!isStaffUser && !isClientUser && !authenticatedClient && (
           <>
             <Header
               activeTab={activeTab}
@@ -324,7 +350,7 @@ function App() {
             {renderContent()}
           </main>
         )}
-        
+
         {/* Modals */}
         {showClientHistory && authenticatedClient && (
           <ClientHistory
@@ -332,7 +358,7 @@ function App() {
             onClose={() => setShowClientHistory(false)}
           />
         )}
-        
+
         {/* Universal Login/Register Modal - Don't show if user is already logged in */}
         {showAdminLoginModal && !user && (
           <UniversalAuth
