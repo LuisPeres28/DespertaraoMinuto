@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppProvider } from './context/AppContext';
+import { AppProvider } from './context/AppContext.tsx';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { EmailService } from './services/emailService';
 import { ClientBooking } from './components/ClientBooking/ClientBooking';
