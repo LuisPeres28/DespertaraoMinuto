@@ -104,7 +104,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: 'Email sent successfully',
-        details: { to: emailData.to_email, id: result.id }
+        details: { to: emailData.to_email }
       }),
       {
         status: 200,
