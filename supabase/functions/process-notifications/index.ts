@@ -126,40 +126,35 @@ Deno.serve(async (req: Request) => {
 async function processEmailNotification(notification: any, supabase: any) {
   console.log(`📧 Sending email to ${notification.recipient_email}...`);
 
-  // EmailJS credentials
-  const serviceId = "service_eqp55ju";
-  const templateId = "template_w3awkf1";
-  const publicKey = "yxdL1IoXHXaC3Q-Cw";
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  // EmailJS API endpoint
-  const emailjsUrl = `https://api.emailjs.com/api/v1.0/email/send`;
-
-  // Prepare the payload for EmailJS
-  const payload = {
-    service_id: serviceId,
-    template_id: templateId,
-    user_id: publicKey,
-    template_params: {
-      to_email: notification.recipient_email,
-      to_name: notification.recipient_email.split('@')[0],
-      subject: notification.subject,
-      message: notification.message,
-      from_name: "Desperto - Coaching ao Minuto"
-    }
+  // Call the send-email edge function
+  const emailPayload = {
+    to_email: notification.recipient_email,
+    subject: notification.subject,
+    message: notification.message,
+    to_name: notification.recipient_email.split('@')[0]
   };
 
-  // Send email through EmailJS API
-  const response = await fetch(emailjsUrl, {
+  const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${supabaseServiceKey}`
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(emailPayload),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`EmailJS API error: ${response.status} - ${errorText}`);
+    throw new Error(`Send email function error: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to send email');
   }
 
   // Update notification as sent

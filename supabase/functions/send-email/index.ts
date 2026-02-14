@@ -8,11 +8,9 @@ const corsHeaders = {
 
 interface EmailRequest {
   to_email: string;
-  to_name: string;
-  date: string;
-  time: string;
-  location: string;
-  message?: string;
+  subject: string;
+  message: string;
+  to_name?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -26,61 +24,76 @@ Deno.serve(async (req: Request) => {
   try {
     const emailData: EmailRequest = await req.json();
 
-    console.log('📧 Sending email via EmailJS API...', {
+    console.log('📧 Sending email via Resend...', {
       to: emailData.to_email,
-      name: emailData.to_name,
+      subject: emailData.subject,
     });
 
-    // EmailJS credentials (hardcoded for reliability)
-    const serviceId = "service_eqp55ju";
-    const templateId = "template_w3awkf1";
-    const publicKey = "yxdL1IoXHXaC3Q-Cw";
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
-    // EmailJS API endpoint
-    const emailjsUrl = `https://api.emailjs.com/api/v1.0/email/send`;
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY not configured");
+    }
 
-    // Prepare the payload for EmailJS
-    const payload = {
-      service_id: serviceId,
-      template_id: templateId,
-      user_id: publicKey,
-      template_params: {
-        to_email: emailData.to_email,
-        to_name: emailData.to_name,
-        date: emailData.date,
-        time: emailData.time,
-        location: emailData.location,
-        message: emailData.message || "Nova marcação via Website"
-      }
-    };
+    // Prepare HTML email body
+    const htmlBody = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Desperto - Coaching ao Minuto</h1>
+            </div>
+            <div class="content">
+              ${emailData.message.replace(/\n/g, '<br>')}
+            </div>
+            <div class="footer">
+              <p>Este email foi enviado automaticamente. Por favor não responda.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
 
-    console.log('📋 Sending to EmailJS with params:', payload.template_params);
-
-    // Send email through EmailJS API
-    const response = await fetch(emailjsUrl, {
+    // Send email through Resend API
+    const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        from: 'Desperto Coaching <onboarding@resend.dev>',
+        to: [emailData.to_email],
+        subject: emailData.subject,
+        html: htmlBody,
+      }),
     });
-
-    console.log('📬 EmailJS response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ EmailJS error:', errorText);
-      throw new Error(`EmailJS API error: ${response.status} - ${errorText}`);
+      console.error('❌ Resend error:', errorText);
+      throw new Error(`Resend API error: ${response.status} - ${errorText}`);
     }
 
-    const result = await response.text();
+    const result = await response.json();
     console.log('✅ Email sent successfully:', result);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Email sent successfully',
-        details: { to: emailData.to_email }
+        details: { to: emailData.to_email, id: result.id }
       }),
       {
         status: 200,
