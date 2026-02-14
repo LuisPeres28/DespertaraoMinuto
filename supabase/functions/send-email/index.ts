@@ -24,15 +24,15 @@ Deno.serve(async (req: Request) => {
   try {
     const emailData: EmailRequest = await req.json();
 
-    console.log('📧 Sending email via Resend...', {
+    console.log('📧 Sending email via SendGrid...', {
       to: emailData.to_email,
       subject: emailData.subject,
     });
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY");
 
-    if (!resendApiKey) {
-      throw new Error("RESEND_API_KEY not configured");
+    if (!sendgridApiKey) {
+      throw new Error("SENDGRID_API_KEY not configured");
     }
 
     // Prepare HTML email body
@@ -65,29 +65,40 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
-    // Send email through Resend API
-    const response = await fetch('https://api.resend.com/emails', {
+    // Send email through SendGrid API
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
+        'Authorization': `Bearer ${sendgridApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Desperto Coaching <noreply@desperto.com>',
-        to: [emailData.to_email],
-        subject: emailData.subject,
-        html: htmlBody,
+        personalizations: [
+          {
+            to: [{ email: emailData.to_email, name: emailData.to_name || '' }],
+            subject: emailData.subject || 'Confirmação de Agendamento - Desperto',
+          }
+        ],
+        from: {
+          email: 'euestoudesperto@gmail.com',
+          name: 'Desperto - Coaching ao Minuto'
+        },
+        content: [
+          {
+            type: 'text/html',
+            value: htmlBody
+          }
+        ]
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Resend error:', errorText);
-      throw new Error(`Resend API error: ${response.status} - ${errorText}`);
+      console.error('❌ SendGrid error:', errorText);
+      throw new Error(`SendGrid API error: ${response.status} - ${errorText}`);
     }
 
-    const result = await response.json();
-    console.log('✅ Email sent successfully:', result);
+    console.log('✅ Email sent successfully via SendGrid!');
 
     return new Response(
       JSON.stringify({
