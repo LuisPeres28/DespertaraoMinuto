@@ -300,19 +300,43 @@ euestoudesperto@gmail.com
   }
 
   static async sendSMS(to: string, message: string): Promise<boolean> {
-    // In a real application, this would integrate with an SMS service like:
-    // - Twilio
-    // - AWS SNS
-    // - Vonage (Nexmo)
+    console.log('🚀 === STARTING SMS SEND PROCESS (via Edge Function) ===');
 
-    console.log('📱 SMS would be sent to:', to);
-    console.log('📱 Message:', message);
+    try {
+      const smsData = {
+        to: to,
+        message: message
+      };
 
-    // Simulate SMS sending
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(Math.random() > 0.05); // 95% success rate simulation
-      }, 500);
-    });
+      console.log('📋 Sending SMS via Edge Function:', smsData);
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const apiUrl = `${supabaseUrl}/functions/v1/send-sms`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(smsData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('❌ Edge Function error:', result);
+        throw new Error(result.error || 'Failed to send SMS');
+      }
+
+      console.log('✅ SMS sent successfully via Edge Function!', result);
+      return true;
+
+    } catch (error: any) {
+      console.error('❌ SMS error:', error);
+      console.warn('⚠️ SMS não foi enviado');
+      return false;
+    }
   }
 }
