@@ -24,15 +24,15 @@ Deno.serve(async (req: Request) => {
   try {
     const emailData: EmailRequest = await req.json();
 
-    console.log('📧 Sending email via SendGrid...', {
+    console.log('📧 Sending email via Resend...', {
       to: emailData.to_email,
       subject: emailData.subject,
     });
 
-    const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY");
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
-    if (!sendgridApiKey) {
-      throw new Error("SENDGRID_API_KEY not configured");
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY not configured");
     }
 
     // Prepare HTML email body
@@ -65,46 +65,35 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
-    // Send email through SendGrid API
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    // Send email through Resend API
+    const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${sendgridApiKey}`,
+        'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        personalizations: [
-          {
-            to: [{ email: emailData.to_email, name: emailData.to_name || '' }],
-            subject: emailData.subject || 'Confirmação de Agendamento - Desperto',
-          }
-        ],
-        from: {
-          email: 'euestoudesperto@gmail.com',
-          name: 'Desperto - Coaching ao Minuto'
-        },
-        content: [
-          {
-            type: 'text/html',
-            value: htmlBody
-          }
-        ]
+        from: 'Desperto <onboarding@resend.dev>',
+        to: [emailData.to_email],
+        subject: emailData.subject || 'Confirmação de Agendamento - Desperto',
+        html: htmlBody,
       }),
     });
 
+    const responseData = await response.json();
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ SendGrid error:', errorText);
-      throw new Error(`SendGrid API error: ${response.status} - ${errorText}`);
+      console.error('❌ Resend error:', responseData);
+      throw new Error(`Resend API error: ${response.status} - ${JSON.stringify(responseData)}`);
     }
 
-    console.log('✅ Email sent successfully via SendGrid!');
+    console.log('✅ Email sent successfully via Resend!', responseData);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Email sent successfully',
-        details: { to: emailData.to_email }
+        details: { to: emailData.to_email, id: responseData.id }
       }),
       {
         status: 200,
