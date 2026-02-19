@@ -69,12 +69,19 @@ Deno.serve(async (req: Request) => {
 
       console.log("Request body:", body);
 
+      console.log("Request URL:", `${baseUrl}/single`);
+      console.log("Request headers:", {
+        "AccountId": accountId?.substring(0, 8) + "...",
+        "ApiKey": apiKey?.substring(0, 8) + "...",
+      });
+
       const response = await fetch(`${baseUrl}/single`, {
         method: "POST",
         headers: {
           "AccountId": accountId,
           "ApiKey": apiKey,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: body
       });
