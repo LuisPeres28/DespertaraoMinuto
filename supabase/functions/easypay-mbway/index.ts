@@ -20,9 +20,18 @@ Deno.serve(async (req: Request) => {
     const accountId = Deno.env.get("EASYPAY_ACCOUNT_ID");
     const apiKey = Deno.env.get("EASYPAY_API_KEY");
 
+    console.log("Checking Easypay credentials...");
+    console.log("Account ID present:", !!accountId);
+    console.log("API Key present:", !!apiKey);
+
     if (!accountId || !apiKey) {
+      const missingVars = [];
+      if (!accountId) missingVars.push("EASYPAY_ACCOUNT_ID");
+      if (!apiKey) missingVars.push("EASYPAY_API_KEY");
+
       return new Response(JSON.stringify({
-        error: "Contact administrator to configure Easypay"
+        success: false,
+        error: `Credenciais Easypay não configuradas. Faltam: ${missingVars.join(", ")}. Configure em: https://supabase.com/dashboard/project/dnswlrvleqvsueawxzfy/settings/vault/secrets`
       }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
