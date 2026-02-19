@@ -9,10 +9,10 @@ export function SidebarHeader({ onMobileMenuClose }: SidebarHeaderProps) {
     <div className="p-4 lg:p-6 border-b border-gray-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <img 
-            src="/Desperto LOGO.jpg" 
-            alt="Desperto Logo" 
-            className="w-12 h-12 lg:w-32 lg:h-32 object-contain rounded-lg"
+          <img
+            src="https://images.pexels.com/photos/3825517/pexels-photo-3825517.jpeg?auto=compress&cs=tinysrgb&w=400"
+            alt="Desperto Logo"
+            className="w-12 h-12 lg:w-32 lg:h-32 object-cover rounded-lg"
           />
           <div className="lg:block">
             <h1 className="text-base lg:text-lg font-bold text-gray-900">Desperto</h1>

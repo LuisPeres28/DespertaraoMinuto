@@ -46,10 +46,10 @@ export function Sidebar({ activeTab, setActiveTab, currentMode = 'client' }: Sid
         {/* Mobile Header with Close Button */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600">
           <div className="flex items-center space-x-3">
-            <img 
-              src="/Desperto LOGO.jpg" 
-              alt="Desperto Logo" 
-              className="w-10 h-10 object-contain rounded-lg"
+            <img
+              src="https://images.pexels.com/photos/3825517/pexels-photo-3825517.jpeg?auto=compress&cs=tinysrgb&w=400"
+              alt="Desperto Logo"
+              className="w-10 h-10 object-cover rounded-lg"
             />
             <div>
               <h1 className="text-lg font-bold text-white">Desperto</h1>

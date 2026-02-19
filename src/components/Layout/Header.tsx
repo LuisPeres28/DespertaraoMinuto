@@ -37,10 +37,10 @@ export function Header({
         <div className="flex items-center justify-between min-h-[60px]">
           {/* Logo and Title */}
           <div className="flex items-center space-x-2 lg:space-x-4 flex-1 lg:flex-none">
-            <img 
-              src="/Desperto LOGO.jpg" 
-              alt="Desperto Logo" 
-              className="w-12 h-12 lg:w-64 lg:h-64 object-contain rounded-lg shadow-sm"
+            <img
+              src="https://images.pexels.com/photos/3825517/pexels-photo-3825517.jpeg?auto=compress&cs=tinysrgb&w=400"
+              alt="Desperto Logo"
+              className="w-12 h-12 lg:w-64 lg:h-64 object-cover rounded-lg shadow-sm"
             />
             <div className="min-w-0">
               <h1 className="text-lg lg:text-4xl font-bold text-desperto-gold truncate">Desperto</h1>
