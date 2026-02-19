@@ -198,11 +198,23 @@ export class CouponService {
 
       // Verificar se é para cliente específico
       if (coupon.clientId && clientEmail && clients) {
+        // Procurar cliente registado
         const client = clients.find(c => c.email === clientEmail);
-        if (!client || client.id !== coupon.clientId) {
+
+        // Se o cupão é para um cliente específico, verificar se corresponde
+        if (client && client.id !== coupon.clientId) {
           return {
             isValid: false,
             error: 'Este cupão não é válido para o seu email'
+          };
+        }
+
+        // Se não há cliente registado mas o cupão exige um clientId específico,
+        // permitir apenas se o cupão for genérico (clientId = null)
+        if (!client) {
+          return {
+            isValid: false,
+            error: 'Este cupão requer registo prévio. Por favor, faça login ou registe-se.'
           };
         }
       }

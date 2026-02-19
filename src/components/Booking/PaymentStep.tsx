@@ -176,19 +176,27 @@ export function PaymentStep({
         }
 
         // Marcar cupão como usado
+        // Para clientes não registados, usar o email como identificador
         const client = clients?.find(c => c.email === clientEmail);
-        if (client) {
-          CouponService.useCoupon(
-            validation.coupon.id,
-            'temp-booking-id',
-            client.id,
-            finalDiscount,
-            coupons,
-            setCoupons,
-            couponUsage,
-            setCouponUsage
-          );
-        }
+        const clientIdentifier = client?.id || clientEmail || 'guest';
+
+        CouponService.useCoupon(
+          validation.coupon.id,
+          'temp-booking-id',
+          clientIdentifier,
+          finalDiscount,
+          coupons,
+          setCoupons,
+          couponUsage,
+          setCouponUsage
+        );
+
+        console.log('✅ Cupão aplicado com sucesso:', {
+          couponCode: inputCouponPassword,
+          discount: finalDiscount,
+          clientIdentifier,
+          isRegistered: !!client
+        });
 
         setPaymentResult({ success: true });
         setTimeout(() => {
