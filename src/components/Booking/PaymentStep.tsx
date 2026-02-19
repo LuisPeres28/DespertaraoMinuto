@@ -482,15 +482,39 @@ export function PaymentStep({
               <p className="text-sm font-semibold">{bankTransferDetails.accountHolder}</p>
             </div>
             <div className="bg-white p-3 rounded-lg">
-              <p className="text-xs text-blue-600 font-medium mb-1">Valor</p>
+              <p className="text-xs text-blue-600 font-medium mb-1">Valor a Transferir</p>
               <p className="text-xl font-bold text-blue-700">€{amount.toFixed(2)}</p>
             </div>
+            <div className="bg-white p-3 rounded-lg">
+              <p className="text-xs text-blue-600 font-medium mb-1">Referência</p>
+              <p className="font-mono text-sm font-bold">{bankTransferDetails.reference}</p>
+            </div>
           </div>
-          <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-            <p className="text-sm text-blue-800">
-              ✅ Após efetuar a transferência, o seu agendamento será confirmado automaticamente.
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+            <p className="text-sm text-yellow-800 font-medium mb-2">
+              ⚠️ Instruções Importantes:
             </p>
+            <ul className="text-sm text-yellow-800 space-y-1">
+              <li>1. Efetue a transferência bancária com os dados acima</li>
+              <li>2. Use a referência fornecida para identificação</li>
+              <li>3. Clique no botão abaixo para confirmar o seu agendamento</li>
+              <li>4. O pagamento será verificado posteriormente</li>
+            </ul>
           </div>
+
+          <button
+            onClick={() => {
+              setPaymentResult({ success: true });
+              setTimeout(() => {
+                onPaymentSuccess(bankTransferDetails.reference);
+              }, 1500);
+            }}
+            className="w-full mt-4 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-base min-h-[48px] flex items-center justify-center"
+            style={{ touchAction: 'manipulation' }}
+          >
+            <CheckCircle className="w-5 h-5 mr-2" />
+            Confirmar Agendamento com Transferência
+          </button>
         </div>
       )}
 
@@ -505,8 +529,8 @@ export function PaymentStep({
       )}
 
       {/* Action Buttons */}
-      {/* Hide button for bank transfer when details are already shown */}
-      {!(selectedMethod === 'bank_transfer' && bankTransferDetails) && (
+      {/* Hide button for bank transfer when details are already shown, and for MB WAY when checking payment */}
+      {!(selectedMethod === 'bank_transfer' && bankTransferDetails) && !checkingPayment && (
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={handlePayment}
