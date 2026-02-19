@@ -14,6 +14,7 @@ export default defineConfig({
     },
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
   },
+  publicDir: false,
   build: {
     sourcemap: false,
     rollupOptions: {
