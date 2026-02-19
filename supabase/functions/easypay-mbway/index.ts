@@ -19,10 +19,17 @@ Deno.serve(async (req: Request) => {
 
     const accountId = Deno.env.get("EASYPAY_ACCOUNT_ID");
     const apiKey = Deno.env.get("EASYPAY_API_KEY");
+    const environment = Deno.env.get("EASYPAY_ENVIRONMENT") || "prod";
+
+    const baseUrl = environment === "sandbox"
+      ? "https://api.test.easypay.pt/2.0"
+      : "https://api.prod.easypay.pt/2.0";
 
     console.log("Checking Easypay credentials...");
     console.log("Account ID present:", !!accountId);
     console.log("API Key present:", !!apiKey);
+    console.log("Environment:", environment);
+    console.log("Base URL:", baseUrl);
 
     if (!accountId || !apiKey) {
       const missingVars = [];
@@ -62,7 +69,7 @@ Deno.serve(async (req: Request) => {
 
       console.log("Request body:", body);
 
-      const response = await fetch("https://api.prod.easypay.pt/2.0/single", {
+      const response = await fetch(`${baseUrl}/single`, {
         method: "POST",
         headers: {
           "AccountId": accountId,
@@ -98,7 +105,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "check") {
-      const response = await fetch(`https://api.prod.easypay.pt/2.0/single/${paymentId}`, {
+      const response = await fetch(`${baseUrl}/single/${paymentId}`, {
         method: "GET",
         headers: {
           "AccountId": accountId,
