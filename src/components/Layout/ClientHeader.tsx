@@ -13,10 +13,10 @@ export function ClientHeader({ onStaffLogin, user, onLogout }: ClientHeaderProps
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img
-              src="https://images.pexels.com/photos/3825517/pexels-photo-3825517.jpeg?auto=compress&cs=tinysrgb&w=400"
-              alt="Desperto Logo"
-              className="w-60 h-60 object-cover rounded-lg shadow-sm"
+            <img 
+              src="/Desperto LOGO.jpg" 
+              alt="Desperto Logo" 
+              className="w-60 h-60 object-contain rounded-lg shadow-sm"
             />
             <div>
               <h1 className="text-4xl font-bold text-desperto-gold">Desperto</h1>
