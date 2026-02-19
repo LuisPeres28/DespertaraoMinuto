@@ -11,7 +11,8 @@ import {
   UserPlus,
   Mail,
   Ticket,
-  Activity
+  Activity,
+  Smartphone
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -30,6 +31,7 @@ const navItems = [
   { id: 'therapist-notes', label: 'Notas', icon: FileText },
   { id: 'messages', label: 'Mensagens', icon: MessageSquare },
   { id: 'system-check', label: 'Diagnóstico Sistema', icon: Activity },
+  { id: 'mbway-test', label: 'Teste MB WAY', icon: Smartphone },
   { id: 'settings', label: 'Definições', icon: Settings },
   { id: 'email-setup', label: 'Configurar Email', icon: Mail },
   { id: 'therapist-management', label: 'Gerir Terapeutas', icon: Users },

@@ -38,12 +38,22 @@ export class PaymentService {
 
     try {
       const cleanPhone = phoneNumber.replace(/\s/g, '');
+      console.log('🔵 Telefone limpo:', cleanPhone);
+
       if (!cleanPhone.match(/^(\+351)?9[1236]\d{7}$/)) {
-        return { success: false, error: "Número de telemóvel inválido." };
+        return { success: false, error: "Número de telemóvel inválido. Use formato: 912345678" };
       }
 
       const url = import.meta.env.VITE_SUPABASE_URL;
       const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!url || !key) {
+        console.error('❌ Variáveis de ambiente não configuradas');
+        return { success: false, error: "Erro de configuração. Contacte o administrador." };
+      }
+
+      console.log('🔵 URL:', url);
+      console.log('🔵 Enviando pedido para:', `${url}/functions/v1/easypay-mbway`);
 
       const response = await fetch(`${url}/functions/v1/easypay-mbway`, {
         method: "POST",
@@ -59,11 +69,30 @@ export class PaymentService {
         })
       });
 
-      const result = await response.json();
+      console.log('🔵 Status da resposta:', response.status);
 
-      if (!response.ok || !result.success) {
+      const responseText = await response.text();
+      console.log('🔵 Resposta bruta:', responseText);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error('❌ Erro ao parsear JSON:', e);
+        return { success: false, error: `Resposta inválida do servidor: ${responseText}` };
+      }
+
+      if (!response.ok) {
+        console.error('❌ Resposta não OK:', result);
+        return { success: false, error: result.error || `Erro ${response.status}` };
+      }
+
+      if (!result.success) {
+        console.error('❌ Resultado sem sucesso:', result);
         return { success: false, error: result.error || "Erro ao comunicar com a Easypay." };
       }
+
+      console.log('✅ Pagamento criado:', result.paymentId);
 
       await supabase.from("payments").insert({
         id: result.paymentId,
@@ -86,8 +115,11 @@ export class PaymentService {
       };
 
     } catch (err) {
-      console.error(err);
-      return { success: false, error: "Erro interno no pagamento MB Way." };
+      console.error('❌ Exceção:', err);
+      return {
+        success: false,
+        error: `Erro: ${err instanceof Error ? err.message : 'Erro desconhecido'}`
+      };
     }
   }
 

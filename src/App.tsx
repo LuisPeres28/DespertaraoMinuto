@@ -19,6 +19,7 @@ import { UniversalAuth } from './components/Auth/UniversalAuth';
 import { ClientHistory } from './components/ClientBooking/ClientHistory';
 import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
 import { SystemCheck } from './components/Diagnostics/SystemCheck';
+import { MBWayTest } from './components/Diagnostics/MBWayTest';
 
 // Production environment - no hardcoded test users
 let defaultUsers: any[] = [];
@@ -246,6 +247,8 @@ function App() {
           return <TherapistNotes />;
         case 'system-check':
           return <SystemCheck />;
+        case 'mbway-test':
+          return <MBWayTest />;
         case 'messages':
           return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">

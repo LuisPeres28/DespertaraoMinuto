@@ -89,24 +89,33 @@ export function PaymentStep({
 
       try {
         setProcessingMBWay(true);
+        console.log('🔵 Iniciando pagamento MB WAY:', { amount, phone: mbwayPhone });
+
         const result = await PaymentService.processMBWayPayment(amount, mbwayPhone, 'temp-booking-id');
+
+        console.log('🔵 Resultado MB WAY:', result);
 
         if (result.success && result.paymentIntent) {
           setMbwayPaymentId(result.paymentIntent.id);
           setQrCodeUrl(result.paymentIntent.qrCodeUrl);
           setProcessingMBWay(false);
 
+          console.log('✅ Pedido MB WAY criado:', result.paymentIntent.id);
+
           // Start checking payment status
           setCheckingPayment(true);
 
           // Check payment status every 3 seconds for 3 minutes
           const checkInterval = setInterval(async () => {
+            console.log('🔍 Verificando status do pagamento...');
             const statusResult = await PaymentService.checkMBWayPaymentStatus(result.paymentIntent!.id);
+            console.log('📊 Status:', statusResult);
 
             if (statusResult.success) {
               clearInterval(checkInterval);
               setCheckingPayment(false);
               setPaymentResult({ success: true });
+              console.log('✅ Pagamento confirmado!');
               window.setTimeout(() => {
                 onPaymentSuccess(result.paymentIntent!.id);
               }, 1500);
@@ -122,16 +131,21 @@ export function PaymentStep({
                 success: false,
                 error: 'Tempo esgotado. Verifique a sua app MB WAY e aprove o pagamento.'
               });
+              console.log('⏱️ Timeout - pagamento não aprovado');
             }
           }, 180000);
 
         } else {
+          console.error('❌ Erro MB WAY:', result.error);
           setPaymentResult({ success: false, error: result.error || 'Erro no pagamento MB WAY' });
           setProcessingMBWay(false);
         }
       } catch (error) {
-        console.error('MB WAY error:', error);
-        setPaymentResult({ success: false, error: 'Erro ao processar MB WAY. Tente novamente.' });
+        console.error('❌ Exceção MB WAY:', error);
+        setPaymentResult({
+          success: false,
+          error: `Erro ao processar MB WAY: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        });
         setProcessingMBWay(false);
       } finally {
         setIsProcessing(false);
