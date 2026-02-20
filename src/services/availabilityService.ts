@@ -22,18 +22,11 @@ export class AvailabilityService {
     clients: any[] = [],
     allServices: any[] = []
   ): TimeSlot[] {
-    console.log('🚀 STARTING SLOT GENERATION');
-    console.log('📅 Date:', date.toDateString());
-    console.log('👨‍⚕️ Therapist ID:', selectedTherapistId);
-    
     const therapist = therapists.find(t => t.id === selectedTherapistId);
-    console.log('👨‍⚕️ Therapist found:', therapist?.name);
-    
+
     const availability = therapist?.availability;
-    console.log('⚙️ Has availability config:', !!availability);
-    
+
     if (!availability) {
-      console.log('❌ No availability config found');
       return [];
     }
     

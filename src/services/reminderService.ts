@@ -1,67 +1,32 @@
 import { Booking, Client, Service, Therapist } from '../types';
-import { EmailService } from './emailService';
+import { supabase } from '../lib/supabase';
 
 export class ReminderService {
-  private static reminderIntervals = [
-    { hours: 24, type: 'email' as const },
-    { hours: 2, type: 'sms' as const },
-    { hours: 1, type: 'email' as const }
-  ];
-
   static async scheduleReminders(
     booking: Booking,
     client: Client,
-    service: Service,
-    therapist: Therapist
+    _service: Service,
+    _therapist: Therapist
   ): Promise<void> {
     const bookingTime = new Date(booking.date);
+    const reminderIntervals = [
+      { hours: 24, type: 'email' as const, reminderType: '24h' as const },
+      { hours: 2, type: 'sms' as const, reminderType: '2h' as const },
+      { hours: 1, type: 'email' as const, reminderType: '1h' as const }
+    ];
 
-    for (const reminder of this.reminderIntervals) {
+    for (const reminder of reminderIntervals) {
       const reminderTime = new Date(bookingTime.getTime() - (reminder.hours * 60 * 60 * 1000));
-      
+
       if (reminderTime > new Date()) {
-        // In a real application, you would schedule these with a job queue like:
-        // - Bull Queue (Redis)
-        // - AWS SQS with Lambda
-        // - Cron jobs
-        // - Database-based scheduling
-        
-        console.log(`📅 Reminder scheduled: ${reminder.type} ${reminder.hours}h before appointment`);
-        
-        // Simulate scheduling
-        window.setTimeout(async () => {
-          await this.sendReminder(booking, client, service, therapist, reminder.hours, reminder.type);
-        }, reminderTime.getTime() - Date.now());
+        await supabase.from('scheduled_reminders').insert({
+          booking_id: booking.id,
+          reminder_type: reminder.reminderType,
+          notification_type: reminder.type,
+          scheduled_for: reminderTime.toISOString(),
+          status: 'pending'
+        });
       }
-    }
-  }
-
-  private static async sendReminder(
-    booking: Booking,
-    client: Client,
-    service: Service,
-    therapist: Therapist,
-    hoursUntil: number,
-    type: 'email' | 'sms'
-  ): Promise<void> {
-    if (booking.status === 'cancelled') return;
-
-    if (type === 'email') {
-      const emailTemplate = EmailService.generateReminderEmail(
-        booking,
-        client,
-        service,
-        therapist,
-        hoursUntil
-      );
-      
-      const success = await EmailService.sendEmail(client.email, emailTemplate);
-      console.log(`📧 Email reminder sent: ${success ? 'Success' : 'Failed'}`);
-    } else if (type === 'sms' && client.phone) {
-      const smsMessage = `Lembrete: Consulta ${service.name} em ${hoursUntil}h com ${therapist.name}. Desperto - ${new Date(booking.date).toLocaleString('pt-PT')}`;
-      
-      const success = await EmailService.sendSMS(client.phone, smsMessage);
-      console.log(`📱 SMS reminder sent: ${success ? 'Success' : 'Failed'}`);
     }
   }
 
@@ -69,27 +34,61 @@ export class ReminderService {
     booking: Booking,
     client: Client,
     service: Service,
-    therapist: Therapist,
+    _therapist: Therapist,
     type: 'confirmation' | 'cancellation' | 'reschedule'
   ): Promise<void> {
-    let emailTemplate;
-    
+    const bookingDate = new Date(booking.date);
+    const formattedDate = bookingDate.toLocaleDateString('pt-PT', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    const formattedTime = bookingDate.toLocaleTimeString('pt-PT', {
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    let subject = '';
+    let message = '';
+
     switch (type) {
       case 'confirmation':
-        emailTemplate = EmailService.generateConfirmationEmail(booking, client, service, therapist);
+        subject = `Confirmacao de Agendamento - ${service.name}`;
+        message = `Ola ${client.name},\n\nO seu agendamento foi confirmado.\n\nServico: ${service.name}\nData: ${formattedDate}\nHora: ${formattedTime}\nDuracao: ${service.duration} minutos`;
         break;
       case 'cancellation':
-        emailTemplate = {
-          subject: 'Agendamento Cancelado',
-          body: `Olá ${client.name}, o seu agendamento de ${service.name} foi cancelado.`
-        };
+        subject = 'Agendamento Cancelado';
+        message = `Ola ${client.name},\n\nO seu agendamento de ${service.name} marcado para ${formattedDate} as ${formattedTime} foi cancelado.`;
         break;
       case 'reschedule':
-        emailTemplate = EmailService.generateConfirmationEmail(booking, client, service, therapist);
-        emailTemplate.subject = 'Agendamento Reagendado - ' + service.name;
+        subject = `Agendamento Reagendado - ${service.name}`;
+        message = `Ola ${client.name},\n\nO seu agendamento foi reagendado.\n\nServico: ${service.name}\nNova data: ${formattedDate}\nHora: ${formattedTime}`;
         break;
     }
-    
-    await EmailService.sendEmail(client.email, emailTemplate);
+
+    await supabase.from('notifications').insert({
+      type: 'email',
+      recipient_type: 'client',
+      recipient_id: client.id,
+      recipient_email: client.email,
+      subject,
+      message,
+      booking_id: booking.id,
+      status: 'pending',
+      scheduled_for: new Date().toISOString()
+    });
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/process-notifications`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+      });
+    } catch (_error) {
+      // Notification processing will be retried by cron
+    }
   }
 }

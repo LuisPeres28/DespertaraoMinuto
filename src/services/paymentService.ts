@@ -34,11 +34,8 @@ export class PaymentService {
 
   // 2. MB WAY (Via Servidor Supabase)
   static async processMBWayPayment(amount: number, phoneNumber: string, bookingId: string): Promise<PaymentResult> {
-    console.log("📱 A iniciar pagamento MB WAY via Servidor...");
-
     try {
       const cleanPhone = phoneNumber.replace(/\s/g, '');
-      console.log('🔵 Telefone limpo:', cleanPhone);
 
       if (!cleanPhone.match(/^(\+351)?9[1236]\d{7}$/)) {
         return { success: false, error: "Número de telemóvel inválido. Use formato: 912345678" };
@@ -48,12 +45,8 @@ export class PaymentService {
       const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       if (!url || !key) {
-        console.error('❌ Variáveis de ambiente não configuradas');
         return { success: false, error: "Erro de configuração. Contacte o administrador." };
       }
-
-      console.log('🔵 URL:', url);
-      console.log('🔵 Enviando pedido para:', `${url}/functions/v1/easypay-mbway`);
 
       const response = await fetch(`${url}/functions/v1/easypay-mbway`, {
         method: "POST",
@@ -69,30 +62,22 @@ export class PaymentService {
         })
       });
 
-      console.log('🔵 Status da resposta:', response.status);
-
       const responseText = await response.text();
-      console.log('🔵 Resposta bruta:', responseText);
 
       let result;
       try {
         result = JSON.parse(responseText);
-      } catch (e) {
-        console.error('❌ Erro ao parsear JSON:', e);
-        return { success: false, error: `Resposta inválida do servidor: ${responseText}` };
+      } catch {
+        return { success: false, error: 'Resposta invalida do servidor' };
       }
 
       if (!response.ok) {
-        console.error('❌ Resposta não OK:', result);
         return { success: false, error: result.error || `Erro ${response.status}` };
       }
 
       if (!result.success) {
-        console.error('❌ Resultado sem sucesso:', result);
         return { success: false, error: result.error || "Erro ao comunicar com a Easypay." };
       }
-
-      console.log('✅ Pagamento criado:', result.paymentId);
 
       await supabase.from("payments").insert({
         id: result.paymentId,
@@ -115,7 +100,6 @@ export class PaymentService {
       };
 
     } catch (err) {
-      console.error('❌ Exceção:', err);
       return {
         success: false,
         error: `Erro: ${err instanceof Error ? err.message : 'Erro desconhecido'}`

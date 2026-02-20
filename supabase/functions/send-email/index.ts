@@ -24,28 +24,25 @@ Deno.serve(async (req: Request) => {
   try {
     const emailData: EmailRequest = await req.json();
 
-    console.log('📧 Sending email via Resend...', {
-      to: emailData.to_email,
-      subject: emailData.subject,
-    });
-
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-
     if (!resendApiKey) {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    // Prepare HTML email body
+    const senderDomain = Deno.env.get("RESEND_SENDER_DOMAIN") || "onboarding@resend.dev";
+    const fromAddress = `Desperto <${senderDomain}>`;
+
     const htmlBody = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .header { background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .header h1 { margin: 0; font-size: 24px; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none; }
             .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
           </style>
         </head>
@@ -58,14 +55,13 @@ Deno.serve(async (req: Request) => {
               ${emailData.message.replace(/\n/g, '<br>')}
             </div>
             <div class="footer">
-              <p>Este email foi enviado automaticamente. Por favor não responda.</p>
+              <p>Este email foi enviado automaticamente. Por favor nao responda.</p>
             </div>
           </div>
         </body>
       </html>
     `;
 
-    // Send email through Resend API
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -73,9 +69,9 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Desperto <onboarding@resend.dev>',
+        from: fromAddress,
         to: [emailData.to_email],
-        subject: emailData.subject || 'Confirmação de Agendamento - Desperto',
+        subject: emailData.subject || 'Desperto - Notificacao',
         html: htmlBody,
       }),
     });
@@ -83,11 +79,8 @@ Deno.serve(async (req: Request) => {
     const responseData = await response.json();
 
     if (!response.ok) {
-      console.error('❌ Resend error:', responseData);
       throw new Error(`Resend API error: ${response.status} - ${JSON.stringify(responseData)}`);
     }
-
-    console.log('✅ Email sent successfully via Resend!', responseData);
 
     return new Response(
       JSON.stringify({
@@ -102,8 +95,6 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (error) {
-    console.error('❌ Send email function error:', error);
-
     return new Response(
       JSON.stringify({
         success: false,

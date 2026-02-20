@@ -19,13 +19,6 @@ export class NotificationService {
     bookingDate: Date
   ): Promise<NotificationResult> {
     try {
-      console.log('📬 Creating booking notifications...', {
-        bookingId,
-        clientEmail,
-        clientPhone,
-        bookingDate
-      });
-
       const { error: notificationError } = await supabase.rpc(
         'create_booking_notifications',
         {
@@ -38,12 +31,7 @@ export class NotificationService {
         }
       );
 
-      if (notificationError) {
-        console.error('❌ Error creating notifications:', notificationError);
-        throw notificationError;
-      }
-
-      console.log('✅ Notifications created successfully');
+      if (notificationError) throw notificationError;
 
       const { error: reminderError } = await supabase.rpc(
         'schedule_booking_reminders',
@@ -53,26 +41,21 @@ export class NotificationService {
         }
       );
 
-      if (reminderError) {
-        console.error('❌ Error scheduling reminders:', reminderError);
-        throw reminderError;
-      }
-
-      console.log('✅ Reminders scheduled successfully');
+      if (reminderError) throw reminderError;
 
       await this.triggerNotificationProcessing();
 
       return {
         success: true,
-        message: 'Notificações criadas e enviadas com sucesso',
+        message: 'Notificacoes criadas e enviadas com sucesso',
         emailSent: true,
         smsSent: !!clientPhone
       };
     } catch (error) {
-      console.error('❌ Notification service error:', error);
+      console.error('Notification service error:', error);
       return {
         success: false,
-        message: 'Erro ao criar notificações',
+        message: 'Erro ao criar notificacoes',
         emailSent: false,
         smsSent: false
       };
@@ -83,11 +66,8 @@ export class NotificationService {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const apiUrl = `${supabaseUrl}/functions/v1/process-notifications`;
 
-      console.log('🔄 Triggering notification processing...');
-
-      const response = await fetch(apiUrl, {
+      await fetch(`${supabaseUrl}/functions/v1/process-notifications`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${supabaseAnonKey}`,
@@ -95,16 +75,8 @@ export class NotificationService {
         },
         body: JSON.stringify({})
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('❌ Failed to trigger notification processing:', error);
-      } else {
-        const result = await response.json();
-        console.log('✅ Notification processing triggered:', result);
-      }
-    } catch (error) {
-      console.error('❌ Error triggering notification processing:', error);
+    } catch {
+      // Will be retried by cron
     }
   }
 
@@ -123,7 +95,7 @@ export class NotificationService {
         recipient_id: clientId,
         recipient_email: clientEmail,
         subject: 'Consulta Reagendada',
-        message: `A sua consulta foi reagendada.\n\nData anterior: ${oldDate.toLocaleString('pt-PT')}\nNova data: ${newDate.toLocaleString('pt-PT')}\n\nMotivo: ${notes || 'Não especificado'}`,
+        message: `A sua consulta foi reagendada.\n\nData anterior: ${oldDate.toLocaleString('pt-PT')}\nNova data: ${newDate.toLocaleString('pt-PT')}\n\nMotivo: ${notes || 'Nao especificado'}`,
         booking_id: bookingId,
         status: 'pending',
         scheduled_for: new Date().toISOString()
@@ -131,33 +103,29 @@ export class NotificationService {
 
       if (error) throw error;
 
-      const adminNotification = await supabase.from('notifications').insert({
+      await supabase.from('notifications').insert({
         type: 'email',
         recipient_type: 'admin',
         recipient_email: this.ADMIN_EMAIL,
         subject: 'Consulta Reagendada',
-        message: `Consulta reagendada.\n\nCliente: ${clientEmail}\nData anterior: ${oldDate.toLocaleString('pt-PT')}\nNova data: ${newDate.toLocaleString('pt-PT')}\n\nMotivo: ${notes || 'Não especificado'}`,
+        message: `Consulta reagendada.\n\nCliente: ${clientEmail}\nData anterior: ${oldDate.toLocaleString('pt-PT')}\nNova data: ${newDate.toLocaleString('pt-PT')}\n\nMotivo: ${notes || 'Nao especificado'}`,
         booking_id: bookingId,
         status: 'pending',
         scheduled_for: new Date().toISOString()
       });
 
-      if (adminNotification.error) {
-        console.error('❌ Failed to create admin notification:', adminNotification.error);
-      }
-
       await this.triggerNotificationProcessing();
 
       return {
         success: true,
-        message: 'Notificação de reagendamento enviada',
+        message: 'Notificacao de reagendamento enviada',
         emailSent: true
       };
     } catch (error) {
-      console.error('❌ Error sending reschedule notification:', error);
+      console.error('Error sending reschedule notification:', error);
       return {
         success: false,
-        message: 'Erro ao enviar notificação',
+        message: 'Erro ao enviar notificacao',
         emailSent: false
       };
     }
@@ -177,7 +145,7 @@ export class NotificationService {
         recipient_id: clientId,
         recipient_email: clientEmail,
         subject: 'Consulta Cancelada',
-        message: `A sua consulta foi cancelada.\n\nServiço: ${serviceName}\nData: ${bookingDate.toLocaleString('pt-PT')}\n\nSe tiver alguma dúvida, por favor contacte-nos.`,
+        message: `A sua consulta foi cancelada.\n\nServico: ${serviceName}\nData: ${bookingDate.toLocaleString('pt-PT')}\n\nSe tiver alguma duvida, por favor contacte-nos.`,
         booking_id: bookingId,
         status: 'pending',
         scheduled_for: new Date().toISOString()
@@ -185,20 +153,16 @@ export class NotificationService {
 
       if (error) throw error;
 
-      const adminNotification = await supabase.from('notifications').insert({
+      await supabase.from('notifications').insert({
         type: 'email',
         recipient_type: 'admin',
         recipient_email: this.ADMIN_EMAIL,
         subject: 'Consulta Cancelada',
-        message: `Consulta cancelada.\n\nCliente: ${clientEmail}\nServiço: ${serviceName}\nData: ${bookingDate.toLocaleString('pt-PT')}`,
+        message: `Consulta cancelada.\n\nCliente: ${clientEmail}\nServico: ${serviceName}\nData: ${bookingDate.toLocaleString('pt-PT')}`,
         booking_id: bookingId,
         status: 'pending',
         scheduled_for: new Date().toISOString()
       });
-
-      if (adminNotification.error) {
-        console.error('❌ Failed to create admin notification:', adminNotification.error);
-      }
 
       await supabase
         .from('scheduled_reminders')
@@ -210,14 +174,14 @@ export class NotificationService {
 
       return {
         success: true,
-        message: 'Notificação de cancelamento enviada',
+        message: 'Notificacao de cancelamento enviada',
         emailSent: true
       };
     } catch (error) {
-      console.error('❌ Error sending cancellation notification:', error);
+      console.error('Error sending cancellation notification:', error);
       return {
         success: false,
-        message: 'Erro ao enviar notificação',
+        message: 'Erro ao enviar notificacao',
         emailSent: false
       };
     }
@@ -232,10 +196,8 @@ export class NotificationService {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-
       return data;
-    } catch (error) {
-      console.error('❌ Error fetching notifications:', error);
+    } catch {
       return [];
     }
   }
@@ -249,10 +211,8 @@ export class NotificationService {
         .order('scheduled_for', { ascending: true });
 
       if (error) throw error;
-
       return data;
-    } catch (error) {
-      console.error('❌ Error fetching scheduled reminders:', error);
+    } catch {
       return [];
     }
   }

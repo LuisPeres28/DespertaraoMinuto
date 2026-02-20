@@ -31,18 +31,11 @@ export class AuthService {
       }
 
       // USAR FUNÇÃO DO SUPABASE para autenticar com bcrypt
-      console.log('🔍 Chamando authenticate_user com:', { p_identifier: username, p_password: '***' });
       const { data: authResult, error: authError } = await supabase
         .rpc('authenticate_user', {
           p_identifier: username,
           p_password: password
         });
-
-      console.log('📊 Resultado authenticate_user:', {
-        authResult,
-        authError: authError?.message,
-        success: authResult?.success
-      });
 
       if (authError || !authResult || !authResult.success) {
         // Tentar encontrar o user para incrementar failed attempts
@@ -79,7 +72,7 @@ export class AuthService {
       try {
         await supabase.rpc('set_current_user', { user_id: authenticatedUser.id });
       } catch (error) {
-        console.error('Error setting user context:', error);
+        console.error(error);
       }
 
       // Verificar se 2FA está ativado
@@ -114,7 +107,7 @@ export class AuthService {
       };
 
     } catch (error) {
-      console.error('Login error:', error);
+      console.error(error);
       return { success: false, error: 'Erro interno do servidor' };
     }
   }
@@ -141,7 +134,7 @@ export class AuthService {
 
       return { isLocked: false };
     } catch (error) {
-      console.error('Error checking lockout:', error);
+      console.error(error);
       return { isLocked: false };
     }
   }
@@ -176,7 +169,7 @@ export class AuthService {
       
       return newFailedAttempts;
     } catch (error) {
-      console.error('Error handling failed login:', error);
+      console.error(error);
       return 1;
     }
   }
@@ -200,7 +193,7 @@ export class AuthService {
 
 
     } catch (error) {
-      console.error('Error handling successful login:', error);
+      console.error(error);
     }
   }
 
@@ -236,7 +229,7 @@ export class AuthService {
           })
         });
       } catch (error) {
-        console.error('Error sending 2FA SMS:', error);
+        console.error(error);
       }
     }
 
@@ -254,7 +247,7 @@ export class AuthService {
         })
       });
     } catch (error) {
-      console.error('Error sending 2FA email:', error);
+      console.error(error);
     }
   }
 
@@ -285,7 +278,7 @@ export class AuthService {
       return { success: false, error: 'Método inválido' };
 
     } catch (error) {
-      console.error('Error requesting password reset:', error);
+      console.error(error);
       return { success: false, error: 'Erro interno do servidor' };
     }
   }
@@ -326,7 +319,7 @@ export class AuthService {
       return { success: true };
 
     } catch (error) {
-      console.error('Error sending password reset email:', error);
+      console.error(error);
       return { success: false, error: 'Erro ao enviar email' };
     }
   }
@@ -370,7 +363,7 @@ export class AuthService {
       return { success: true };
 
     } catch (error) {
-      console.error('Error sending password reset SMS:', error);
+      console.error(error);
       return { success: false, error: 'Erro ao enviar SMS' };
     }
   }
@@ -400,7 +393,7 @@ export class AuthService {
       return { success: true, questions };
 
     } catch (error) {
-      console.error('Error loading security questions:', error);
+      console.error(error);
       return { success: false, error: 'Erro ao carregar perguntas de segurança' };
     }
   }
@@ -502,7 +495,7 @@ export class AuthService {
       };
 
     } catch (error) {
-      console.error('SignUp error:', error);
+      console.error(error);
       return { success: false, error: 'Erro interno do servidor' };
     }
   }

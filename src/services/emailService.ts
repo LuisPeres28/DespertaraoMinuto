@@ -1,5 +1,4 @@
 import { Booking, Client, Service, Therapist } from '../types';
-import emailjs from '@emailjs/browser';
 
 export interface EmailTemplate {
   subject: string;
@@ -7,15 +6,15 @@ export interface EmailTemplate {
 }
 
 export class EmailService {
-  static async initialize() {
-    try {
-      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-      if (publicKey) {
-        emailjs.init(publicKey);
-      }
-    } catch (error) {
-      console.error('Error initializing EmailJS:', error);
-    }
+  private static getEdgeFunctionHeaders() {
+    return {
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  private static getEdgeFunctionUrl(fn: string) {
+    return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${fn}`;
   }
 
   static generateConfirmationEmail(
@@ -27,56 +26,19 @@ export class EmailService {
   ): EmailTemplate {
     const bookingDate = new Date(booking.date);
     const formattedDate = bookingDate.toLocaleDateString('pt-PT', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
     const formattedTime = bookingDate.toLocaleTimeString('pt-PT', {
-      hour: '2-digit',
-      minute: '2-digit'
+      hour: '2-digit', minute: '2-digit'
     });
 
-    const couponSection = couponPassword ? `
+    const couponSection = couponPassword
+      ? `\nCupao gratuito utilizado - Password validada: ${couponPassword}\nConsulta gratuita confirmada para ${formattedDate} as ${formattedTime}\n`
+      : '';
 
-🎫 **CUPÃO GRATUITO UTILIZADO:**
-Password validada: **${couponPassword}**
-
-✅ O seu cupão foi validado com sucesso! Consulta gratuita confirmada.
-Válida para: ${formattedDate} às ${formattedTime}
-
-` : '';
     return {
-      subject: `Confirmação de Agendamento - ${service.name}`,
-      body: `
-Olá ${client.name},
-
-O seu agendamento foi confirmado com sucesso!
-
-📅 **Detalhes do Agendamento:**
-- **Serviço:** ${service.name}
-- **Terapeuta:** ${therapist.name}
-- **Data:** ${formattedDate}
-- **Hora:** ${formattedTime}
-- **Duração:** ${service.duration} minutos
-- **Preço:** €${service.price}
-
-📍 **Localização:** Desperto - Coaching ao Minuto
-
-📞 **Contacto:** Para qualquer questão, pode contactar-nos através deste email.
-
-🔗 **Gerir Agendamento:**
-- [Reagendar Consulta](${window.location.origin}/reschedule/${booking.id})
-- [Cancelar Consulta](${window.location.origin}/cancel/${booking.id})
-
-**Importante:** Por favor, chegue 5 minutos antes da hora marcada.
-
-Obrigado por escolher a Desperto!
-
-Com os melhores cumprimentos,
-Equipa Desperto
-euestoudesperto@gmail.com
-      `
+      subject: `Confirmacao de Agendamento - ${service.name}`,
+      body: `Ola ${client.name},\n\nO seu agendamento foi confirmado com sucesso!\n\nDetalhes do Agendamento:\n- Servico: ${service.name}\n- Terapeuta: ${therapist.name}\n- Data: ${formattedDate}\n- Hora: ${formattedTime}\n- Duracao: ${service.duration} minutos\n- Preco: ${service.price}EUR${couponSection}\n\nLocalizacao: Desperto - Coaching ao Minuto\n\nImportante: Por favor, chegue 5 minutos antes da hora marcada.\n\nObrigado por escolher a Desperto!\n\nCumprimentos,\nEquipa Desperto`
     };
   }
 
@@ -90,35 +52,12 @@ euestoudesperto@gmail.com
     const bookingDate = new Date(booking.date);
     const formattedDate = bookingDate.toLocaleDateString('pt-PT');
     const formattedTime = bookingDate.toLocaleTimeString('pt-PT', {
-      hour: '2-digit',
-      minute: '2-digit'
+      hour: '2-digit', minute: '2-digit'
     });
 
     return {
       subject: `Lembrete: Consulta em ${hoursUntil} horas - ${service.name}`,
-      body: `
-Olá ${client.name},
-
-Este é um lembrete da sua consulta marcada para hoje.
-
-📅 **Detalhes:**
-- **Serviço:** ${service.name}
-- **Terapeuta:** ${therapist.name}
-- **Data:** ${formattedDate}
-- **Hora:** ${formattedTime}
-- **Duração:** ${service.duration} minutos
-
-📍 **Localização:** Desperto - Despertar ao Minuto
-
-🔗 **Precisa de reagendar?**
-- [Reagendar Consulta](${window.location.origin}/reschedule/${booking.id})
-- [Cancelar Consulta](${window.location.origin}/cancel/${booking.id})
-
-Aguardamos por si!
-
-Equipa Desperto
-euestoudesperto@gmail.com
-      `
+      body: `Ola ${client.name},\n\nEste e um lembrete da sua consulta marcada para hoje.\n\nDetalhes:\n- Servico: ${service.name}\n- Terapeuta: ${therapist.name}\n- Data: ${formattedDate}\n- Hora: ${formattedTime}\n- Duracao: ${service.duration} minutos\n\nLocalizacao: Desperto - Coaching ao Minuto\n\nAguardamos por si!\n\nEquipa Desperto`
     };
   }
 
@@ -129,104 +68,46 @@ euestoudesperto@gmail.com
     bookingTime: string,
     location: string
   ): Promise<boolean> {
-    console.log('🚀 === STARTING EMAIL SEND PROCESS (via Edge Function) ===');
-
     try {
       const dateDay = String(bookingDate.getDate()).padStart(2, '0');
       const dateMonth = String(bookingDate.getMonth() + 1).padStart(2, '0');
       const dateYear = String(bookingDate.getFullYear());
       const formattedDate = `${dateDay}/${dateMonth}/${dateYear}`;
 
-      const emailData = {
-        to_email: clientEmail,
-        to_name: clientName,
-        date: formattedDate,
-        time: bookingTime,
-        location: location,
-        message: "Nova marcação via Website"
-      };
-
-      console.log('📋 Sending email via Edge Function:', emailData);
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const apiUrl = `${supabaseUrl}/functions/v1/send-email`;
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch(this.getEdgeFunctionUrl('send-email'), {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData)
+        headers: this.getEdgeFunctionHeaders(),
+        body: JSON.stringify({
+          to_email: clientEmail,
+          to_name: clientName,
+          subject: 'Confirmacao de Agendamento - Desperto',
+          message: `Ola ${clientName},\n\nA sua marcacao foi confirmada para ${formattedDate} as ${bookingTime}.\n\nLocal: ${location}\n\nCumprimentos,\nEquipa Desperto`
+        })
       });
 
       const result = await response.json();
-
-      if (!response.ok) {
-        console.error('❌ Edge Function error:', result);
-        throw new Error(result.error || 'Failed to send email');
-      }
-
-      console.log('✅ Email sent successfully via Edge Function!', result);
-      return true;
-
-    } catch (error: any) {
-      console.error('❌ Email error:', error);
-      // Don't show aggressive alerts - just log the error
-      console.warn('⚠️ Email não foi enviado, mas a reserva foi criada');
-      // Return true to allow booking to continue
+      return result.success === true;
+    } catch {
       return true;
     }
   }
 
   static async sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
     try {
-      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-
-      if (!serviceId || !templateId || !publicKey) {
-        console.warn('⚠️ EmailJS environment variables not configured');
-        console.log('📧 Email details for manual sending:');
-        console.log('From: euestoudesperto@gmail.com');
-        console.log('To:', to);
-        console.log('Subject:', template.subject);
-        console.log('Body:', template.body);
-        return true;
-      }
-
-      console.log('📧 Sending email to:', to);
-      console.log('📧 Using Service ID:', serviceId);
-      console.log('📧 Using Template ID:', templateId);
-
-      const result = await emailjs.send(
-        serviceId,
-        templateId,
-        {
+      const response = await fetch(this.getEdgeFunctionUrl('send-email'), {
+        method: 'POST',
+        headers: this.getEdgeFunctionHeaders(),
+        body: JSON.stringify({
           to_email: to,
-          from_email: 'euestoudesperto@gmail.com',
           subject: template.subject,
-          message: template.body,
-          reply_to: 'euestoudesperto@gmail.com'
-        },
-        publicKey
-      );
+          message: template.body
+        })
+      });
 
-      console.log('✅ Email sent successfully:', result);
-      return true;
-    } catch (error) {
-      console.error('❌ Email sending failed:', error);
-
-      // Fallback: Log the email details for manual sending
-      console.log('📧 Email details for manual sending:');
-      console.log('From: euestoudesperto@gmail.com');
-      console.log('To:', to);
-      console.log('Subject:', template.subject);
-      console.log('Body:', template.body);
-
-      // For now, return true to continue the booking process
-      return true;
+      const result = await response.json();
+      return result.success === true;
+    } catch {
+      return false;
     }
   }
 
@@ -239,103 +120,55 @@ euestoudesperto@gmail.com
     serviceName: string
   ): Promise<boolean> {
     try {
-      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-      const templateId = import.meta.env.VITE_EMAILJS_RESCHEDULE_TEMPLATE_ID;
-      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-      const adminEmail = 'euestoudesperto@gmail.com';
-
-      if (!serviceId || !templateId || !publicKey) {
-        console.warn('⚠️ EmailJS reschedule template not configured');
-        console.log('📧 Reschedule notification details:');
-        console.log('To: Admin', adminEmail);
-        console.log('Client:', clientName, clientEmail);
-        console.log('Old Date:', oldDate);
-        console.log('New Date:', newDate);
-        console.log('Notes:', notes);
-        return true;
-      }
-
       const formattedOldDate = oldDate.toLocaleDateString('pt-PT', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
       });
 
       const formattedNewDate = newDate.toLocaleDateString('pt-PT', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
       });
 
-      console.log('📧 Sending reschedule notification to admin');
+      const adminResponse = await fetch(this.getEdgeFunctionUrl('send-email'), {
+        method: 'POST',
+        headers: this.getEdgeFunctionHeaders(),
+        body: JSON.stringify({
+          to_email: 'euestoudesperto@gmail.com',
+          subject: `Consulta Reagendada - ${clientName}`,
+          message: `Consulta reagendada.\n\nCliente: ${clientName} (${clientEmail})\nServico: ${serviceName}\nData anterior: ${formattedOldDate}\nNova data: ${formattedNewDate}\nMotivo: ${notes || 'Nao especificado'}`
+        })
+      });
 
-      const result = await emailjs.send(
-        serviceId,
-        templateId,
-        {
-          to_email: adminEmail,
-          name: clientName,
-          email: clientEmail,
-          date: formattedOldDate,
-          new_date: formattedNewDate,
-          notes: notes || 'Sem motivo especificado',
-          service: serviceName,
-          reply_to: clientEmail
-        },
-        publicKey
-      );
+      const adminResult = await adminResponse.json();
 
-      console.log('✅ Reschedule notification sent successfully:', result);
-      return true;
-    } catch (error) {
-      console.error('❌ Reschedule notification failed:', error);
+      await fetch(this.getEdgeFunctionUrl('send-email'), {
+        method: 'POST',
+        headers: this.getEdgeFunctionHeaders(),
+        body: JSON.stringify({
+          to_email: clientEmail,
+          subject: `Agendamento Reagendado - ${serviceName}`,
+          message: `Ola ${clientName},\n\nO seu agendamento foi reagendado.\n\nData anterior: ${formattedOldDate}\nNova data: ${formattedNewDate}\n\nSe tiver alguma duvida, contacte-nos.\n\nCumprimentos,\nEquipa Desperto`
+        })
+      });
+
+      return adminResult.success === true;
+    } catch {
       return false;
     }
   }
 
   static async sendSMS(to: string, message: string): Promise<boolean> {
-    console.log('🚀 === STARTING SMS SEND PROCESS (via Edge Function) ===');
-
     try {
-      const smsData = {
-        to: to,
-        message: message
-      };
-
-      console.log('📋 Sending SMS via Edge Function:', smsData);
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const apiUrl = `${supabaseUrl}/functions/v1/send-sms`;
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch(this.getEdgeFunctionUrl('send-sms'), {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(smsData)
+        headers: this.getEdgeFunctionHeaders(),
+        body: JSON.stringify({ to, message })
       });
 
       const result = await response.json();
-
-      if (!response.ok) {
-        console.error('❌ Edge Function error:', result);
-        throw new Error(result.error || 'Failed to send SMS');
-      }
-
-      console.log('✅ SMS sent successfully via Edge Function!', result);
-      return true;
-
-    } catch (error: any) {
-      console.error('❌ SMS error:', error);
-      console.warn('⚠️ SMS não foi enviado');
+      return result.success === true;
+    } catch {
       return false;
     }
   }
