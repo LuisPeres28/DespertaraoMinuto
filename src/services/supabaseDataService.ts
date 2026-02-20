@@ -83,6 +83,30 @@ export class SupabaseDataService {
       });
   }
 
+  static async fetchServicesByTherapist(therapistId: string): Promise<Service[]> {
+    const { data, error } = await supabase
+      .from('therapist_services')
+      .select('service_id, services(*)')
+      .eq('therapist_id', therapistId);
+
+    if (error) {
+      console.error('Error fetching therapist services:', error);
+      return [];
+    }
+
+    return (data || [])
+      .filter((ts: any) => ts.services && ts.services.is_active)
+      .map((ts: any) => ({
+        id: ts.services.id,
+        name: ts.services.name,
+        duration: ts.services.duration,
+        price: Number(ts.services.price),
+        description: ts.services.description || '',
+        category: ts.services.category || '',
+        therapistId: therapistId,
+      }));
+  }
+
   static async fetchBookings(): Promise<Booking[]> {
     const { data, error } = await supabase
       .from('bookings')

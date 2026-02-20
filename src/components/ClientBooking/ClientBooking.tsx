@@ -89,11 +89,21 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
   const [showHistory, setShowHistory] = useState(false);
 
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [therapistServices, setTherapistServices] = useState<typeof services>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
 
-  // Get services for selected therapist
-  const availableServices = selectedTherapist 
-    ? services.filter(service => service.therapistId === selectedTherapist)
-    : [];
+  React.useEffect(() => {
+    if (!selectedTherapist) {
+      setTherapistServices([]);
+      return;
+    }
+    setLoadingServices(true);
+    SupabaseDataService.fetchServicesByTherapist(selectedTherapist)
+      .then(setTherapistServices)
+      .finally(() => setLoadingServices(false));
+  }, [selectedTherapist]);
+
+  const availableServices = therapistServices;
 
   // Get selected service details
   const selectedServiceDetails = services.find(s => s.id === selectedService);
