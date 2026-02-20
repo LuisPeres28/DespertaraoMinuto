@@ -54,8 +54,7 @@ export class SupabaseDataService {
       .map(u => {
         const profile = profileMap.get(u.id);
         const availConfig = profile?.availability_config || {};
-        const availability: TherapistAvailability | undefined =
-          availConfig.workingDays ? {
+        const availability: TherapistAvailability = {
             id: u.id,
             therapistId: u.id,
             workingDays: availConfig.workingDays || [1, 2, 3, 4, 5],
@@ -69,7 +68,7 @@ export class SupabaseDataService {
             bufferTime: availConfig.bufferTime || 15,
             maxAdvanceBooking: availConfig.maxAdvanceBooking || 30,
             minAdvanceNotice: availConfig.minAdvanceNotice || 2,
-          } : undefined;
+          };
 
         return {
           id: u.id,
@@ -83,8 +82,7 @@ export class SupabaseDataService {
           status: 'active' as const,
           availability,
         };
-      })
-      .filter(t => t.availability);
+      });
   }
 
   static async fetchBookings(): Promise<Booking[]> {
