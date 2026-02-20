@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppProvider } from './context/AppContext.tsx';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { EmailService } from './services/emailService';
+import { useHashRouter } from './hooks/useHashRouter';
 import { ClientBooking } from './components/ClientBooking/ClientBooking';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { Sidebar } from './components/Layout/Sidebar';
@@ -18,14 +19,13 @@ import { TherapistNotes } from './components/Therapists/TherapistNotes';
 import { UniversalAuth } from './components/Auth/UniversalAuth';
 import { ClientHistory } from './components/ClientBooking/ClientHistory';
 import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
+import { BookingActionPage } from './components/BookingAction/BookingActionPage';
 import { SystemCheck } from './components/Diagnostics/SystemCheck';
 import { MBWayTest } from './components/Diagnostics/MBWayTest';
 
-// Production environment - no hardcoded test users
-let defaultUsers: any[] = [];
-
 function App() {
   const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
+  const { route, clearRoute } = useHashRouter();
   const [activeTab, setActiveTab] = useState('client-booking');
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(null);
@@ -187,7 +187,34 @@ function App() {
 
   const renderContent = () => {
     try {
-      // If client is logged in, show client dashboard or booking form
+      if (route.path === '/cancel' && route.params.bookingId) {
+        return (
+          <BookingActionPage
+            bookingId={route.params.bookingId}
+            action="cancel"
+            onBack={clearRoute}
+          />
+        );
+      }
+      if (route.path === '/reschedule' && route.params.bookingId) {
+        return (
+          <BookingActionPage
+            bookingId={route.params.bookingId}
+            action="reschedule"
+            onBack={clearRoute}
+          />
+        );
+      }
+      if (route.path === '/booking' && route.params.bookingId) {
+        return (
+          <BookingActionPage
+            bookingId={route.params.bookingId}
+            action="view"
+            onBack={clearRoute}
+          />
+        );
+      }
+
       if (isClientUser) {
         if (showClientBookingForm) {
           return (
@@ -286,11 +313,6 @@ function App() {
       );
     }
   };
-
-  // Debug logging
-  console.log('🔍 App render - user:', user?.email, 'type:', user?.userType);
-  console.log('🔍 App render - isStaffUser:', isStaffUser, 'isClientUser:', isClientUser);
-  console.log('🔍 App render - activeTab:', activeTab);
 
   return (
     <AppProvider>

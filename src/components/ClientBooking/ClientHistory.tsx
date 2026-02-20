@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Clock, User, MapPin, Phone, Mail, X, RefreshCw, Trash2, CheckCircle, AlertCircle, Send } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { EmailService } from '../../services/emailService';
+import { SupabaseDataService } from '../../services/supabaseDataService';
 
 interface ClientHistoryProps {
   clientData: any;
@@ -20,7 +21,7 @@ export function ClientHistory({ clientData, onClose }: ClientHistoryProps) {
   });
 
   // Get client's bookings
-  const client = clients.find(c => c.email === clientData.email);
+  const client = clients.find(c => c.id === clientData.id || c.email === clientData.email);
   const clientBookings = client ? bookings.filter(b => b.clientId === client.id) : [];
 
   const now = new Date();
@@ -31,8 +32,8 @@ export function ClientHistory({ clientData, onClose }: ClientHistoryProps) {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking || !client) return;
 
-    // Update booking status
-    setBookings(prev => prev.map(b => 
+    await SupabaseDataService.updateBooking(bookingId, { status: 'cancelled' });
+    setBookings(prev => prev.map(b =>
       b.id === bookingId ? { ...b, status: 'cancelled' as const } : b
     ));
 
@@ -95,7 +96,10 @@ euestoudesperto@gmail.com
       }
     };
 
-    setBookings(prev => prev.map(b => 
+    await SupabaseDataService.updateBooking(bookingId, {
+      rescheduleRequest: updatedBooking.rescheduleRequest,
+    });
+    setBookings(prev => prev.map(b =>
       b.id === bookingId ? updatedBooking : b
     ));
 

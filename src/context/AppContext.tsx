@@ -1,17 +1,7 @@
-import React, { createContext, useContext, ReactNode } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { defaultBusinessSettings, defaultServices, defaultTherapists } from '../constants/businessData';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { SupabaseDataService } from '../services/supabaseDataService';
+import { defaultBusinessSettings } from '../constants/businessData';
 import { Client, Booking, Service, Payment, BusinessSettings, CustomForm, Therapist, TherapistNote, TherapistAvailability, TherapistInvitation, Coupon, CouponUsage } from '../types';
-
-// Date reviver function to convert date strings back to Date objects
-const dateReviver = (key: string, value: any) => {
-  const dateFields = ['createdAt', 'updatedAt', 'expiresAt', 'date', 'booking_date', 'session_date', 'payment_date', 'validFrom', 'validUntil'];
-  if (dateFields.includes(key) && typeof value === 'string') {
-    const date = new Date(value);
-    return isNaN(date.getTime()) ? value : date;
-  }
-  return value;
-};
 
 interface AppContextType {
   clients: Client[];
@@ -38,25 +28,66 @@ interface AppContextType {
   setCoupons: (coupons: Coupon[] | ((prev: Coupon[]) => Coupon[])) => void;
   couponUsage: CouponUsage[];
   setCouponUsage: (usage: CouponUsage[] | ((prev: CouponUsage[]) => CouponUsage[])) => void;
+  refreshData: () => Promise<void>;
+  dataLoading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [clients, setClients] = useLocalStorage<Client[]>('clients', []);
-  const [bookings, setBookings] = useLocalStorage<Booking[]>('bookings', [], dateReviver);
-  const [services, setServices] = useLocalStorage<Service[]>('services', defaultServices, dateReviver);
-  const [payments, setPayments] = useLocalStorage<Payment[]>('payments', []);
-  const [businessSettings, setBusinessSettings] = useLocalStorage<BusinessSettings>('businessSettings', defaultBusinessSettings);
-  const [customForms, setCustomForms] = useLocalStorage<CustomForm[]>('customForms', []);
-  const [therapists, setTherapists] = useLocalStorage<Therapist[]>('therapists', defaultTherapists, dateReviver);
-  const [therapistNotes, setTherapistNotes] = useLocalStorage<TherapistNote[]>('therapistNotes', [], dateReviver);
-  const [therapistAvailability, setTherapistAvailability] = useLocalStorage<TherapistAvailability[]>('therapistAvailability', [], dateReviver);
-  const [therapistInvitations, setTherapistInvitations] = useLocalStorage<TherapistInvitation[]>('therapistInvitations', [], dateReviver);
-  const [coupons, setCoupons] = useLocalStorage<Coupon[]>('coupons', [], dateReviver);
-  const [couponUsage, setCouponUsage] = useLocalStorage<CouponUsage[]>('couponUsage', [], dateReviver);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>(defaultBusinessSettings);
+  const [customForms, setCustomForms] = useState<CustomForm[]>([]);
+  const [therapists, setTherapists] = useState<Therapist[]>([]);
+  const [therapistNotes, setTherapistNotes] = useState<TherapistNote[]>([]);
+  const [therapistAvailability, setTherapistAvailability] = useState<TherapistAvailability[]>([]);
+  const [therapistInvitations, setTherapistInvitations] = useState<TherapistInvitation[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [couponUsage, setCouponUsage] = useState<CouponUsage[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
+  const refreshData = useCallback(async () => {
+    try {
+      const [
+        servicesData,
+        therapistsData,
+        bookingsData,
+        clientsData,
+        paymentsData,
+        notesData,
+      ] = await Promise.all([
+        SupabaseDataService.fetchServices(),
+        SupabaseDataService.fetchTherapists(),
+        SupabaseDataService.fetchBookings(),
+        SupabaseDataService.fetchClients(),
+        SupabaseDataService.fetchPayments(),
+        SupabaseDataService.fetchTherapistNotes(),
+      ]);
+
+      setServices(servicesData);
+      setTherapists(therapistsData);
+      setBookings(bookingsData);
+      setClients(clientsData);
+      setPayments(paymentsData);
+      setTherapistNotes(notesData);
+
+      const avail = therapistsData
+        .filter(t => t.availability)
+        .map(t => t.availability!);
+      setTherapistAvailability(avail);
+    } catch (error) {
+      console.error('Error loading data from Supabase:', error);
+    } finally {
+      setDataLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   return (
     <AppContext.Provider
@@ -84,7 +115,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         coupons,
         setCoupons,
         couponUsage,
-        setCouponUsage
+        setCouponUsage,
+        refreshData,
+        dataLoading,
       }}
     >
       {children}

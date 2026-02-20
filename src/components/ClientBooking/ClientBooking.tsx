@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { Calendar, Clock, User, Mail, Phone, MessageSquare, ChevronLeft, ChevronRight, Globe, LogIn, LogOut, Shield, Heart } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AvailabilityService, TimeSlot } from '../../services/availabilityService';
-import { EmailService } from '../../services/emailService';
 import { NotificationService } from '../../services/notificationService';
 import { CalendarService } from '../../services/calendarService';
-import { TimezoneService } from '../../services/timezoneService';
+import { SupabaseDataService } from '../../services/supabaseDataService';
 import { PaymentStep } from '../Booking/PaymentStep';
 import { RecurringBooking, RecurrencePattern } from '../Booking/RecurringBooking';
 import { ClientLogin } from '../Auth/ClientLogin';
@@ -14,7 +13,6 @@ import { HorizontalScrollContainer } from '../Layout/HorizontalScrollContainer';
 import { MobileTherapistCard } from '../Mobile/MobileTherapistCard';
 import { MobileServiceCard } from '../Mobile/MobileServiceCard';
 import { MobileTimeSlots } from '../Mobile/MobileTimeSlots';
-import { v4 as uuidv4 } from 'uuid';
 
 // User Type Toggle Component
 function UserTypeToggle() {
@@ -59,7 +57,7 @@ interface ClientBookingProps {
 }
 
 export function ClientBooking({ onComplete, initialClientData }: ClientBookingProps = {}) {
-  const { services, businessSettings, therapists, bookings, setBookings, clients, setClients } = useApp();
+  const { services, businessSettings, therapists, bookings, clients, refreshData } = useApp();
   const [step, setStep] = useState(1);
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
   const [selectedService, setSelectedService] = useState<string>('');
@@ -119,7 +117,8 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
         therapists,
         therapist?.availability,
         clientInfo.email,
-        clients
+        clients,
+        services
       );
       console.log('Generated slots:', slots);
       setAvailableSlots(slots);
@@ -179,84 +178,66 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
   const handleBooking = async (paymentId?: string) => {
     if (!selectedDate || !selectedTime || !selectedServiceDetails) return;
 
-    console.log('Creating booking with:', {
-      selectedDate,
-      selectedTime,
-      selectedServiceDetails,
-      clientInfo
-    });
-
-    // Create or find client
-    let client = clients.find(c => c.email === clientInfo.email);
-    if (!client) {
-      client = {
-        id: uuidv4(),
-        name: clientInfo.name,
-        email: clientInfo.email,
-        phone: clientInfo.phone,
-        notes: clientInfo.notes,
-        serviceHistory: [],
-        paymentHistory: [],
-        createdAt: new Date(),
-        therapistNotes: []
-      };
-      setClients(prev => [...prev, client!]);
-    }
-
-    // Create booking date
     const bookingDateTime = new Date(selectedDate);
     const [hours, minutes] = selectedTime.split(':').map(Number);
     bookingDateTime.setHours(hours, minutes, 0, 0);
 
-    // Create base booking
-    const baseBooking = {
-      id: uuidv4(),
-      clientId: client.id,
-      serviceId: selectedService,
+    const clientId = await SupabaseDataService.findOrCreateClient({
+      name: clientInfo.name,
+      email: clientInfo.email,
+      phone: clientInfo.phone,
+    });
+
+    if (!clientId) {
+      console.error('Failed to create/find client');
+      return;
+    }
+
+    const newBooking = await SupabaseDataService.createBooking({
+      clientId,
       therapistId: selectedTherapist,
-      date: bookingDateTime,
-      status: 'confirmed' as const,
-      notes: clientInfo.notes,
-      paymentStatus: paymentId ? 'paid' as const : 'pending' as const,
-      reminderSent: false
-    };
+      serviceId: selectedService,
+      bookingDate: bookingDateTime,
+      status: 'confirmed',
+      paymentStatus: paymentId ? 'paid' : 'pending',
+      notes: clientInfo.notes || undefined,
+    });
 
-    // Generate all bookings (including recurring)
-    const allBookings = generateRecurringBookings(baseBooking);
-    setBookings(prev => [...prev, ...allBookings]);
+    if (!newBooking) {
+      console.error('Failed to create booking');
+      return;
+    }
 
-    // Get therapist for notifications
-    const therapist = therapists.find(t => t.id === selectedTherapist)!;
+    if (paymentId && selectedServiceDetails) {
+      await SupabaseDataService.createPayment({
+        bookingId: newBooking.id,
+        amount: selectedServiceDetails.price,
+        method: paymentId.startsWith('coupon_') ? 'coupon' as any : 'card',
+        status: 'paid',
+        transactionId: paymentId,
+      });
+    }
+
+    await refreshData();
 
     try {
-      console.log('📬 Sending notifications via new system...');
-
       const notificationResult = await NotificationService.createBookingNotifications(
-        baseBooking.id,
-        client.id,
-        client.email,
-        client.phone,
+        newBooking.id,
+        clientId,
+        clientInfo.email,
+        clientInfo.phone,
         selectedTherapist,
         bookingDateTime
       );
 
-      if (notificationResult.success) {
-        console.log('✅ Notifications sent successfully');
-        if (notificationResult.emailSent) {
-          console.log('📧 Email confirmação enviado para cliente e admin');
-        }
-        if (notificationResult.smsSent) {
-          console.log('📱 SMS enviado para cliente');
-        }
-      } else {
-        console.warn('⚠️ Notifications failed but booking created:', notificationResult.message);
+      if (!notificationResult.success) {
+        console.warn('Notifications failed but booking created:', notificationResult.message);
       }
     } catch (error) {
-      console.error('❌ Error sending notifications:', error);
-      console.log('⚠️ Consulta criada mas notificações falharam');
+      console.error('Error sending notifications:', error);
     }
 
-    setStep(6); // Go to success
+    setStep(6);
   };
 
   const handlePaymentSuccess = (paymentId: string) => {

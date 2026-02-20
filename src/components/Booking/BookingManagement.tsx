@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { EmailService } from '../../services/emailService';
 import { NotificationService } from '../../services/notificationService';
 import { CalendarService } from '../../services/calendarService';
+import { SupabaseDataService } from '../../services/supabaseDataService';
 
 interface BookingManagementProps {
   bookingId: string;
@@ -11,7 +12,7 @@ interface BookingManagementProps {
 }
 
 export function BookingManagement({ bookingId, onClose }: BookingManagementProps) {
-  const { bookings, setBookings, clients, services, therapists } = useApp();
+  const { bookings, setBookings, clients, services, therapists, refreshData } = useApp();
   
   const booking = bookings.find(b => b.id === bookingId);
   const client = booking ? clients.find(c => c.id === booking.clientId) : null;
@@ -59,6 +60,10 @@ export function BookingManagement({ bookingId, onClose }: BookingManagementProps
       status: 'confirmed' as const
     };
 
+    await SupabaseDataService.updateBooking(bookingId, {
+      bookingDate: newDateTime,
+      status: 'confirmed',
+    });
     setBookings(prev => prev.map(b => b.id === bookingId ? updatedBooking : b));
 
     try {
@@ -87,6 +92,7 @@ export function BookingManagement({ bookingId, onClose }: BookingManagementProps
       status: 'cancelled' as const
     };
 
+    await SupabaseDataService.updateBooking(bookingId, { status: 'cancelled' });
     setBookings(prev => prev.map(b => b.id === bookingId ? updatedBooking : b));
 
     try {
@@ -125,9 +131,11 @@ export function BookingManagement({ bookingId, onClose }: BookingManagementProps
       therapistId: newTherapistId
     };
 
+    await SupabaseDataService.updateBooking(bookingId, {
+      status: newStatus,
+    });
     setBookings(prev => prev.map(b => b.id === bookingId ? updatedBooking : b));
 
-    // Get the new therapist for email
     const newTherapist = therapists.find(t => t.id === newTherapistId) || therapist;
 
     // Send notification email based on status change
@@ -178,6 +186,37 @@ Equipa Desperto
       await EmailService.sendEmail(client?.email || '', therapistChangeTemplate);
     }
 
+    onClose();
+  };
+
+  const handleRescheduleApproval = async (approved: boolean) => {
+    if (!booking?.rescheduleRequest) return;
+
+    const updatedRequest = {
+      ...booking.rescheduleRequest,
+      status: approved ? 'approved' : 'rejected',
+      therapistResponse: rescheduleResponse || (approved ? 'Aprovado' : 'Rejeitado'),
+    };
+
+    const updates: any = { rescheduleRequest: updatedRequest };
+    if (approved) {
+      updates.bookingDate = new Date(booking.rescheduleRequest.newDate);
+      updates.status = 'confirmed';
+    }
+
+    await SupabaseDataService.updateBooking(bookingId, updates);
+    setBookings(prev => prev.map(b =>
+      b.id === bookingId
+        ? {
+            ...b,
+            rescheduleRequest: updatedRequest,
+            ...(approved ? { date: new Date(booking.rescheduleRequest.newDate), status: 'confirmed' as const } : {}),
+          }
+        : b
+    ));
+
+    setShowRescheduleApproval(false);
+    setRescheduleResponse('');
     onClose();
   };
 

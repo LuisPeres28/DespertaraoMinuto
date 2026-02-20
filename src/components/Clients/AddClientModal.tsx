@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { X, User, Mail, Phone, MessageSquare, Save } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { Client } from '../../types';
-import { v4 as uuidv4 } from 'uuid';
+import { SupabaseDataService } from '../../services/supabaseDataService';
 
 interface AddClientModalProps {
   onClose: () => void;
 }
 
 export function AddClientModal({ onClose }: AddClientModalProps) {
-  const { setClients } = useApp();
+  const { refreshData } = useApp();
   const [clientData, setClientData] = useState({
     name: '',
     email: '',
@@ -29,24 +28,20 @@ export function AddClientModal({ onClose }: AddClientModalProps) {
     setIsSubmitting(true);
 
     try {
-      const newClient: Client = {
-        id: uuidv4(),
+      const clientId = await SupabaseDataService.findOrCreateClient({
         name: clientData.name.trim(),
         email: clientData.email.trim(),
         phone: clientData.phone.trim(),
-        notes: clientData.notes.trim(),
-        serviceHistory: [],
-        paymentHistory: [],
-        createdAt: new Date(),
-        therapistNotes: []
-      };
+      });
 
-      setClients(prev => [...prev, newClient]);
-      
-      // Reset form and close modal
+      if (!clientId) {
+        alert('Erro ao adicionar cliente. Verifique se o email já existe.');
+        return;
+      }
+
+      await refreshData();
       setClientData({ name: '', email: '', phone: '', notes: '' });
       onClose();
-      
       alert('Cliente adicionado com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar cliente:', error);

@@ -19,7 +19,8 @@ export class AvailabilityService {
     therapists: any[] = [],
     therapistAvailability?: TherapistAvailability,
     clientEmail?: string,
-    clients: any[] = []
+    clients: any[] = [],
+    allServices: any[] = []
   ): TimeSlot[] {
     console.log('🚀 STARTING SLOT GENERATION');
     console.log('📅 Date:', date.toDateString());
@@ -188,16 +189,7 @@ export class AvailabilityService {
         const bookingStart = new Date(booking.date);
         const bookingEnd = new Date(bookingStart);
         
-        // Get service duration for this booking
-        const services = [
-          { id: '1', duration: 60 },
-          { id: '2', duration: 60 },
-          { id: '3', duration: 60 },
-          { id: '4', duration: 60 },
-          { id: '5', duration: 90 },
-          { id: '6', duration: 120 }
-        ];
-        const service = services.find(s => s.id === booking.serviceId);
+        const service = allServices.find((s: any) => s.id === booking.serviceId);
         const bookingDuration = service ? service.duration : 60;
         bookingEnd.setMinutes(bookingEnd.getMinutes() + bookingDuration);
         
@@ -304,17 +296,7 @@ export class AvailabilityService {
 
       const bookingStart = new Date(booking.date);
       const bookingEnd = new Date(bookingStart);
-      // Get the actual service duration for this booking
-      const services = [
-        { id: '1', duration: 60 },
-        { id: '2', duration: 60 },
-        { id: '3', duration: 60 },
-        { id: '4', duration: 60 },
-        { id: '5', duration: 90 },
-        { id: '6', duration: 120 }
-      ];
-      const service = services.find(s => s.id === booking.serviceId);
-      const bookingDuration = service ? service.duration : 60;
+      const bookingDuration = 60;
       bookingEnd.setMinutes(bookingEnd.getMinutes() + bookingDuration);
 
       if (slotStart < bookingEnd && slotEnd > bookingStart) {

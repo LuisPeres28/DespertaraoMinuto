@@ -37,8 +37,7 @@ export function ClientDashboard({ clientData, onLogout, onNewBooking }: ClientDa
     );
   }
 
-  // Find client in database
-  const client = clients.find(c => c.email === clientData.email);
+  const client = clients.find(c => c.id === clientData.id || c.email === clientData.email);
   const clientBookings = client ? bookings.filter(b => b.clientId === client.id) : [];
   
   // Separate upcoming and past bookings
