@@ -29,7 +29,7 @@ export class SupabaseDataService {
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('id, email, user_type')
-      .in('user_type', ['therapist', 'admin'])
+      .eq('user_type', 'therapist')
       .eq('is_active', true);
 
     if (usersError || !users) {
@@ -49,9 +49,7 @@ export class SupabaseDataService {
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-    return users
-      .filter(u => u.user_type === 'therapist' || u.user_type === 'admin')
-      .map(u => {
+    return users.map(u => {
         const profile = profileMap.get(u.id);
         const availConfig = profile?.availability_config || {};
         const availability: TherapistAvailability = {
