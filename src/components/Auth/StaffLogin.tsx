@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { X, Shield, LogIn, AlertTriangle, Clock, Eye, EyeOff, User, Lock, Mail, ArrowLeft, CheckCircle, Smartphone } from 'lucide-react';
+import { X, Shield, LogIn, AlertTriangle, Clock, Eye, EyeOff, User, Lock, ArrowLeft, CheckCircle } from 'lucide-react';
 import { PasswordRecovery } from './PasswordRecovery';
-import { validateCredentials, createUserData } from './AuthHelpers';
 import { LoginFormData, AuthResult } from './AuthTypes';
 import { supabase } from '../../lib/supabase';
 
@@ -86,16 +85,6 @@ export function StaffLogin({ onLogin, onClose }: StaffLoginProps) {
         return;
       }
 
-      // Validate for staff login
-      const foundUser = validateCredentials(formData.username, formData.password);
-      
-      if (foundUser && foundUser.userType === 'client') {
-        setError('Acesso restrito a terapeutas e administradores.');
-        await logFailedAttempt(formData.username, 'wrong_user_type');
-        setLoading(false);
-        return;
-      }
-      
       const result = await onLogin(formData.username, formData.password);
       
       if (!result.success) {
@@ -236,19 +225,6 @@ export function StaffLogin({ onLogin, onClose }: StaffLoginProps) {
     } catch (error) {
       console.error('Error logging failed attempt:', error);
     }
-  };
-
-  const fillTestCredentials = (type: 'admin' | 'therapist') => {
-    const credentials = {
-      admin: { username: 'euestoudesperto@gmail.com', password: 'Dhvif2m1' },
-      therapist: { username: 'luisperes28@gmail.com', password: 'Dhvif2m0' }
-    };
-    
-    setFormData(prev => ({
-      ...prev,
-      username: credentials[type].username,
-      password: credentials[type].password
-    }));
   };
 
   return (
@@ -467,72 +443,6 @@ export function StaffLogin({ onLogin, onClose }: StaffLoginProps) {
                 </button>
               </div>
 
-              {/* Test Credentials */}
-              <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl sm:rounded-2xl">
-                <h4 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center text-sm sm:text-base">
-                  <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
-                  Contas de Demonstração
-                </h4>
-                <div className="space-y-2 sm:space-y-3">
-                  <div className="bg-white border border-purple-200 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:shadow-md transition-all">
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="font-semibold text-purple-900 text-sm sm:text-base">Administrador</span>
-                          <p className="text-xs sm:text-sm text-purple-700 truncate">Luís Guerreiro Peres</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => fillTestCredentials('admin')}
-                        className="px-3 sm:px-4 py-2 sm:py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-sm font-medium transition-all min-h-[44px] min-w-[60px] flex-shrink-0"
-                        style={{ touchAction: 'manipulation' }}
-                      >
-                        Usar
-                      </button>
-                    </div>
-                    <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                      <p><strong>Email:</strong> euestoudesperto@gmail.com</p>
-                      <p><strong>Password:</strong> Dhvif2m1</p>
-                    </div>
-                  </div>
-                  <div className="bg-white border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:shadow-md transition-all">
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <User className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="font-semibold text-blue-900 text-sm sm:text-base">Terapeuta</span>
-                          <p className="text-xs sm:text-sm text-blue-700 truncate">Luís Peres</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => fillTestCredentials('therapist')}
-                        className="px-3 sm:px-4 py-2 sm:py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm font-medium transition-all min-h-[44px] min-w-[60px] flex-shrink-0"
-                        style={{ touchAction: 'manipulation' }}
-                      >
-                        Usar
-                      </button>
-                    </div>
-                    <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                      <p><strong>Email:</strong> luisperes28@gmail.com</p>
-                      <p><strong>Password:</strong> Dhvif2m0</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-xs sm:text-sm text-red-800 space-y-2">
-                  <p>As contas de demonstração foram removidas por motivos de segurança.</p>
-                  <p><strong>Para aceder como staff:</strong></p>
-                  <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>Contacte o administrador do sistema</li>
-                    <li>Solicite credenciais oficiais</li>
-                    <li>Use apenas contas autorizadas</li>
-                  </ul>
-                </div>
-              </div>
             </>
           )}
         </div>

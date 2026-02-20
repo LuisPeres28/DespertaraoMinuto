@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppProvider } from './context/AppContext.tsx';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
-import { EmailService } from './services/emailService';
 import { useHashRouter } from './hooks/useHashRouter';
 import { ClientBooking } from './components/ClientBooking/ClientBooking';
 import { Dashboard } from './components/Dashboard/Dashboard';
@@ -12,7 +11,6 @@ import { BookingsList } from './components/Bookings/BookingsList';
 import { ClientsList } from './components/Clients/ClientsList';
 import { PaymentsList } from './components/Payments/PaymentsList';
 import { Settings } from './components/Settings/Settings';
-import { EmailSetup } from './components/EmailSetup/EmailSetup';
 import { TherapistManagement } from './components/Therapists/TherapistManagement';
 import { CouponManagement } from './components/Coupons/CouponManagement';
 import { TherapistNotes } from './components/Therapists/TherapistNotes';
@@ -20,8 +18,6 @@ import { UniversalAuth } from './components/Auth/UniversalAuth';
 import { ClientHistory } from './components/ClientBooking/ClientHistory';
 import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
 import { BookingActionPage } from './components/BookingAction/BookingActionPage';
-import { SystemCheck } from './components/Diagnostics/SystemCheck';
-import { MBWayTest } from './components/Diagnostics/MBWayTest';
 
 function App() {
   const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
@@ -45,16 +41,9 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    EmailService.initialize().catch(error => {
-      console.error('Error initializing email service:', error);
-    });
-  }, []);
-
   // Ensure modal is closed when user logs in
   useEffect(() => {
     if (user) {
-      console.log('👤 User detected, ensuring login modal is closed');
       setShowAdminLoginModal(false);
     }
   }, [user]);
@@ -62,14 +51,10 @@ function App() {
 
 
   const handleLogin = async (email: string, password: string) => {
-    console.log('🔐 App handleLogin called');
-
     try {
       const result = await signIn(email, password);
-      console.log('📊 SignIn result:', result);
 
       if (result.success && result.user) {
-        console.log('✅ Login successful, closing modal and setting active tab');
 
         // First close the modal
         setShowAdminLoginModal(false);
@@ -86,20 +71,15 @@ function App() {
 
       return result;
     } catch (error) {
-      console.error('❌ Login error:', error);
       return { success: false, error: 'Erro no login' };
     }
   };
 
   const handleRegister = async (email: string, password: string, fullName: string, phone?: string) => {
-    console.log('📝 App handleRegister called');
-
     try {
       const result = await signUp(email, password, fullName, phone);
-      console.log('📊 SignUp result:', result);
 
       if (result.success && result.user) {
-        console.log('✅ Registration successful, closing modal');
 
         // First close the modal
         setShowAdminLoginModal(false);
@@ -112,7 +92,6 @@ function App() {
 
       return result;
     } catch (error) {
-      console.error('❌ Registration error:', error);
       return { success: false, error: 'Erro no registo' };
     }
   };
@@ -127,11 +106,8 @@ function App() {
 
 
   const handleAdminLoginRequest = () => {
-    console.log('🚪 Admin login requested, user state:', user ? 'logged in' : 'not logged in');
     if (!user) {
       setShowAdminLoginModal(true);
-    } else {
-      console.log('⚠️ User already logged in, ignoring login request');
     }
   };
 
@@ -272,10 +248,6 @@ function App() {
           return <CouponManagement />;
         case 'therapist-notes':
           return <TherapistNotes />;
-        case 'system-check':
-          return <SystemCheck />;
-        case 'mbway-test':
-          return <MBWayTest />;
         case 'messages':
           return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
@@ -285,8 +257,6 @@ function App() {
           );
         case 'settings':
           return <Settings />;
-        case 'email-setup':
-          return <EmailSetup />;
         case 'therapist-management':
           return <TherapistManagement />;
         default:

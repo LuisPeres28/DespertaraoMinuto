@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Mail, ArrowLeft, CheckCircle, Lock, Eye, EyeOff, Phone, HelpCircle, Shield } from 'lucide-react';
-import { EmailService } from '../../services/emailService';
 import { supabase } from '../../lib/supabase';
 
 interface PasswordRecoveryProps {
@@ -145,7 +144,22 @@ Equipa Desperto
         `
       };
 
-      await EmailService.sendEmail(user.email, recoveryEmail);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to_email: user.email,
+          subject: recoveryEmail.subject,
+          message: recoveryEmail.body
+        })
+      });
+
       setResetToken(token);
       setStep('email');
 
@@ -180,9 +194,20 @@ Equipa Desperto
 
       if (error) throw error;
 
-      // Enviar SMS (simulado)
-      const smsMessage = `Desperto: O seu código de recuperação é ${code}. Válido por 15 minutos. Não partilhe este código.`;
-      await EmailService.sendSMS(user.phone_number, smsMessage);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: user.phone_number,
+          message: `Desperto: O seu codigo de recuperacao e ${code}. Valido por 15 minutos. Nao partilhe este codigo.`
+        })
+      });
       
       setStep('sms');
 
@@ -364,30 +389,21 @@ Equipa Desperto
           .eq('token_hash', tokenHash);
       }
 
-      // Enviar email de confirmação
-      const confirmationEmail = {
-        subject: 'Password Alterada com Sucesso - Desperto',
-        body: `
-Olá,
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-A password da sua conta Desperto foi alterada com sucesso.
-
-📅 **Data/Hora:** ${new Date().toLocaleString('pt-PT')}
-🌐 **IP:** ${await getUserIP()}
-
-Se não foi você que alterou a password, contacte-nos imediatamente através de euestoudesperto@gmail.com
-
-**Dicas de Segurança:**
-• Use uma password única para a Desperto
-• Ative a verificação em duas etapas nas definições da conta
-• Nunca partilhe a sua password
-
-Cumprimentos,
-Equipa Desperto
-        `
-      };
-
-      await EmailService.sendEmail(foundUser.email, confirmationEmail);
+      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to_email: foundUser.email,
+          subject: 'Password Alterada com Sucesso - Desperto',
+          message: `A password da sua conta Desperto foi alterada com sucesso.\n\nData/Hora: ${new Date().toLocaleString('pt-PT')}\n\nSe nao foi voce que alterou a password, contacte-nos imediatamente atraves de euestoudesperto@gmail.com`
+        })
+      });
 
       setStep('success');
 
@@ -415,16 +431,6 @@ Equipa Desperto
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  };
-
-  const getUserIP = async (): Promise<string> => {
-    try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      return data.ip;
-    } catch {
-      return 'Desconhecido';
-    }
   };
 
   return (

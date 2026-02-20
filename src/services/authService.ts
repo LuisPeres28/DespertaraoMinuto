@@ -205,19 +205,57 @@ export class AuthService {
   }
 
 
-  static async verifyPassword(password: string, hash: string): Promise<boolean> {
-    // WARNING: This is an INSECURE implementation for demonstration purposes only.
-    // In a production environment, you MUST use a strong, one-way hashing algorithm
-    // like bcrypt on the server-side, and compare hashes securely.
-    // The password_hash in the database should store the result of a server-side hash.
-    // For this demo, we assume the 'hash' from the database is the plain text password.
-    return password === hash;
-  }
-
   static async send2FACode(user: any) {
-    // Implementar envio de código 2FA
-    console.log('Sending 2FA code to user:', user.email);
-    // Em produção, integrar com serviço de SMS/Email
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const tokenHash = await this.hashToken(code);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await supabase
+      .from('password_reset_tokens')
+      .insert({
+        user_id: user.id,
+        token_hash: tokenHash,
+        expires_at: expiresAt.toISOString()
+      });
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (user.phone_number) {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: user.phone_number,
+            message: `Desperto: O seu codigo de verificacao 2FA e ${code}. Valido por 10 minutos.`
+          })
+        });
+      } catch (error) {
+        console.error('Error sending 2FA SMS:', error);
+      }
+    }
+
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to_email: user.email,
+          subject: 'Codigo de Verificacao - Desperto',
+          message: `O seu codigo de verificacao e: ${code}\n\nEste codigo e valido por 10 minutos.\nSe nao solicitou este codigo, ignore esta mensagem.`
+        })
+      });
+    } catch (error) {
+      console.error('Error sending 2FA email:', error);
+    }
   }
 
   static async requestPasswordReset(identifier: string, method: 'email' | 'sms' | 'security'): Promise<{ success: boolean; error?: string }> {
@@ -269,9 +307,21 @@ export class AuthService {
 
       if (error) throw error;
 
-      // Enviar email (implementar com EmailJS ou outro serviço)
-      console.log('Password reset email sent to:', user.email);
-      console.log('Reset token:', token);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to_email: user.email,
+          subject: 'Recuperacao de Password - Desperto',
+          message: `Recebemos um pedido para redefinir a password da sua conta.\n\nLink de Recuperacao:\n${window.location.origin}/reset-password?token=${token}\n\nEste link e valido por 30 minutos e so pode ser usado uma vez.\n\nSe nao solicitou esta alteracao, pode ignorar este email.`
+        })
+      });
 
       return { success: true };
 
@@ -302,9 +352,20 @@ export class AuthService {
 
       if (error) throw error;
 
-      // Enviar SMS (implementar com Twilio ou outro serviço)
-      console.log('Password reset SMS sent to:', user.phone_number);
-      console.log('Reset code:', code);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: user.phone_number,
+          message: `Desperto: O seu codigo de recuperacao e ${code}. Valido por 15 minutos.`
+        })
+      });
 
       return { success: true };
 

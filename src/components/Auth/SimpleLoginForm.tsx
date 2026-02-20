@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { LogIn, Shield, AlertTriangle, Clock } from 'lucide-react';
 import { LoginFormFields } from './LoginFormFields';
-import { TestCredentials } from './TestCredentials';
-import { validateCredentials, isStaffUser, createUserData } from './AuthHelpers';
 import { LoginFormData, AuthResult } from './AuthTypes';
 import { supabase } from '../../lib/supabase';
 
@@ -42,18 +40,6 @@ export function SimpleLoginForm({ onLogin, isStaffLogin = false }: SimpleLoginFo
         return;
       }
 
-      // Validate for staff login
-      if (isStaffLogin) {
-        const foundUser = validateCredentials(formData.username, formData.password);
-        
-        if (foundUser && foundUser.userType === 'client') {
-          setError('Acesso restrito a terapeutas e administradores. Clientes não podem aceder a esta área.');
-          await logFailedAttempt(formData.username, 'wrong_user_type');
-          setLoading(false);
-          return;
-        }
-      }
-      
       const result = await onLogin(formData.username, formData.password);
       
       if (!result.success) {
@@ -158,22 +144,6 @@ export function SimpleLoginForm({ onLogin, isStaffLogin = false }: SimpleLoginFo
   };
 
 
-  const fillTestCredentials = (type: 'admin' | 'client' | 'therapist') => {
-    if (isStaffLogin && type === 'client') return;
-    
-    const credentials = {
-      admin: { username: 'euestoudesperto@gmail.com', password: 'Dhvif2m1' },
-      client: { username: 'cliente@teste.com', password: '123456' },
-      therapist: { username: 'luisperes28@gmail.com', password: 'Dhvif2m0' }
-    };
-    
-    setFormData(prev => ({
-      ...prev,
-      username: credentials[type].username,
-      password: credentials[type].password
-    }));
-  };
-
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -251,10 +221,6 @@ export function SimpleLoginForm({ onLogin, isStaffLogin = false }: SimpleLoginFo
         </div>
       )}
 
-      <TestCredentials 
-        onFillCredentials={fillTestCredentials}
-        isStaffLogin={isStaffLogin}
-      />
     </div>
   );
 }
