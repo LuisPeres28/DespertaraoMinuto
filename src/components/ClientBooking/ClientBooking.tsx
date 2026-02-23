@@ -112,12 +112,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
   React.useEffect(() => {
     if (selectedDate && selectedServiceDetails) {
       const therapist = therapists.find(t => t.id === selectedTherapist);
-      console.log('Generating slots for:', {
-        date: selectedDate,
-        therapist: therapist?.name,
-        service: selectedServiceDetails.name,
-        duration: selectedServiceDetails.duration
-      });
       const slots = AvailabilityService.generateTimeSlots(
         selectedDate,
         businessSettings,
@@ -130,7 +124,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
         clients,
         services
       );
-      console.log('Generated slots:', slots);
       setAvailableSlots(slots);
     }
   }, [selectedDate, selectedServiceDetails, selectedTherapist, businessSettings, bookings, therapists, clientInfo.email, clients]);
@@ -272,23 +265,17 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
 
   // Check for existing authentication on component mount
   React.useEffect(() => {
-    console.log('🔍 ClientBooking useEffect - initialClientData:', initialClientData);
-    
     if (initialClientData) {
-      console.log('✅ Setting client data from props:', initialClientData);
       setAuthenticatedClient(initialClientData);
       updateClientInfo(initialClientData);
     } else {
-      console.log('🔍 Checking localStorage for client auth...');
       const savedAuth = localStorage.getItem('clientAuth');
       if (savedAuth) {
         try {
           const authData = JSON.parse(savedAuth);
-          console.log('✅ Found saved client auth:', authData);
           setAuthenticatedClient(authData);
           updateClientInfo(authData);
-        } catch (error) {
-          console.error('Error parsing saved auth:', error);
+        } catch {
           localStorage.removeItem('clientAuth');
         }
       }
@@ -297,7 +284,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
 
   // Helper function to update client info
   const updateClientInfo = (clientData: any) => {
-    console.log('🔄 Updating client info with:', clientData);
     setClientInfo({
       name: clientData.fullName || clientData.name || '',
       email: clientData.email || '',
@@ -309,7 +295,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
   // Update client info when authenticated client changes
   React.useEffect(() => {
     if (authenticatedClient) {
-      console.log('🔄 Authenticated client changed, updating info:', authenticatedClient);
       updateClientInfo(authenticatedClient);
     }
   }, [authenticatedClient]);
@@ -317,7 +302,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
   // Ensure data is filled when reaching step 4
   React.useEffect(() => {
     if (step === 4 && authenticatedClient) {
-      console.log('🎯 Reached step 4, ensuring data is filled:', authenticatedClient);
       updateClientInfo(authenticatedClient);
     }
   }, [step, authenticatedClient]);
@@ -329,7 +313,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
   };
 
   const handleLogout = () => {
-    console.log('🚪 Cliente fazendo logout...');
     setAuthenticatedClient(null);
     localStorage.removeItem('clientAuth');
     setClientInfo({ name: '', email: '', phone: '', notes: '' });
@@ -338,7 +321,6 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
     setSelectedService('');
     setSelectedDate(null);
     setSelectedTime('');
-    console.log('✅ Logout completo realizado');
   };
 
   return (
@@ -592,8 +574,10 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
 
                 <div className="grid grid-cols-7 gap-2">
                   {days.map((date, index) => {
+                    const todayStart = new Date();
+                    todayStart.setHours(0, 0, 0, 0);
                     const isToday = date && date.toDateString() === new Date().toDateString();
-                    const isPast = date && date < new Date();
+                    const isPast = date && date < todayStart;
                     const isSelected = date && selectedDate && date.toDateString() === selectedDate.toDateString();
                     
                     // Check if therapist is blocked on this date
