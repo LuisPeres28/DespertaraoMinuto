@@ -14,10 +14,8 @@ export default defineConfig({
     },
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
   },
-  publicDir: 'static',
   build: {
     sourcemap: false,
-    copyPublicDir: true,
     rollupOptions: {
       output: {
         manualChunks: {
