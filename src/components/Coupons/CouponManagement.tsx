@@ -95,7 +95,7 @@ export function CouponManagement() {
         validUntil: new Date(couponData.validUntil),
         usageLimit: couponData.usageLimit,
         description: couponData.description,
-      });
+      }, currentUser.id);
 
       if (!updated) {
         alert('Erro ao atualizar cupão na base de dados');
@@ -173,7 +173,7 @@ export function CouponManagement() {
     if (!coupon) return;
 
     if (confirm(`Tem certeza que deseja eliminar o cupão ${coupon.code}?`)) {
-      const deleted = await SupabaseDataService.deleteCoupon(couponId);
+      const deleted = await SupabaseDataService.deleteCoupon(couponId, currentUser.id);
       if (!deleted) {
         alert('Erro ao eliminar cupão da base de dados');
         return;
@@ -185,7 +185,7 @@ export function CouponManagement() {
   };
 
   const handleCancelCoupon = async (couponId: string) => {
-    const updated = await SupabaseDataService.updateCoupon(couponId, { status: 'cancelled' });
+    const updated = await SupabaseDataService.updateCoupon(couponId, { status: 'cancelled' }, currentUser.id);
     if (!updated) {
       alert('Erro ao cancelar cupão');
       return;

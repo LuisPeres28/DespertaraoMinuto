@@ -692,48 +692,41 @@ export class SupabaseDataService {
     usageLimit: number;
     description?: string;
   }): Promise<Coupon | null> {
-    const { data, error } = await supabase
-      .from('coupons')
-      .insert({
-        code: coupon.code,
-        password: coupon.code,
-        discount_type: coupon.type,
-        discount_value: coupon.value,
-        service_id: coupon.serviceId || null,
-        client_id: coupon.clientId || null,
-        created_by: coupon.createdBy,
-        valid_from: new Date().toISOString(),
-        valid_until: coupon.validUntil.toISOString(),
-        max_uses: coupon.usageLimit,
-        used_count: 0,
-        is_active: true,
-        status: 'active',
-        description: coupon.description || '',
-      })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('create_coupon_rpc', {
+      p_user_id: coupon.createdBy,
+      p_code: coupon.code,
+      p_password: coupon.code,
+      p_discount_type: coupon.type,
+      p_discount_value: coupon.value,
+      p_service_id: coupon.serviceId || null,
+      p_client_id: coupon.clientId || null,
+      p_valid_until: coupon.validUntil.toISOString(),
+      p_max_uses: coupon.usageLimit,
+      p_description: coupon.description || '',
+    });
 
     if (error) {
       console.error('Error creating coupon:', error);
       return null;
     }
 
+    const d = data as Record<string, unknown>;
     return {
-      id: data.id,
-      code: data.code,
-      type: (data.discount_type || 'percentage') as Coupon['type'],
-      value: Number(data.discount_value),
-      serviceId: data.service_id || undefined,
-      clientId: data.client_id || undefined,
-      createdBy: data.created_by || '',
-      validFrom: new Date(data.valid_from || data.created_at),
-      validUntil: new Date(data.valid_until),
-      usageLimit: data.max_uses || 1,
-      usedCount: data.used_count || 0,
-      status: (data.status || 'active') as Coupon['status'],
-      description: data.description || '',
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
+      id: d.id as string,
+      code: d.code as string,
+      type: ((d.discount_type as string) || 'percentage') as Coupon['type'],
+      value: Number(d.discount_value),
+      serviceId: (d.service_id as string) || undefined,
+      clientId: (d.client_id as string) || undefined,
+      createdBy: (d.created_by as string) || '',
+      validFrom: new Date((d.valid_from as string) || (d.created_at as string)),
+      validUntil: new Date(d.valid_until as string),
+      usageLimit: (d.max_uses as number) || 1,
+      usedCount: (d.used_count as number) || 0,
+      status: ((d.status as string) || 'active') as Coupon['status'],
+      description: (d.description as string) || '',
+      createdAt: new Date(d.created_at as string),
+      updatedAt: new Date(d.updated_at as string),
     };
   }
 
@@ -747,25 +740,29 @@ export class SupabaseDataService {
     description: string;
     status: string;
     usedCount: number;
-  }>): Promise<boolean> {
-    const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  }>, userId?: string): Promise<boolean> {
+    const dbUpdates: Record<string, unknown> = {};
     if (updates.type !== undefined) dbUpdates.discount_type = updates.type;
-    if (updates.value !== undefined) dbUpdates.discount_value = updates.value;
+    if (updates.value !== undefined) dbUpdates.discount_value = String(updates.value);
     if (updates.serviceId !== undefined) dbUpdates.service_id = updates.serviceId;
     if (updates.clientId !== undefined) dbUpdates.client_id = updates.clientId;
     if (updates.validUntil) dbUpdates.valid_until = updates.validUntil.toISOString();
-    if (updates.usageLimit !== undefined) dbUpdates.max_uses = updates.usageLimit;
+    if (updates.usageLimit !== undefined) dbUpdates.max_uses = String(updates.usageLimit);
     if (updates.description !== undefined) dbUpdates.description = updates.description;
-    if (updates.usedCount !== undefined) dbUpdates.used_count = updates.usedCount;
-    if (updates.status !== undefined) {
-      dbUpdates.status = updates.status;
-      dbUpdates.is_active = updates.status === 'active';
+    if (updates.usedCount !== undefined) dbUpdates.used_count = String(updates.usedCount);
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+
+    const callerId = userId || this.getCurrentUserId();
+    if (!callerId) {
+      console.error('Error updating coupon: no user id available');
+      return false;
     }
 
-    const { error } = await supabase
-      .from('coupons')
-      .update(dbUpdates)
-      .eq('id', id);
+    const { error } = await supabase.rpc('update_coupon_rpc', {
+      p_user_id: callerId,
+      p_coupon_id: id,
+      p_updates: dbUpdates,
+    });
 
     if (error) {
       console.error('Error updating coupon:', error);
@@ -774,11 +771,28 @@ export class SupabaseDataService {
     return true;
   }
 
-  static async deleteCoupon(id: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('coupons')
-      .delete()
-      .eq('id', id);
+  private static getCurrentUserId(): string | null {
+    try {
+      const saved = localStorage.getItem('desperto_user');
+      if (saved) {
+        const user = JSON.parse(saved);
+        return user.id || null;
+      }
+    } catch { /* ignore */ }
+    return null;
+  }
+
+  static async deleteCoupon(id: string, userId?: string): Promise<boolean> {
+    const callerId = userId || this.getCurrentUserId();
+    if (!callerId) {
+      console.error('Error deleting coupon: no user id available');
+      return false;
+    }
+
+    const { error } = await supabase.rpc('delete_coupon_rpc', {
+      p_user_id: callerId,
+      p_coupon_id: id,
+    });
 
     if (error) {
       console.error('Error deleting coupon:', error);
