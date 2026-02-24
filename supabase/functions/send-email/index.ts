@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +14,27 @@ interface EmailRequest {
   to_name?: string;
 }
 
+async function getResendApiKey(): Promise<string> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (supabaseUrl && serviceRoleKey) {
+    try {
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      const { data, error } = await supabase
+        .rpc("get_secret", { secret_name: "RESEND_API_KEY" });
+      if (!error && data) {
+        const key = typeof data === "string" ? data : data[0]?.decrypted_secret;
+        if (key) return key;
+      }
+    } catch (_) { /* fall through to env */ }
+  }
+
+  const envKey = Deno.env.get("RESEND_API_KEY");
+  if (envKey) return envKey;
+
+  throw new Error("RESEND_API_KEY not configured");
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -24,7 +46,7 @@ Deno.serve(async (req: Request) => {
   try {
     const emailData: EmailRequest = await req.json();
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const resendApiKey = await getResendApiKey();
     if (!resendApiKey) {
       throw new Error("RESEND_API_KEY not configured");
     }
