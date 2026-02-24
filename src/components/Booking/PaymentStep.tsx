@@ -9,6 +9,7 @@ interface PaymentStepProps {
   serviceName: string;
   onPaymentSuccess: (paymentId: string) => void;
   onPaymentSkip: () => void;
+  onProcessingStart?: () => void;
   requirePayment: boolean;
   clientEmail?: string;
   serviceId?: string;
@@ -20,6 +21,7 @@ export function PaymentStep({
   serviceName,
   onPaymentSuccess,
   onPaymentSkip,
+  onProcessingStart,
   requirePayment,
   clientEmail,
   serviceId,
@@ -52,6 +54,12 @@ export function PaymentStep({
     }
     return password;
   };
+
+  useEffect(() => {
+    if (paymentResult?.success && onProcessingStart) {
+      onProcessingStart();
+    }
+  }, [paymentResult?.success]);
 
   // Auto-generate bank transfer details when selected
   useEffect(() => {

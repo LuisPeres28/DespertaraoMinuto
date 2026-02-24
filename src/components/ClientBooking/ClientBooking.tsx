@@ -87,6 +87,7 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
   const [showLogin, setShowLogin] = useState(false);
   const [authenticatedClient, setAuthenticatedClient] = useState<any>(initialClientData);
   const [showHistory, setShowHistory] = useState(false);
+  const [paymentInProgress, setPaymentInProgress] = useState(false);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [therapistServices, setTherapistServices] = useState<typeof services>([]);
@@ -947,6 +948,7 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                   serviceName={selectedServiceDetails.name}
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentSkip={handlePaymentSkip}
+                  onProcessingStart={() => setPaymentInProgress(true)}
                   requirePayment={requirePayment}
                   clientEmail={clientInfo.email}
                   serviceId={selectedService}
@@ -954,15 +956,17 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                 />
               </div>
 
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={() => setStep(4)}
-                  className="w-full lg:w-auto px-6 py-4 border border-neutral-300 rounded-xl font-semibold hover:bg-neutral-50 transition-colors min-h-[48px]"
-                  style={{ touchAction: 'manipulation' }}
-                >
-                  Voltar
-                </button>
-              </div>
+              {!paymentInProgress && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => setStep(4)}
+                    className="w-full lg:w-auto px-6 py-4 border border-neutral-300 rounded-xl font-semibold hover:bg-neutral-50 transition-colors min-h-[48px]"
+                    style={{ touchAction: 'manipulation' }}
+                  >
+                    Voltar
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1033,6 +1037,7 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                     setSelectedService('');
                     setSelectedDate(null);
                     setSelectedTime('');
+                    setPaymentInProgress(false);
                     setClientInfo(authenticatedClient ? {
                       name: authenticatedClient.name,
                       email: authenticatedClient.email,
