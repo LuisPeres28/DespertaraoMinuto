@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Save, Upload, Clock, DollarSign, Bell, Palette, Globe, CreditCard, Shield } from 'lucide-react';
+import { Save, Upload, Clock, DollarSign, Bell, Palette, Globe, CreditCard, Shield, Loader2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { SupabaseDataService } from '../../services/supabaseDataService';
 import { SecuritySettings } from './SecuritySettings';
 
 export function Settings() {
@@ -48,35 +49,43 @@ export function Settings() {
     setBusinessSettings(prev => ({ ...prev, logo: '' }));
   };
 
-  const handleSave = () => {
-    try {
-      console.log('💾 Saving settings:', businessSettings);
-      localStorage.setItem('businessSettings', JSON.stringify(businessSettings));
-      
-      // Show success notification
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.innerHTML = '✅ Definições guardadas com sucesso!';
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 3000);
-      
-      console.log('✅ Settings saved successfully');
-    } catch (error) {
-      console.error('❌ Error saving settings:', error);
-      
-      // Show error notification
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.innerHTML = '❌ Erro ao guardar definições';
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 3000);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!currentUser?.id) {
+      alert('Sessao expirada. Faca login novamente.');
+      return;
     }
+
+    setSaving(true);
+
+    const settingsPayload: Record<string, any> = {
+      businessName: businessSettings.businessName,
+      businessEmail: businessSettings.businessEmail,
+      logo: businessSettings.logo,
+      colors: businessSettings.colors,
+      workingHours: businessSettings.workingHours,
+      bookingRules: businessSettings.bookingRules,
+      paymentSettings: businessSettings.paymentSettings,
+    };
+
+    const success = await SupabaseDataService.saveBusinessSettings(
+      currentUser.id,
+      settingsPayload
+    );
+
+    setSaving(false);
+
+    const notification = document.createElement('div');
+    if (success) {
+      notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Definicoes guardadas com sucesso!';
+    } else {
+      notification.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Erro ao guardar definicoes. Verifique permissoes.';
+    }
+    document.body.appendChild(notification);
+    setTimeout(() => { document.body.removeChild(notification); }, 3000);
   };
 
   const tabs = [
@@ -500,10 +509,11 @@ export function Settings() {
           <div className="pt-6 border-t border-gray-200">
             <button
               onClick={handleSave}
-              className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              disabled={saving}
+              className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
             >
-              <Save className="w-4 h-4" />
-              <span>Guardar Definições</span>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              <span>{saving ? 'A guardar...' : 'Guardar Definicoes'}</span>
             </button>
           </div>
         </div>

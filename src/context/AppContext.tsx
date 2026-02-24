@@ -58,6 +58,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clientsData,
         paymentsData,
         notesData,
+        savedSettings,
       ] = await Promise.all([
         SupabaseDataService.fetchServices(),
         SupabaseDataService.fetchTherapists(),
@@ -65,6 +66,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         SupabaseDataService.fetchClients(),
         SupabaseDataService.fetchPayments(),
         SupabaseDataService.fetchTherapistNotes(),
+        SupabaseDataService.loadBusinessSettings(),
       ]);
 
       setServices(servicesData);
@@ -73,6 +75,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setClients(clientsData);
       setPayments(paymentsData);
       setTherapistNotes(notesData);
+
+      if (savedSettings && Object.keys(savedSettings).length > 0) {
+        setBusinessSettings(prev => ({
+          ...prev,
+          businessName: savedSettings.businessName ?? prev.businessName,
+          businessEmail: savedSettings.businessEmail ?? prev.businessEmail,
+          logo: savedSettings.logo ?? prev.logo,
+          colors: savedSettings.colors ?? prev.colors,
+          workingHours: savedSettings.workingHours ?? prev.workingHours,
+          bookingRules: savedSettings.bookingRules ?? prev.bookingRules,
+          paymentSettings: savedSettings.paymentSettings ?? prev.paymentSettings,
+        }));
+      }
 
       const avail = therapistsData
         .filter(t => t.availability)

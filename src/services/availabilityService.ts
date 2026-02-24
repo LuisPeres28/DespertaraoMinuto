@@ -29,62 +29,95 @@ export class AvailabilityService {
       return [];
     }
 
-    const slots: TimeSlot[] = [];
     const dayOfWeek = date.getDay();
 
-    if (!availability.workingDays.includes(dayOfWeek)) {
+    const isBlockedDate = availability.blockedDates?.some(bd => {
+      const blocked = new Date(bd);
+      return blocked.toDateString() === date.toDateString();
+    });
+
+    if (isBlockedDate) {
       return [];
     }
 
     const customSchedule = availability.customSchedule?.find(cs => {
       const csDate = new Date(cs.date);
-      const targetDate = new Date(date);
-      return csDate.toDateString() === targetDate.toDateString();
+      return csDate.toDateString() === date.toDateString();
     });
 
-    let workingHours;
-    if (customSchedule && customSchedule.available !== false) {
-      workingHours = customSchedule.customHours || availability.workingHours;
-    } else if (customSchedule && customSchedule.available === false) {
+    if (customSchedule && customSchedule.available === false) {
       return [];
+    }
+
+    if (!customSchedule && !availability.workingDays.includes(dayOfWeek)) {
+      return [];
+    }
+
+    let workingHours;
+    if (customSchedule && customSchedule.customHours) {
+      workingHours = customSchedule.customHours;
     } else {
       workingHours = availability.workingHours;
     }
 
     const [startHour, startMinute] = workingHours.start.split(':').map(Number);
     const [endHour, endMinute] = workingHours.end.split(':').map(Number);
-
     const startTime = startHour * 60 + startMinute;
     const endTime = endHour * 60 + endMinute;
 
     const breaks = availability.breaks || businessSettings.workingHours.breaks;
+    const bufferTime = availability.bufferTime || 0;
+    const minAdvanceNotice = availability.minAdvanceNotice || 0;
 
-    for (let time = startTime; time < endTime; time += 30) {
+    const now = new Date();
+    const minAllowedTime = new Date(now.getTime() + minAdvanceNotice * 60 * 60 * 1000);
+
+    const slots: TimeSlot[] = [];
+
+    for (let time = startTime; time + serviceDuration <= endTime; time += 30) {
       const hour = Math.floor(time / 60);
       const minute = time % 60;
       const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 
-      let isDuringBreak = false;
-      let breakReason = '';
+      const slotDateTime = new Date(date);
+      slotDateTime.setHours(hour, minute, 0, 0);
 
+      if (slotDateTime < minAllowedTime) {
+        slots.push({
+          time: timeString,
+          available: false,
+          reason: 'Horario passado',
+          isPremium: false
+        });
+        continue;
+      }
+
+      let isDuringBreak = false;
       for (const breakTime of breaks) {
         const breakStart = this.parseTime(breakTime.start);
         const breakEnd = this.parseTime(breakTime.end);
-
         const slotEnd = time + serviceDuration;
 
         if ((time >= breakStart && time < breakEnd) ||
             (slotEnd > breakStart && time < breakEnd)) {
           isDuringBreak = true;
-          breakReason = 'Pausa para almoco';
           break;
         }
       }
 
+      if (isDuringBreak) {
+        slots.push({
+          time: timeString,
+          available: false,
+          reason: 'Pausa',
+          isPremium: false
+        });
+        continue;
+      }
+
       slots.push({
         time: timeString,
-        available: !isDuringBreak,
-        reason: isDuringBreak ? breakReason : undefined,
+        available: true,
         isPremium: false
       });
     }
@@ -118,12 +151,17 @@ export class AvailabilityService {
       for (const booking of bookingsForDate) {
         const bookingStart = new Date(booking.date);
         const bookingEnd = new Date(bookingStart);
-
         const service = allServices.find((s: any) => s.id === booking.serviceId);
         const bookingDuration = service ? service.duration : 60;
         bookingEnd.setMinutes(bookingEnd.getMinutes() + bookingDuration);
 
-        if (slotDateTime < bookingEnd && slotEnd > bookingStart) {
+        const bufferedBookingStart = new Date(bookingStart);
+        bufferedBookingStart.setMinutes(bufferedBookingStart.getMinutes() - bufferTime);
+
+        const bufferedBookingEnd = new Date(bookingEnd);
+        bufferedBookingEnd.setMinutes(bufferedBookingEnd.getMinutes() + bufferTime);
+
+        if (slotDateTime < bufferedBookingEnd && slotEnd > bufferedBookingStart) {
           slot.available = false;
           slot.reason = 'Ja reservado';
           slot.occupiedBy = booking.therapistId;
@@ -135,7 +173,6 @@ export class AvailabilityService {
         for (const clientBooking of clientBookingsForDate) {
           const bookingStart = new Date(clientBooking.date);
           const bookingEnd = new Date(bookingStart);
-
           const clientService = allServices.find((s: any) => s.id === clientBooking.serviceId);
           const bookingDuration = clientService ? clientService.duration : 60;
           bookingEnd.setMinutes(bookingEnd.getMinutes() + bookingDuration);

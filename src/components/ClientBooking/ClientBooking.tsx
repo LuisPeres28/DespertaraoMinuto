@@ -580,59 +580,54 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                     const isPast = date && date < todayStart;
                     const isSelected = date && selectedDate && date.toDateString() === selectedDate.toDateString();
                     
-                    // Check if therapist is blocked on this date
                     let isBlocked = false;
                     let doesntWorkThisDay = false;
-                    
+                    let isTooFarAdvance = false;
+
                     if (date && selectedTherapist) {
                       const therapist = therapists.find(t => t.id === selectedTherapist);
-                      
+
                       if (therapist?.availability) {
-                        // Check blocked dates
                         isBlocked = therapist.availability.blockedDates?.some(blockedDate => {
                           const blocked = new Date(blockedDate);
                           return blocked.toDateString() === date.toDateString();
                         }) || false;
-                        
-                        // Check working days
+
+                        const maxDays = therapist.availability.maxAdvanceBooking || 30;
+                        const maxDate = new Date();
+                        maxDate.setDate(maxDate.getDate() + maxDays);
+                        maxDate.setHours(23, 59, 59, 999);
+                        isTooFarAdvance = date > maxDate;
+
                         const dayOfWeek = date.getDay();
-                        doesntWorkThisDay = !therapist.availability.workingDays.includes(dayOfWeek);
+                        const hasCustomSchedule = therapist.availability.customSchedule?.some(cs => {
+                          const csDate = new Date(cs.date);
+                          return csDate.toDateString() === date.toDateString() && cs.available !== false;
+                        });
+                        doesntWorkThisDay = !therapist.availability.workingDays.includes(dayOfWeek) && !hasCustomSchedule;
                       }
                     }
-                    
+
+                    const isDisabled = isPast || isBlocked || doesntWorkThisDay || isTooFarAdvance;
+
                     return (
                       <div key={index} className="aspect-square min-h-[48px]">
                         {date && (
                           <button
-                            onClick={() => !isPast && !isBlocked && !doesntWorkThisDay && setSelectedDate(date)}
-                            disabled={isPast || isBlocked || doesntWorkThisDay}
+                            onClick={() => !isDisabled && setSelectedDate(date)}
+                            disabled={isDisabled}
                             className={`w-full h-full rounded-xl text-sm font-medium transition-colors min-h-[48px] ${
                               isSelected
                                 ? 'bg-desperto-gold text-white shadow-md'
-                                : isToday
+                                : isToday && !isDisabled
                                 ? 'bg-desperto-cream text-desperto-gold hover:bg-desperto-yellow/20'
-                                : isPast
+                                : isDisabled
                                 ? 'text-neutral-300 cursor-not-allowed'
-                                : isBlocked
-                                ? 'bg-red-100 text-red-600 cursor-not-allowed border border-red-200'
-                                : doesntWorkThisDay
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                 : 'hover:bg-neutral-100 text-neutral-700'
                             }`}
                             style={{ touchAction: 'manipulation' }}
-                            title={
-                              isBlocked ? 'Terapeuta não está disponível neste dia' :
-                              doesntWorkThisDay ? 'Terapeuta não trabalha neste dia da semana' :
-                              undefined
-                            }
                           >
                             {date.getDate()}
-                            {isBlocked && (
-                              <div className="text-xs mt-1">❌</div>
-                            )}
-                            {doesntWorkThisDay && (
-                              <div className="text-xs mt-1">🚫</div>
-                            )}
                           </button>
                         )}
                       </div>

@@ -445,6 +445,74 @@ export class SupabaseDataService {
     return true;
   }
 
+  static async saveTherapistAvailability(
+    userId: string,
+    therapistId: string,
+    availability: TherapistAvailability
+  ): Promise<boolean> {
+    const config = {
+      workingDays: availability.workingDays,
+      workingHours: availability.workingHours,
+      breaks: availability.breaks,
+      blockedDates: availability.blockedDates.map((d: Date) =>
+        d instanceof Date ? d.toISOString() : d
+      ),
+      customSchedule: availability.customSchedule.map((cs: any) => ({
+        ...cs,
+        date: cs.date instanceof Date ? cs.date.toISOString() : cs.date,
+      })),
+      bufferTime: availability.bufferTime,
+      maxAdvanceBooking: availability.maxAdvanceBooking,
+      minAdvanceNotice: availability.minAdvanceNotice,
+    };
+
+    const { data, error } = await supabase.rpc('save_therapist_availability', {
+      p_user_id: userId,
+      p_therapist_id: therapistId,
+      p_availability_config: config,
+    });
+
+    if (error) {
+      console.error('Error saving therapist availability:', error);
+      return false;
+    }
+
+    return data?.success === true;
+  }
+
+  static async saveBusinessSettings(
+    userId: string,
+    settings: Record<string, any>
+  ): Promise<boolean> {
+    const settingsPayload: Record<string, any> = {};
+    for (const [key, value] of Object.entries(settings)) {
+      settingsPayload[key] = value;
+    }
+
+    const { data, error } = await supabase.rpc('save_business_settings', {
+      p_user_id: userId,
+      p_settings: settingsPayload,
+    });
+
+    if (error) {
+      console.error('Error saving business settings:', error);
+      return false;
+    }
+
+    return data?.success === true;
+  }
+
+  static async loadBusinessSettings(): Promise<Record<string, any> | null> {
+    const { data, error } = await supabase.rpc('load_business_settings');
+
+    if (error) {
+      console.error('Error loading business settings:', error);
+      return null;
+    }
+
+    return data;
+  }
+
   static async fetchBookingsForAvailability(therapistId: string, date: Date): Promise<Booking[]> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
