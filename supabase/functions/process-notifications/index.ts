@@ -64,23 +64,25 @@ Deno.serve(async (req: Request) => {
       skipped: 0
     };
 
-    // Process each notification
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
     for (const notification of notifications) {
       try {
         if (notification.type === 'email') {
           await processEmailNotification(notification, supabase);
           results.sent++;
+          await delay(600);
         } else if (notification.type === 'sms') {
           await processSMSNotification(notification, supabase);
           results.sent++;
+          await delay(200);
         } else {
-          console.warn(`⚠️ Unknown notification type: ${notification.type}`);
+          console.warn(`Unknown notification type: ${notification.type}`);
           results.skipped++;
         }
       } catch (error) {
-        console.error(`❌ Failed to process notification ${notification.id}:`, error);
+        console.error(`Failed to process notification ${notification.id}:`, error);
 
-        // Update notification as failed
         await supabase
           .from('notifications')
           .update({
@@ -91,6 +93,7 @@ Deno.serve(async (req: Request) => {
           .eq('id', notification.id);
 
         results.failed++;
+        await delay(600);
       }
     }
 

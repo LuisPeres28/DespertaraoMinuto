@@ -29,15 +29,17 @@ Deno.serve(async (req: Request) => {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    const senderDomain = Deno.env.get("RESEND_SENDER_DOMAIN") || "";
+    const senderDomain = (Deno.env.get("RESEND_SENDER_DOMAIN") || "").trim();
     let fromAddress: string;
     if (senderDomain && senderDomain.includes("@")) {
       fromAddress = `Desperto <${senderDomain}>`;
-    } else if (senderDomain) {
+    } else if (senderDomain && senderDomain.length > 3 && senderDomain.includes(".")) {
       fromAddress = `Desperto <noreply@${senderDomain}>`;
     } else {
-      fromAddress = "Desperto <onboarding@resend.dev>";
+      fromAddress = "onboarding@resend.dev";
     }
+
+    console.log(`Sending email from: ${fromAddress} to: ${emailData.to_email}`);
 
     const htmlBody = `
       <!DOCTYPE html>

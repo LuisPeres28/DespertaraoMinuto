@@ -12,37 +12,13 @@ export class NotificationService {
 
   static async createBookingNotifications(
     bookingId: string,
-    clientId: string,
-    clientEmail: string,
+    _clientId: string,
+    _clientEmail: string,
     clientPhone: string | undefined,
-    therapistId: string,
-    bookingDate: Date
+    _therapistId: string,
+    _bookingDate: Date
   ): Promise<NotificationResult> {
     try {
-      const { error: notificationError } = await supabase.rpc(
-        'create_booking_notifications',
-        {
-          p_booking_id: bookingId,
-          p_client_id: clientId,
-          p_client_email: clientEmail,
-          p_client_phone: clientPhone || null,
-          p_therapist_id: therapistId,
-          p_admin_email: this.ADMIN_EMAIL
-        }
-      );
-
-      if (notificationError) throw notificationError;
-
-      const { error: reminderError } = await supabase.rpc(
-        'schedule_booking_reminders',
-        {
-          p_booking_id: bookingId,
-          p_booking_date: bookingDate.toISOString()
-        }
-      );
-
-      if (reminderError) throw reminderError;
-
       await this.triggerNotificationProcessing();
 
       return {
