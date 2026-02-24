@@ -225,13 +225,21 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
     await refreshData();
 
     try {
+      const therapistDetails = therapists.find(t => t.id === selectedTherapist);
       const notificationResult = await NotificationService.createBookingNotifications(
         newBooking.id,
         clientId,
         clientInfo.email,
         clientInfo.phone,
         selectedTherapist,
-        bookingDateTime
+        bookingDateTime,
+        {
+          clientName: clientInfo.name,
+          serviceName: selectedServiceDetails.name,
+          therapistName: therapistDetails?.name,
+          duration: selectedServiceDetails.duration,
+          price: selectedServiceDetails.price,
+        }
       );
 
       if (!notificationResult.success) {

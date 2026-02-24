@@ -12,19 +12,106 @@ export class NotificationService {
 
   static async createBookingNotifications(
     bookingId: string,
-    _clientId: string,
-    _clientEmail: string,
+    clientId: string,
+    clientEmail: string,
     clientPhone: string | undefined,
     _therapistId: string,
-    _bookingDate: Date
+    bookingDate: Date,
+    details?: { clientName?: string; serviceName?: string; therapistName?: string; duration?: number; price?: number }
   ): Promise<NotificationResult> {
     try {
+      const formattedDate = bookingDate.toLocaleDateString('pt-PT', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+      const formattedTime = bookingDate.toLocaleTimeString('pt-PT', {
+        hour: '2-digit', minute: '2-digit'
+      });
+
+      const clientName = details?.clientName || clientEmail.split('@')[0];
+      const serviceName = details?.serviceName || 'Consulta';
+      const therapistName = details?.therapistName || '';
+      const duration = details?.duration || 0;
+      const price = details?.price || 0;
+
+      const clientMessage = [
+        `Ola ${clientName},`,
+        '',
+        'O seu agendamento foi confirmado com sucesso!',
+        '',
+        'Detalhes do Agendamento:',
+        `- Servico: ${serviceName}`,
+        therapistName ? `- Terapeuta: ${therapistName}` : '',
+        `- Data: ${formattedDate}`,
+        `- Hora: ${formattedTime}`,
+        duration ? `- Duracao: ${duration} minutos` : '',
+        price ? `- Preco: ${price}EUR` : '',
+        '',
+        'Localizacao: Desperto - Coaching ao Minuto',
+        '',
+        'Importante: Por favor, chegue 5 minutos antes da hora marcada.',
+        '',
+        'Obrigado por escolher a Desperto!',
+        '',
+        'Cumprimentos,',
+        'Equipa Desperto'
+      ].filter(Boolean).join('\n');
+
+      const adminMessage = [
+        'Nova marcacao recebida.',
+        '',
+        `Cliente: ${clientName} (${clientEmail})`,
+        clientPhone ? `Telefone: ${clientPhone}` : '',
+        `Servico: ${serviceName}`,
+        therapistName ? `Terapeuta: ${therapistName}` : '',
+        `Data: ${formattedDate} as ${formattedTime}`,
+      ].filter(Boolean).join('\n');
+
+      const { error: clientError } = await supabase.from('notifications').insert({
+        type: 'email',
+        recipient_type: 'client',
+        recipient_id: clientId,
+        recipient_email: clientEmail,
+        subject: `Confirmacao de Agendamento - ${serviceName}`,
+        message: clientMessage,
+        booking_id: bookingId,
+        status: 'pending',
+        scheduled_for: new Date().toISOString()
+      });
+
+      if (clientError) {
+        console.error('Error inserting client notification:', clientError);
+      }
+
+      await supabase.from('notifications').insert({
+        type: 'email',
+        recipient_type: 'admin',
+        recipient_email: this.ADMIN_EMAIL,
+        subject: `Nova Marcacao - ${clientName} - ${serviceName}`,
+        message: adminMessage,
+        booking_id: bookingId,
+        status: 'pending',
+        scheduled_for: new Date().toISOString()
+      });
+
+      if (clientPhone) {
+        await supabase.from('notifications').insert({
+          type: 'sms',
+          recipient_type: 'client',
+          recipient_id: clientId,
+          recipient_phone: clientPhone,
+          message: `Desperto: Agendamento confirmado para ${formattedDate} as ${formattedTime}. Servico: ${serviceName}.`,
+          booking_id: bookingId,
+          status: 'pending',
+          scheduled_for: new Date().toISOString()
+        });
+      }
+
       await this.triggerNotificationProcessing();
 
       return {
         success: true,
         message: 'Notificacoes criadas e enviadas com sucesso',
-        emailSent: true,
+        emailSent: !clientError,
         smsSent: !!clientPhone
       };
     } catch (error) {
