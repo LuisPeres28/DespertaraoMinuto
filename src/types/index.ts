@@ -66,10 +66,6 @@ export interface Therapist {
   invitedBy?: string;
   invitedAt?: Date;
   status: 'active' | 'pending' | 'suspended';
-  isAdmin: boolean;
-  invitedBy?: string;
-  invitedAt?: Date;
-  status: 'active' | 'pending' | 'suspended';
   availability?: TherapistAvailability;
 }
 

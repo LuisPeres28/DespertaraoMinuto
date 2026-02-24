@@ -466,51 +466,99 @@ export class SupabaseDataService {
       minAdvanceNotice: availability.minAdvanceNotice,
     };
 
-    const { data, error } = await supabase.rpc('save_therapist_availability', {
-      p_user_id: userId,
-      p_therapist_id: therapistId,
-      p_availability_config: config,
-    });
+    try {
+      const { data, error } = await supabase.rpc('save_therapist_availability', {
+        p_user_id: userId,
+        p_therapist_id: therapistId,
+        p_availability_config: config,
+      });
 
-    if (error) {
-      console.error('Error saving therapist availability:', error);
+      if (!error && data?.success === true) {
+        return true;
+      }
+
+      console.error('RPC save_therapist_availability failed, trying direct update:', error || data);
+    } catch (rpcError) {
+      console.error('RPC call exception:', rpcError);
+    }
+
+    const { error: directError } = await supabase
+      .from('user_profiles')
+      .update({ availability_config: config, updated_at: new Date().toISOString() })
+      .eq('user_id', therapistId);
+
+    if (directError) {
+      console.error('Direct update also failed:', directError);
       return false;
     }
 
-    return data?.success === true;
+    return true;
   }
 
   static async saveBusinessSettings(
     userId: string,
     settings: Record<string, any>
   ): Promise<boolean> {
-    const settingsPayload: Record<string, any> = {};
+    try {
+      const { data, error } = await supabase.rpc('save_business_settings', {
+        p_user_id: userId,
+        p_settings: settings,
+      });
+
+      if (!error && data?.success === true) {
+        return true;
+      }
+
+      console.error('RPC save_business_settings failed, trying direct upsert:', error || data);
+    } catch (rpcError) {
+      console.error('RPC call exception:', rpcError);
+    }
+
+    let allSuccess = true;
     for (const [key, value] of Object.entries(settings)) {
-      settingsPayload[key] = value;
+      const { error: upsertError } = await supabase
+        .from('business_settings')
+        .upsert(
+          { key, value, updated_by: userId, updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        );
+
+      if (upsertError) {
+        console.error(`Direct upsert failed for key "${key}":`, upsertError);
+        allSuccess = false;
+      }
     }
 
-    const { data, error } = await supabase.rpc('save_business_settings', {
-      p_user_id: userId,
-      p_settings: settingsPayload,
-    });
-
-    if (error) {
-      console.error('Error saving business settings:', error);
-      return false;
-    }
-
-    return data?.success === true;
+    return allSuccess;
   }
 
   static async loadBusinessSettings(): Promise<Record<string, any> | null> {
-    const { data, error } = await supabase.rpc('load_business_settings');
+    try {
+      const { data, error } = await supabase.rpc('load_business_settings');
 
-    if (error) {
-      console.error('Error loading business settings:', error);
+      if (!error && data && typeof data === 'object') {
+        return data;
+      }
+
+      console.error('RPC load_business_settings failed, trying direct query:', error);
+    } catch (rpcError) {
+      console.error('RPC call exception:', rpcError);
+    }
+
+    const { data: rows, error: queryError } = await supabase
+      .from('business_settings')
+      .select('key, value');
+
+    if (queryError || !rows) {
+      console.error('Direct query also failed:', queryError);
       return null;
     }
 
-    return data;
+    const result: Record<string, any> = {};
+    for (const row of rows) {
+      result[row.key] = row.value;
+    }
+    return result;
   }
 
   static async fetchBookingsForAvailability(therapistId: string, date: Date): Promise<Booking[]> {
