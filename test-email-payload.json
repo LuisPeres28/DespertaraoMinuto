@@ -1,0 +1,6 @@
+{
+  "to_email": "luisaltru@gmail.com",
+  "subject": "Teste Desperto - Email de Verificacao",
+  "message": "Ola Luis! Este e um email de teste do sistema Desperto. Se recebeste este email, o sistema de notificacoes esta a funcionar correctamente!",
+  "to_name": "Luis"
+}
