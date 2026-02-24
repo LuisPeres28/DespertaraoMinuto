@@ -29,7 +29,7 @@ Deno.serve(async (req: Request) => {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    const fromAddress = "Desperto <onboarding@resend.dev>";
+    const fromAddress = "Desperto <noreply@euestoudesperto.pt>";
 
     console.log(`Sending email from: ${fromAddress} to: ${emailData.to_email}`);
 
