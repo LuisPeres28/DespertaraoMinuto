@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Search, Filter, Ticket, Calendar, User, DollarSign, CheckCircle, X, AlertTriangle, CreditCard as Edit, Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { CouponService } from '../../services/couponService';
+import { SupabaseDataService } from '../../services/supabaseDataService';
 import { Coupon, CouponUsage } from '../../types';
 
 export function CouponManagement() {
@@ -86,20 +87,54 @@ export function CouponManagement() {
     }
 
     if (editingCoupon) {
-      // Para edição, manter o código existente
+      const updated = await SupabaseDataService.updateCoupon(editingCoupon.id, {
+        type: couponData.type,
+        value: couponData.value,
+        serviceId: couponData.serviceId || null,
+        clientId: couponData.clientId || null,
+        validUntil: new Date(couponData.validUntil),
+        usageLimit: couponData.usageLimit,
+        description: couponData.description,
+      });
+
+      if (!updated) {
+        alert('Erro ao atualizar cupão na base de dados');
+        return;
+      }
+
       const updatedCoupon = {
-        ...result.coupon,
-        id: editingCoupon.id,
-        code: editingCoupon.code,
-        createdAt: editingCoupon.createdAt,
-        usedCount: editingCoupon.usedCount
+        ...editingCoupon,
+        type: couponData.type as Coupon['type'],
+        value: couponData.value,
+        serviceId: couponData.serviceId || undefined,
+        clientId: couponData.clientId || undefined,
+        validUntil: new Date(couponData.validUntil),
+        usageLimit: couponData.usageLimit,
+        description: couponData.description,
+        updatedAt: new Date(),
       };
       setCoupons(prev => prev.map(c => c.id === editingCoupon.id ? updatedCoupon : c));
     } else {
-      setCoupons(prev => [...prev, result.coupon]);
+      const dbCoupon = await SupabaseDataService.createCoupon({
+        code: result.coupon.code,
+        type: couponData.type,
+        value: couponData.value,
+        serviceId: couponData.serviceId || undefined,
+        clientId: couponData.clientId || undefined,
+        createdBy: currentUser.id,
+        validUntil: new Date(couponData.validUntil),
+        usageLimit: couponData.usageLimit,
+        description: couponData.description,
+      });
+
+      if (!dbCoupon) {
+        alert('Erro ao guardar cupão na base de dados');
+        return;
+      }
+
+      setCoupons(prev => [...prev, dbCoupon]);
     }
 
-    // Reset form
     setCouponData({
       type: 'fixed_amount',
       value: 0,
@@ -112,7 +147,6 @@ export function CouponManagement() {
     setEditingCoupon(null);
     setShowCreateModal(false);
 
-    // Mostrar a password do cupão criado
     if (!editingCoupon && result.coupon) {
       alert(`Cupão criado com sucesso!\n\nPassword: ${result.coupon.code}\n\nPartilhe esta password com o cliente.`);
     } else {
@@ -134,19 +168,29 @@ export function CouponManagement() {
     setShowCreateModal(true);
   };
 
-  const handleDeleteCoupon = (couponId: string) => {
+  const handleDeleteCoupon = async (couponId: string) => {
     const coupon = coupons.find(c => c.id === couponId);
     if (!coupon) return;
 
     if (confirm(`Tem certeza que deseja eliminar o cupão ${coupon.code}?`)) {
+      const deleted = await SupabaseDataService.deleteCoupon(couponId);
+      if (!deleted) {
+        alert('Erro ao eliminar cupão da base de dados');
+        return;
+      }
       setCoupons(prev => prev.filter(c => c.id !== couponId));
       setCouponUsage(prev => prev.filter(u => u.couponId !== couponId));
       alert('Cupão eliminado com sucesso!');
     }
   };
 
-  const handleCancelCoupon = (couponId: string) => {
-    setCoupons(prev => prev.map(c => 
+  const handleCancelCoupon = async (couponId: string) => {
+    const updated = await SupabaseDataService.updateCoupon(couponId, { status: 'cancelled' });
+    if (!updated) {
+      alert('Erro ao cancelar cupão');
+      return;
+    }
+    setCoupons(prev => prev.map(c =>
       c.id === couponId ? { ...c, status: 'cancelled' as const } : c
     ));
   };

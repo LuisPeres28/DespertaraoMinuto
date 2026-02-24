@@ -59,6 +59,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         paymentsData,
         notesData,
         savedSettings,
+        couponsData,
+        couponUsageData,
       ] = await Promise.all([
         SupabaseDataService.fetchServices(),
         SupabaseDataService.fetchTherapists(),
@@ -67,6 +69,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         SupabaseDataService.fetchPayments(),
         SupabaseDataService.fetchTherapistNotes(),
         SupabaseDataService.loadBusinessSettings(),
+        SupabaseDataService.fetchCoupons(),
+        SupabaseDataService.fetchCouponUsage(),
       ]);
 
       setServices(servicesData);
@@ -75,6 +79,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setClients(clientsData);
       setPayments(paymentsData);
       setTherapistNotes(notesData);
+      setCoupons(couponsData);
+      setCouponUsage(couponUsageData);
 
       if (savedSettings && Object.keys(savedSettings).length > 0) {
         setBusinessSettings(prev => ({

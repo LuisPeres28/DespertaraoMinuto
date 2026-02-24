@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Service, Booking, Therapist, TherapistAvailability, Payment, Client, TherapistNote } from '../types';
+import type { Service, Booking, Therapist, TherapistAvailability, Payment, Client, TherapistNote, Coupon, CouponUsage } from '../types';
 
 export class SupabaseDataService {
   static async fetchServices(): Promise<Service[]> {
@@ -628,5 +628,182 @@ export class SupabaseDataService {
       paymentStatus: b.payment_status || 'pending',
       reminderSent: b.reminder_sent || false,
     }));
+  }
+
+  static async fetchCoupons(): Promise<Coupon[]> {
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching coupons:', error);
+      return [];
+    }
+
+    return (data || []).map(c => ({
+      id: c.id,
+      code: c.code,
+      type: (c.discount_type || 'percentage') as Coupon['type'],
+      value: Number(c.discount_value),
+      serviceId: c.service_id || undefined,
+      clientId: c.client_id || undefined,
+      createdBy: c.created_by || '',
+      validFrom: new Date(c.valid_from || c.created_at),
+      validUntil: new Date(c.valid_until),
+      usageLimit: c.max_uses || 1,
+      usedCount: c.used_count || 0,
+      status: (c.status || (c.is_active ? 'active' : 'cancelled')) as Coupon['status'],
+      description: c.description || '',
+      createdAt: new Date(c.created_at),
+      updatedAt: new Date(c.updated_at),
+    }));
+  }
+
+  static async fetchCouponUsage(): Promise<CouponUsage[]> {
+    const { data, error } = await supabase
+      .from('coupon_usages')
+      .select('*')
+      .order('used_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching coupon usage:', error);
+      return [];
+    }
+
+    return (data || []).map(u => ({
+      id: u.id,
+      couponId: u.coupon_id,
+      bookingId: u.booking_id,
+      usedBy: u.user_id,
+      usedAt: new Date(u.used_at),
+      discountApplied: 0,
+    }));
+  }
+
+  static async createCoupon(coupon: {
+    code: string;
+    type: string;
+    value: number;
+    serviceId?: string;
+    clientId?: string;
+    createdBy: string;
+    validUntil: Date;
+    usageLimit: number;
+    description?: string;
+  }): Promise<Coupon | null> {
+    const { data, error } = await supabase
+      .from('coupons')
+      .insert({
+        code: coupon.code,
+        password: coupon.code,
+        discount_type: coupon.type,
+        discount_value: coupon.value,
+        service_id: coupon.serviceId || null,
+        client_id: coupon.clientId || null,
+        created_by: coupon.createdBy,
+        valid_from: new Date().toISOString(),
+        valid_until: coupon.validUntil.toISOString(),
+        max_uses: coupon.usageLimit,
+        used_count: 0,
+        is_active: true,
+        status: 'active',
+        description: coupon.description || '',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating coupon:', error);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      code: data.code,
+      type: (data.discount_type || 'percentage') as Coupon['type'],
+      value: Number(data.discount_value),
+      serviceId: data.service_id || undefined,
+      clientId: data.client_id || undefined,
+      createdBy: data.created_by || '',
+      validFrom: new Date(data.valid_from || data.created_at),
+      validUntil: new Date(data.valid_until),
+      usageLimit: data.max_uses || 1,
+      usedCount: data.used_count || 0,
+      status: (data.status || 'active') as Coupon['status'],
+      description: data.description || '',
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  static async updateCoupon(id: string, updates: Partial<{
+    type: string;
+    value: number;
+    serviceId: string | null;
+    clientId: string | null;
+    validUntil: Date;
+    usageLimit: number;
+    description: string;
+    status: string;
+    usedCount: number;
+  }>): Promise<boolean> {
+    const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (updates.type !== undefined) dbUpdates.discount_type = updates.type;
+    if (updates.value !== undefined) dbUpdates.discount_value = updates.value;
+    if (updates.serviceId !== undefined) dbUpdates.service_id = updates.serviceId;
+    if (updates.clientId !== undefined) dbUpdates.client_id = updates.clientId;
+    if (updates.validUntil) dbUpdates.valid_until = updates.validUntil.toISOString();
+    if (updates.usageLimit !== undefined) dbUpdates.max_uses = updates.usageLimit;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.usedCount !== undefined) dbUpdates.used_count = updates.usedCount;
+    if (updates.status !== undefined) {
+      dbUpdates.status = updates.status;
+      dbUpdates.is_active = updates.status === 'active';
+    }
+
+    const { error } = await supabase
+      .from('coupons')
+      .update(dbUpdates)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating coupon:', error);
+      return false;
+    }
+    return true;
+  }
+
+  static async deleteCoupon(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('coupons')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting coupon:', error);
+      return false;
+    }
+    return true;
+  }
+
+  static async recordCouponUsage(usage: {
+    couponId: string;
+    bookingId: string;
+    userId: string;
+  }): Promise<boolean> {
+    const { error } = await supabase
+      .from('coupon_usages')
+      .insert({
+        coupon_id: usage.couponId,
+        booking_id: usage.bookingId,
+        user_id: usage.userId,
+      });
+
+    if (error) {
+      console.error('Error recording coupon usage:', error);
+      return false;
+    }
+    return true;
   }
 }

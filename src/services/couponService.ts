@@ -1,3 +1,5 @@
+import { SupabaseDataService } from './supabaseDataService';
+
 export interface CouponValidationResult {
   isValid: boolean;
   coupon?: any;
@@ -260,9 +262,6 @@ export class CouponService {
     }
   }
 
-  /**
-   * Marca um cupão como usado
-   */
   static useCoupon(
     couponId: string,
     bookingId: string,
@@ -274,22 +273,18 @@ export class CouponService {
     setCouponUsage: (usage: any[]) => void
   ): boolean {
     try {
-      const coupon = coupons.find(c => c.id === couponId);
+      const coupon = coupons.find((c: any) => c.id === couponId);
       if (!coupon) return false;
 
-      // Atualizar contador de uso
-      const updatedCoupons = coupons.map(c => 
-        c.id === couponId 
-          ? { 
-              ...c, 
-              usedCount: c.usedCount + 1,
-              status: c.usedCount + 1 >= c.usageLimit ? 'used' : 'active',
-              updatedAt: new Date()
-            }
+      const newUsedCount = coupon.usedCount + 1;
+      const newStatus = newUsedCount >= coupon.usageLimit ? 'used' : 'active';
+
+      const updatedCoupons = coupons.map((c: any) =>
+        c.id === couponId
+          ? { ...c, usedCount: newUsedCount, status: newStatus, updatedAt: new Date() }
           : c
       );
 
-      // Registar uso
       const usage = {
         id: Date.now().toString(),
         couponId,
@@ -302,16 +297,14 @@ export class CouponService {
       setCoupons(updatedCoupons);
       setCouponUsage([...couponUsage, usage]);
 
-      console.log('✅ Cupão utilizado:', {
-        code: coupon.code,
-        usedCount: coupon.usedCount + 1,
-        usageLimit: coupon.usageLimit
+      SupabaseDataService.updateCoupon(couponId, {
+        usedCount: newUsedCount,
+        status: newStatus,
       });
 
       return true;
-
     } catch (error) {
-      console.error('❌ Erro ao usar cupão:', error);
+      console.error('Error using coupon:', error);
       return false;
     }
   }
