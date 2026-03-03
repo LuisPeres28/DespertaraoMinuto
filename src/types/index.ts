@@ -44,6 +44,7 @@ export interface Booking {
   notes: string;
   paymentStatus: 'paid' | 'partial' | 'pending' | 'overdue';
   reminderSent: boolean;
+  meetingLink?: string;
   rescheduleRequest?: {
     id: string;
     newDate: Date;

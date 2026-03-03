@@ -36,9 +36,41 @@ export class EmailService {
       ? `\nCupao gratuito utilizado - Password validada: ${couponPassword}\nConsulta gratuita confirmada para ${formattedDate} as ${formattedTime}\n`
       : '';
 
+    const meetingSection = booking.meetingLink
+      ? `\nLink da sessao (Google Meet): ${booking.meetingLink}`
+      : '\nO link da sessao (Google Meet) sera enviado antes da consulta.';
+
     return {
       subject: `Confirmacao de Agendamento - ${service.name}`,
-      body: `Ola ${client.name},\n\nO seu agendamento foi confirmado com sucesso!\n\nDetalhes do Agendamento:\n- Servico: ${service.name}\n- Terapeuta: ${therapist.name}\n- Data: ${formattedDate}\n- Hora: ${formattedTime}\n- Duracao: ${service.duration} minutos\n- Preco: ${service.price}EUR${couponSection}\n\nLocalizacao: Desperto - Coaching ao Minuto\n\nImportante: Por favor, chegue 5 minutos antes da hora marcada.\n\nObrigado por escolher a Desperto!\n\nCumprimentos,\nEquipa Desperto`
+      body: [
+        `Ola ${client.name},`,
+        '',
+        'O seu agendamento foi confirmado com sucesso!',
+        '',
+        'Detalhes do Agendamento:',
+        `- Servico: ${service.name}`,
+        `- Terapeuta: ${therapist.name}`,
+        `- Data: ${formattedDate}`,
+        `- Hora: ${formattedTime}`,
+        `- Duracao: ${service.duration} minutos`,
+        `- Preco: ${service.price}EUR`,
+        couponSection,
+        '--- Consulta 100% Online ---',
+        'A sua sessao sera realizada por videochamada atraves do Google Meet.',
+        meetingSection,
+        '',
+        'Antes da sessao, por favor:',
+        '- Teste a sua camara e microfone',
+        '- Escolha um local calmo e com boa ligacao a internet',
+        '- Entre na reuniao 2-3 minutos antes da hora marcada',
+        '',
+        `Contacto: euestoudesperto@gmail.com`,
+        '',
+        'Obrigado por escolher a Desperto!',
+        '',
+        'Cumprimentos,',
+        'Equipa Desperto'
+      ].filter(line => line !== undefined).join('\n')
     };
   }
 
@@ -55,9 +87,38 @@ export class EmailService {
       hour: '2-digit', minute: '2-digit'
     });
 
+    const meetingSection = booking.meetingLink
+      ? `\nLink da sessao (Google Meet): ${booking.meetingLink}`
+      : '\nO link da sessao sera enviado em breve.';
+
     return {
       subject: `Lembrete: Consulta em ${hoursUntil} horas - ${service.name}`,
-      body: `Ola ${client.name},\n\nEste e um lembrete da sua consulta marcada para hoje.\n\nDetalhes:\n- Servico: ${service.name}\n- Terapeuta: ${therapist.name}\n- Data: ${formattedDate}\n- Hora: ${formattedTime}\n- Duracao: ${service.duration} minutos\n\nLocalizacao: Desperto - Coaching ao Minuto\n\nAguardamos por si!\n\nEquipa Desperto`
+      body: [
+        `Ola ${client.name},`,
+        '',
+        'Este e um lembrete da sua consulta marcada para hoje.',
+        '',
+        'Detalhes:',
+        `- Servico: ${service.name}`,
+        `- Terapeuta: ${therapist.name}`,
+        `- Data: ${formattedDate}`,
+        `- Hora: ${formattedTime}`,
+        `- Duracao: ${service.duration} minutos`,
+        '',
+        '--- Consulta Online (Google Meet) ---',
+        meetingSection,
+        '',
+        'Antes da sessao, por favor:',
+        '- Teste a sua camara e microfone',
+        '- Escolha um local calmo e com boa ligacao a internet',
+        '- Entre na reuniao 2-3 minutos antes da hora marcada',
+        '',
+        `Contacto: euestoudesperto@gmail.com`,
+        '',
+        'Aguardamos por si!',
+        '',
+        'Equipa Desperto'
+      ].join('\n')
     };
   }
 
@@ -81,7 +142,7 @@ export class EmailService {
           to_email: clientEmail,
           to_name: clientName,
           subject: 'Confirmacao de Agendamento - Desperto',
-          message: `Ola ${clientName},\n\nA sua marcacao foi confirmada para ${formattedDate} as ${bookingTime}.\n\nLocal: ${location}\n\nCumprimentos,\nEquipa Desperto`
+          message: `Ola ${clientName},\n\nA sua marcacao foi confirmada para ${formattedDate} as ${bookingTime}.\n\nA sessao sera realizada online via Google Meet. O link sera enviado antes da consulta.\n\nAntes da sessao, teste a sua camara e microfone.\n\nContacto: euestoudesperto@gmail.com\n\nCumprimentos,\nEquipa Desperto`
         })
       });
 
@@ -148,7 +209,7 @@ export class EmailService {
         body: JSON.stringify({
           to_email: clientEmail,
           subject: `Agendamento Reagendado - ${serviceName}`,
-          message: `Ola ${clientName},\n\nO seu agendamento foi reagendado.\n\nData anterior: ${formattedOldDate}\nNova data: ${formattedNewDate}\n\nSe tiver alguma duvida, contacte-nos.\n\nCumprimentos,\nEquipa Desperto`
+          message: `Ola ${clientName},\n\nO seu agendamento foi reagendado.\n\nData anterior: ${formattedOldDate}\nNova data: ${formattedNewDate}\n\nA sessao sera realizada online via Google Meet. O novo link sera enviado antes da consulta.\n\nSe tiver alguma duvida, contacte-nos: euestoudesperto@gmail.com\n\nCumprimentos,\nEquipa Desperto`
         })
       });
 

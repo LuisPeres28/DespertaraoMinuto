@@ -65,20 +65,24 @@ Deno.serve(async (req: Request) => {
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .header h1 { margin: 0; font-size: 24px; }
+            .header p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; }
             .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none; }
             .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            .footer a { color: #2c5282; text-decoration: none; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1>Desperto - Coaching ao Minuto</h1>
+              <h1>Desperto</h1>
+              <p>Consultas Online via Google Meet</p>
             </div>
             <div class="content">
               ${emailData.message.replace(/\n/g, '<br>')}
             </div>
             <div class="footer">
-              <p>Este email foi enviado automaticamente. Por favor nao responda.</p>
+              <p>Contacto: <a href="mailto:euestoudesperto@gmail.com">euestoudesperto@gmail.com</a></p>
+              <p>Este email foi enviado automaticamente. Por favor nao responda diretamente.</p>
             </div>
           </div>
         </body>

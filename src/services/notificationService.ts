@@ -17,7 +17,7 @@ export class NotificationService {
     clientPhone: string | undefined,
     _therapistId: string,
     bookingDate: Date,
-    details?: { clientName?: string; serviceName?: string; therapistName?: string; duration?: number; price?: number }
+    details?: { clientName?: string; serviceName?: string; therapistName?: string; duration?: number; price?: number; meetingLink?: string }
   ): Promise<NotificationResult> {
     try {
       const formattedDate = bookingDate.toLocaleDateString('pt-PT', {
@@ -32,6 +32,11 @@ export class NotificationService {
       const therapistName = details?.therapistName || '';
       const duration = details?.duration || 0;
       const price = details?.price || 0;
+      const meetingLink = details?.meetingLink;
+
+      const meetingLine = meetingLink
+        ? `Link da sessao (Google Meet): ${meetingLink}`
+        : 'O link da sessao (Google Meet) sera enviado antes da consulta.';
 
       const clientMessage = [
         `Ola ${clientName},`,
@@ -46,9 +51,16 @@ export class NotificationService {
         duration ? `- Duracao: ${duration} minutos` : '',
         price ? `- Preco: ${price}EUR` : '',
         '',
-        'Localizacao: Desperto - Coaching ao Minuto',
+        '--- Consulta 100% Online ---',
+        'A sua sessao sera realizada por videochamada atraves do Google Meet.',
+        meetingLine,
         '',
-        'Importante: Por favor, chegue 5 minutos antes da hora marcada.',
+        'Antes da sessao, por favor:',
+        '- Teste a sua camara e microfone',
+        '- Escolha um local calmo e com boa ligacao a internet',
+        '- Entre na reuniao 2-3 minutos antes da hora marcada',
+        '',
+        'Contacto: euestoudesperto@gmail.com',
         '',
         'Obrigado por escolher a Desperto!',
         '',
@@ -208,7 +220,7 @@ export class NotificationService {
         recipient_id: clientId,
         recipient_email: clientEmail,
         subject: 'Consulta Cancelada',
-        message: `A sua consulta foi cancelada.\n\nServico: ${serviceName}\nData: ${bookingDate.toLocaleString('pt-PT')}\n\nSe tiver alguma duvida, por favor contacte-nos.`,
+        message: `A sua consulta foi cancelada.\n\nServico: ${serviceName}\nData: ${bookingDate.toLocaleString('pt-PT')}\n\nSe tiver alguma duvida, contacte-nos: euestoudesperto@gmail.com`,
         booking_id: bookingId,
         status: 'pending',
         scheduled_for: new Date().toISOString()
