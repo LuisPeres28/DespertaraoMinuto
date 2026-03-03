@@ -30,43 +30,6 @@ export class NotificationService {
       const clientName = details?.clientName || clientEmail.split('@')[0];
       const serviceName = details?.serviceName || 'Consulta';
       const therapistName = details?.therapistName || '';
-      const duration = details?.duration || 0;
-      const price = details?.price || 0;
-      const meetingLink = details?.meetingLink;
-
-      const meetingLine = meetingLink
-        ? `Link da sessao (Google Meet): ${meetingLink}`
-        : 'O link da sessao (Google Meet) sera enviado antes da consulta.';
-
-      const clientMessage = [
-        `Ola ${clientName},`,
-        '',
-        'O seu agendamento foi confirmado com sucesso!',
-        '',
-        'Detalhes do Agendamento:',
-        `- Servico: ${serviceName}`,
-        therapistName ? `- Terapeuta: ${therapistName}` : '',
-        `- Data: ${formattedDate}`,
-        `- Hora: ${formattedTime}`,
-        duration ? `- Duracao: ${duration} minutos` : '',
-        price ? `- Preco: ${price}EUR` : '',
-        '',
-        '--- Consulta 100% Online ---',
-        'A sua sessao sera realizada por videochamada atraves do Google Meet.',
-        meetingLine,
-        '',
-        'Antes da sessao, por favor:',
-        '- Teste a sua camara e microfone',
-        '- Escolha um local calmo e com boa ligacao a internet',
-        '- Entre na reuniao 2-3 minutos antes da hora marcada',
-        '',
-        'Contacto: euestoudesperto@gmail.com',
-        '',
-        'Obrigado por escolher a Desperto!',
-        '',
-        'Cumprimentos,',
-        'Equipa Desperto'
-      ].filter(Boolean).join('\n');
 
       const adminMessage = [
         'Nova marcacao recebida.',
@@ -77,22 +40,6 @@ export class NotificationService {
         therapistName ? `Terapeuta: ${therapistName}` : '',
         `Data: ${formattedDate} as ${formattedTime}`,
       ].filter(Boolean).join('\n');
-
-      const { error: clientError } = await supabase.from('notifications').insert({
-        type: 'email',
-        recipient_type: 'client',
-        recipient_id: clientId,
-        recipient_email: clientEmail,
-        subject: `Confirmacao de Agendamento - ${serviceName}`,
-        message: clientMessage,
-        booking_id: bookingId,
-        status: 'pending',
-        scheduled_for: new Date().toISOString()
-      });
-
-      if (clientError) {
-        console.error('Error inserting client notification:', clientError);
-      }
 
       await supabase.from('notifications').insert({
         type: 'email',
@@ -105,25 +52,12 @@ export class NotificationService {
         scheduled_for: new Date().toISOString()
       });
 
-      if (clientPhone) {
-        await supabase.from('notifications').insert({
-          type: 'sms',
-          recipient_type: 'client',
-          recipient_id: clientId,
-          recipient_phone: clientPhone,
-          message: `Desperto: Agendamento confirmado para ${formattedDate} as ${formattedTime}. Servico: ${serviceName}.`,
-          booking_id: bookingId,
-          status: 'pending',
-          scheduled_for: new Date().toISOString()
-        });
-      }
-
       await this.triggerNotificationProcessing();
 
       return {
         success: true,
         message: 'Notificacoes criadas e enviadas com sucesso',
-        emailSent: !clientError,
+        emailSent: true,
         smsSent: !!clientPhone
       };
     } catch (error) {

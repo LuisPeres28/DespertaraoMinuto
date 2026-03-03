@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, X, RefreshCw, Mail, Phone, CheckCircle, AlertTriangle, Check, XCircle } from 'lucide-react';
+import { Calendar, Clock, X, RefreshCw, Mail, Phone, CheckCircle, AlertTriangle, Check, XCircle, Video, Link } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { EmailService } from '../../services/emailService';
 import { NotificationService } from '../../services/notificationService';
@@ -28,6 +28,8 @@ export function BookingManagement({ bookingId, onClose }: BookingManagementProps
   const [hasChanges, setHasChanges] = useState(false);
   const [rescheduleResponse, setRescheduleResponse] = useState('');
   const [showRescheduleApproval, setShowRescheduleApproval] = useState(false);
+  const [meetingLink, setMeetingLink] = useState(booking?.meetingLink || '');
+  const [meetingLinkSaved, setMeetingLinkSaved] = useState(false);
 
   if (!booking || !client || !service || !therapist) {
     return (
@@ -229,8 +231,8 @@ Equipa Desperto
       title: `${service.name} - ${therapist.name}`,
       start: startDate,
       end: endDate,
-      description: `Consulta com ${therapist.name}\nServiço: ${service.name}\nCliente: ${client.name}`,
-      location: 'Desperto - Despertar ao Minuto'
+      description: `Consulta online com ${therapist.name}\nServico: ${service.name}\nCliente: ${client.name}${meetingLink ? `\nGoogle Meet: ${meetingLink}` : ''}`,
+      location: meetingLink || 'Google Meet (link a enviar)'
     };
   };
 
@@ -299,6 +301,54 @@ Equipa Desperto
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Meeting Link */}
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+              <Video className="w-5 h-5 mr-2 text-blue-600" />
+              Link Google Meet
+            </h3>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Link className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                <input
+                  type="url"
+                  value={meetingLink}
+                  onChange={(e) => {
+                    setMeetingLink(e.target.value);
+                    setMeetingLinkSaved(false);
+                  }}
+                  placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  await SupabaseDataService.updateBooking(bookingId, { meetingLink });
+                  setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, meetingLink } : b));
+                  setMeetingLinkSaved(true);
+                  setTimeout(() => setMeetingLinkSaved(false), 3000);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium whitespace-nowrap"
+              >
+                {meetingLinkSaved ? 'Guardado!' : 'Guardar Link'}
+              </button>
+            </div>
+            {meetingLink && (
+              <a
+                href={meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center mt-2 text-sm text-blue-600 hover:text-blue-800"
+              >
+                <Video className="w-4 h-4 mr-1" />
+                Abrir reuniao
+              </a>
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              Cole aqui o link do Google Meet. Este link sera incluido nos emails de confirmacao e lembrete ao cliente.
+            </p>
           </div>
 
           {/* Calendar Integration */}

@@ -128,6 +128,7 @@ export class SupabaseDataService {
       notes: b.notes || '',
       paymentStatus: b.payment_status || 'pending',
       reminderSent: b.reminder_sent || false,
+      meetingLink: b.meeting_link || undefined,
       rescheduleRequest: b.reschedule_request || undefined,
     }));
   }
@@ -226,6 +227,7 @@ export class SupabaseDataService {
     status?: string;
     paymentStatus?: string;
     notes?: string;
+    meetingLink?: string;
   }): Promise<Booking | null> {
     const { data, error } = await supabase
       .from('bookings')
@@ -237,6 +239,7 @@ export class SupabaseDataService {
         status: (booking.status || 'confirmed') as any,
         payment_status: (booking.paymentStatus || 'pending') as any,
         notes: booking.notes || null,
+        meeting_link: booking.meetingLink || null,
       })
       .select()
       .single();
@@ -264,6 +267,7 @@ export class SupabaseDataService {
     paymentStatus: string;
     notes: string;
     bookingDate: Date;
+    meetingLink: string;
     rescheduleRequest: any;
   }>): Promise<boolean> {
     const dbUpdates: any = {};
@@ -271,6 +275,7 @@ export class SupabaseDataService {
     if (updates.paymentStatus) dbUpdates.payment_status = updates.paymentStatus;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.bookingDate) dbUpdates.booking_date = updates.bookingDate.toISOString();
+    if (updates.meetingLink !== undefined) dbUpdates.meeting_link = updates.meetingLink;
     if (updates.rescheduleRequest !== undefined) dbUpdates.reschedule_request = updates.rescheduleRequest;
     dbUpdates.updated_at = new Date().toISOString();
 
@@ -590,6 +595,7 @@ export class SupabaseDataService {
       notes: b.notes || '',
       paymentStatus: b.payment_status || 'pending',
       reminderSent: b.reminder_sent || false,
+      meetingLink: b.meeting_link || undefined,
     }));
   }
 
@@ -627,6 +633,7 @@ export class SupabaseDataService {
       notes: b.notes || '',
       paymentStatus: b.payment_status || 'pending',
       reminderSent: b.reminder_sent || false,
+      meetingLink: b.meeting_link || undefined,
     }));
   }
 

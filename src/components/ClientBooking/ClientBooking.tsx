@@ -1016,11 +1016,11 @@ export function ClientBooking({ onComplete, initialClientData }: ClientBookingPr
                       const endDate = new Date(startDate);
                       endDate.setMinutes(endDate.getMinutes() + selectedServiceDetails.duration);
                       const event = {
-                        title: `${selectedServiceDetails.name} - Despertar`,
+                        title: `${selectedServiceDetails.name} - Desperto`,
                         start: startDate,
                         end: endDate,
-                        description: `Consulta com ${therapists.find(t => t.id === selectedTherapist)?.name}`,
-                        location: 'Desperto - Despertar ao Minuto'
+                        description: `Consulta online com ${therapists.find(t => t.id === selectedTherapist)?.name}\nSessao via Google Meet`,
+                        location: 'Google Meet (link no email de confirmacao)'
                       };
                       
                       return (
