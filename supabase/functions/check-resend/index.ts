@@ -12,9 +12,9 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const resendApiKey = Deno.env.get("VITE_RESEND_API_KEY") || Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      return new Response(JSON.stringify({ error: "RESEND_API_KEY not set" }), {
+      return new Response(JSON.stringify({ error: "VITE_RESEND_API_KEY not set" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

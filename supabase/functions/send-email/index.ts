@@ -15,24 +15,24 @@ interface EmailRequest {
 }
 
 async function getResendApiKey(): Promise<string> {
+  const envKey = Deno.env.get("VITE_RESEND_API_KEY") || Deno.env.get("RESEND_API_KEY");
+  if (envKey) return envKey;
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (supabaseUrl && serviceRoleKey) {
     try {
       const supabase = createClient(supabaseUrl, serviceRoleKey);
       const { data, error } = await supabase
-        .rpc("get_secret", { secret_name: "RESEND_API_KEY" });
+        .rpc("get_secret", { secret_name: "VITE_RESEND_API_KEY" });
       if (!error && data) {
         const key = typeof data === "string" ? data : data[0]?.decrypted_secret;
         if (key) return key;
       }
-    } catch (_) { /* fall through to env */ }
+    } catch (_) { /* fall through */ }
   }
 
-  const envKey = Deno.env.get("RESEND_API_KEY");
-  if (envKey) return envKey;
-
-  throw new Error("RESEND_API_KEY not configured");
+  throw new Error("VITE_RESEND_API_KEY not configured");
 }
 
 Deno.serve(async (req: Request) => {
@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    const fromAddress = "Desperto <noreply@euestoudesperto.pt>";
+    const fromAddress = "Desperto <agendamentos@desperto.app>";
 
     console.log(`Sending email from: ${fromAddress} to: ${emailData.to_email}`);
 
