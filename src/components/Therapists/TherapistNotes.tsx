@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, FileText, Calendar, User, Edit, Trash2, Eye, EyeOff, Tag, X } from 'lucide-react';
+import { Plus, Search, Filter, FileText, Calendar, User, CreditCard as Edit, Trash2, Eye, EyeOff, Tag, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { TherapistNote } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
