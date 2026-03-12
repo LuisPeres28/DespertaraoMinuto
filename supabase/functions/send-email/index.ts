@@ -226,7 +226,8 @@ Deno.serve(async (req: Request) => {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    const fromAddress = "Desperto <agendamentos@desperto.app>";
+    const fromAddress = "Desperto <euestoudesperto@gmail.com>";
+    const replyTo = "euestoudesperto@gmail.com";
     const htmlBody = buildHtmlEmail(emailData);
 
     console.log(`Sending email from: ${fromAddress} to: ${emailData.to_email}`);
@@ -239,6 +240,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         from: fromAddress,
+        reply_to: replyTo,
         to: [emailData.to_email],
         subject: emailData.subject || 'Desperto - Notificacao',
         html: htmlBody,
