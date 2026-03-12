@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, FileText, Calendar, User, Pencil, Trash2, Eye, EyeOff, Tag, X, AlertCircle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { TherapistNote } from '../../types';
@@ -34,6 +34,16 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const canManageNotes = currentUser?.userType === 'admin' || currentUser?.userType === 'therapist';
+
+  useEffect(() => {
+    if (canManageNotes && currentUser?.id) {
+      SupabaseDataService.fetchTherapistNotes(currentUser.id).then(notes => {
+        if (notes.length > 0 || therapistNotes.length === 0) {
+          setTherapistNotes(notes);
+        }
+      });
+    }
+  }, [currentUser?.id, canManageNotes]);
 
   if (!canManageNotes) {
     return (
@@ -80,7 +90,7 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
           content: noteData.content,
           isPrivate: noteData.isPrivate,
           tags: noteData.tags,
-        });
+        }, currentUser?.id);
         if (!success) {
           setErrorMsg('Erro ao atualizar a nota. Verifique as suas permissoes e tente novamente.');
           setSaving(false);
@@ -154,7 +164,7 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
     if (!confirm('Tem certeza que deseja eliminar esta nota?')) return;
 
     setErrorMsg(null);
-    const success = await SupabaseDataService.deleteTherapistNote(noteId);
+    const success = await SupabaseDataService.deleteTherapistNote(noteId, currentUser?.id);
     if (!success) {
       setErrorMsg('Erro ao eliminar a nota. Tente novamente.');
       return;

@@ -194,7 +194,27 @@ export class SupabaseDataService {
     }));
   }
 
-  static async fetchTherapistNotes(): Promise<TherapistNote[]> {
+  static async fetchTherapistNotes(userId?: string): Promise<TherapistNote[]> {
+    if (userId) {
+      const { data, error } = await supabase.rpc('rpc_fetch_therapist_notes', { p_user_id: userId });
+      if (error) {
+        console.error('Error fetching therapist notes via RPC:', error);
+        return [];
+      }
+      return (data || []).map((n: any) => ({
+        id: n.id,
+        therapistId: n.therapist_id,
+        clientId: n.client_id,
+        title: n.title,
+        content: n.content,
+        isPrivate: n.is_private,
+        createdAt: new Date(n.created_at),
+        updatedAt: new Date(n.updated_at),
+        sessionDate: n.session_date ? new Date(n.session_date) : undefined,
+        tags: n.tags || [],
+      }));
+    }
+
     const { data, error } = await supabase
       .from('therapist_notes')
       .select('*')
@@ -205,7 +225,7 @@ export class SupabaseDataService {
       return [];
     }
 
-    return (data || []).map(n => ({
+    return (data || []).map((n: any) => ({
       id: n.id,
       therapistId: n.therapist_id,
       clientId: n.client_id,
@@ -380,19 +400,15 @@ export class SupabaseDataService {
     sessionDate?: Date;
     tags?: string[];
   }): Promise<TherapistNote | null> {
-    const { data, error } = await supabase
-      .from('therapist_notes')
-      .insert({
-        therapist_id: note.therapistId,
-        client_id: note.clientId,
-        title: note.title,
-        content: note.content,
-        is_private: note.isPrivate ?? true,
-        session_date: note.sessionDate?.toISOString() || null,
-        tags: note.tags || [],
-      })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('rpc_create_therapist_note', {
+      p_user_id: note.therapistId,
+      p_client_id: note.clientId,
+      p_title: note.title,
+      p_content: note.content,
+      p_is_private: note.isPrivate ?? true,
+      p_session_date: note.sessionDate?.toISOString() || null,
+      p_tags: note.tags || [],
+    });
 
     if (error) {
       console.error('Error creating therapist note:', error);
@@ -418,7 +434,23 @@ export class SupabaseDataService {
     content: string;
     isPrivate: boolean;
     tags: string[];
-  }>): Promise<boolean> {
+  }>, userId?: string): Promise<boolean> {
+    if (userId) {
+      const { error } = await supabase.rpc('rpc_update_therapist_note', {
+        p_user_id: userId,
+        p_note_id: id,
+        p_title: updates.title ?? null,
+        p_content: updates.content ?? null,
+        p_is_private: updates.isPrivate ?? null,
+        p_tags: updates.tags ?? null,
+      });
+      if (error) {
+        console.error('Error updating therapist note:', error);
+        return false;
+      }
+      return true;
+    }
+
     const dbUpdates: any = { updated_at: new Date().toISOString() };
     if (updates.title !== undefined) dbUpdates.title = updates.title;
     if (updates.content !== undefined) dbUpdates.content = updates.content;
@@ -437,7 +469,19 @@ export class SupabaseDataService {
     return true;
   }
 
-  static async deleteTherapistNote(id: string): Promise<boolean> {
+  static async deleteTherapistNote(id: string, userId?: string): Promise<boolean> {
+    if (userId) {
+      const { error } = await supabase.rpc('rpc_delete_therapist_note', {
+        p_user_id: userId,
+        p_note_id: id,
+      });
+      if (error) {
+        console.error('Error deleting therapist note:', error);
+        return false;
+      }
+      return true;
+    }
+
     const { error } = await supabase
       .from('therapist_notes')
       .delete()

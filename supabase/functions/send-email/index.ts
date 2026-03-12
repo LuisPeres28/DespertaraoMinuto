@@ -15,7 +15,6 @@ interface EmailRequest {
 }
 
 const SITE_URL = "https://desperto.app";
-const LOGO_URL = `${SITE_URL}/Logo_Desperto_qualidade.jpg`;
 const GIF_URL = `${SITE_URL}/Criacao_de_Animacao_de_Logotipo_em_Loop.gif`;
 
 async function getResendApiKey(): Promise<string> {
@@ -193,7 +192,6 @@ function buildHtmlEmail(emailData: EmailRequest): string {
           <!-- Footer -->
           <tr>
             <td align="center" style="padding:32px 16px 0;">
-              <img src="${LOGO_URL}" alt="Desperto" width="120" style="display:block;max-width:120px;height:auto;margin-bottom:16px;" />
               <p style="color:#999;font-size:12px;margin:0 0 4px 0;">Desperto - Consultas Online</p>
               <p style="color:#999;font-size:12px;margin:0 0 4px 0;">
                 <a href="mailto:euestoudesperto@gmail.com" style="color:#c9a84c;text-decoration:none;">euestoudesperto@gmail.com</a>
