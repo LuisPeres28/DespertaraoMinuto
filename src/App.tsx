@@ -245,7 +245,7 @@ function App() {
         case 'payments':
           return <PaymentsList />;
         case 'coupons':
-          return <CouponManagement />;
+          return <CouponManagement currentUser={user} />;
         case 'therapist-notes':
           return <TherapistNotes />;
         case 'messages':
@@ -258,7 +258,7 @@ function App() {
         case 'settings':
           return <Settings />;
         case 'therapist-management':
-          return <TherapistManagement />;
+          return <TherapistManagement currentUser={user} />;
         default:
           return <Dashboard onNavigate={setActiveTab} />;
       }

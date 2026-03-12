@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { Plus, Mail, User, Shield, Clock, CheckCircle, X, Send, AlertCircle, Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { TherapistInvitation, Therapist } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from '../../services/emailService';
 
-export function TherapistManagement() {
+interface TherapistManagementProps {
+  currentUser?: { id: string; userType: string; [key: string]: any } | null;
+}
+
+export function TherapistManagement({ currentUser = null }: TherapistManagementProps) {
   const {
     therapists,
     setTherapists,
     therapistInvitations,
     setTherapistInvitations
   } = useApp();
-  const { user: currentUser, loading: authLoading } = useSupabaseAuth();
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteData, setInviteData] = useState({
@@ -24,17 +26,6 @@ export function TherapistManagement() {
   });
 
   const isAdmin = currentUser?.userType === 'admin';
-
-  if (authLoading) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600">A carregar...</span>
-        </div>
-      </div>
-    );
-  }
 
   if (!isAdmin) {
     return (

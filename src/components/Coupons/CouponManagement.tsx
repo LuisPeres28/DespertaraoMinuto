@@ -5,22 +5,25 @@ import { CouponService } from '../../services/couponService';
 import { SupabaseDataService } from '../../services/supabaseDataService';
 import { Coupon, CouponUsage } from '../../types';
 
-export function CouponManagement() {
-  const { 
-    coupons, 
-    setCoupons, 
-    couponUsage, 
-    setCouponUsage, 
-    clients, 
-    services, 
-    therapists 
+interface CouponManagementProps {
+  currentUser?: { id: string; userType: string; [key: string]: any } | null;
+}
+
+export function CouponManagement({ currentUser = null }: CouponManagementProps) {
+  const {
+    coupons,
+    setCoupons,
+    couponUsage,
+    setCouponUsage,
+    clients,
+    services,
+    therapists
   } = useApp();
-  
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const [couponData, setCouponData] = useState({
     type: 'fixed_amount' as const,
@@ -32,19 +35,6 @@ export function CouponManagement() {
     description: ''
   });
 
-  React.useEffect(() => {
-    const savedUser = localStorage.getItem('desperto_user');
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setCurrentUser(userData);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-      }
-    }
-  }, []);
-
-  // Check permissions
   const canManageCoupons = currentUser?.userType === 'admin' || currentUser?.userType === 'therapist';
 
   if (!canManageCoupons) {
