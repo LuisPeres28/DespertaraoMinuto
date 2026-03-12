@@ -4,26 +4,17 @@ import { useApp } from '../../context/AppContext';
 import { ClientDetails } from './ClientDetails';
 import { AddClientModal } from './AddClientModal';
 
-export function ClientsList() {
+interface ClientsListProps {
+  currentUser?: { id: string; userType: string; [key: string]: any } | null;
+}
+
+export function ClientsList({ currentUser = null }: ClientsListProps) {
   const { clients, setClients, bookings, setBookings, payments, setPayments, therapists } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    const savedUser = localStorage.getItem('desperto_user');
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setCurrentUser(userData);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-      }
-    }
-  }, []);
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

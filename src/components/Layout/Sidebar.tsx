@@ -8,10 +8,10 @@ import { X } from 'lucide-react';
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  currentMode?: 'client' | 'therapist' | 'admin';
+  userType?: string;
 }
 
-export function Sidebar({ activeTab, setActiveTab, currentMode = 'client' }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, userType }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -70,12 +70,13 @@ export function Sidebar({ activeTab, setActiveTab, currentMode = 'client' }: Sid
           <SidebarHeader onMobileMenuClose={() => setIsMobileMenuOpen(false)} />
         </div>
         
-        <Navigation 
-          activeTab={activeTab} 
+        <Navigation
+          activeTab={activeTab}
           setActiveTab={(tab) => {
             setActiveTab(tab);
             setIsMobileMenuOpen(false);
-          }} 
+          }}
+          userType={userType}
         />
         <SidebarFooter />
       </div>

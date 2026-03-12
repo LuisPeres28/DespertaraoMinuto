@@ -4,19 +4,22 @@ import { useApp } from '../../context/AppContext';
 import { TherapistNote } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
-export function TherapistNotes() {
-  const { 
-    therapistNotes, 
-    setTherapistNotes, 
-    clients, 
-    therapists 
+interface TherapistNotesProps {
+  currentUser?: { id: string; userType: string; [key: string]: any } | null;
+}
+
+export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
+  const {
+    therapistNotes,
+    setTherapistNotes,
+    clients,
+    therapists
   } = useApp();
-  
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingNote, setEditingNote] = useState<TherapistNote | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClient, setFilterClient] = useState<string>('all');
-  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const [noteData, setNoteData] = useState({
     clientId: '',
@@ -28,19 +31,6 @@ export function TherapistNotes() {
   });
   const [newTag, setNewTag] = useState('');
 
-  React.useEffect(() => {
-    const savedUser = localStorage.getItem('desperto_user');
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setCurrentUser(userData);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-      }
-    }
-  }, []);
-
-  // Check permissions
   const canManageNotes = currentUser?.userType === 'admin' || currentUser?.userType === 'therapist';
 
   if (!canManageNotes) {

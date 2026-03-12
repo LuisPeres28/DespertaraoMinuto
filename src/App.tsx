@@ -241,13 +241,13 @@ function App() {
         case 'bookings':
           return <BookingsList />;
         case 'clients':
-          return <ClientsList />;
+          return <ClientsList currentUser={user} />;
         case 'payments':
           return <PaymentsList />;
         case 'coupons':
           return <CouponManagement currentUser={user} />;
         case 'therapist-notes':
-          return <TherapistNotes />;
+          return <TherapistNotes currentUser={user} />;
         case 'messages':
           return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
@@ -291,7 +291,7 @@ function App() {
         {isStaffUser && (
           <div className="flex">
             <div className="w-64 flex-shrink-0">
-              <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+              <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} userType={user?.userType} />
             </div>
             <div className="flex-1">
               <Header
