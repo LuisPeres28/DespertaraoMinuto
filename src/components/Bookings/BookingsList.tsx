@@ -11,14 +11,15 @@ export function BookingsList() {
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
-  const filteredBookings = bookings.filter(booking => {
-    const client = clients.find(c => c.id === booking.clientId);
-    const matchesSearch = client?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client?.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || booking.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredBookings = bookings
+    .filter(booking => {
+      const client = clients.find(c => c.id === booking.clientId);
+      const matchesSearch = client?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           client?.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = filterStatus === 'all' || booking.status === filterStatus;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const getStatusColor = (status: string) => {
     switch (status) {

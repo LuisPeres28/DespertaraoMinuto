@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, FileText, Calendar, User, CreditCard as Edit, Trash2, Eye, EyeOff, Tag, X } from 'lucide-react';
+import { Plus, Search, Filter, FileText, Calendar, User, Pencil, Trash2, Eye, EyeOff, Tag, X, AlertCircle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { TherapistNote } from '../../types';
-import { v4 as uuidv4 } from 'uuid';
+import { SupabaseDataService } from '../../services/supabaseDataService';
 
 interface TherapistNotesProps {
   currentUser?: { id: string; userType: string; [key: string]: any } | null;
@@ -30,6 +30,8 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
     tags: [] as string[]
   });
   const [newTag, setNewTag] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const canManageNotes = currentUser?.userType === 'admin' || currentUser?.userType === 'therapist';
 
@@ -61,44 +63,64 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
     return matchesSearch && matchesClient;
   });
 
-  const handleCreateNote = () => {
+  const handleCreateNote = async () => {
     if (!noteData.clientId || !noteData.title.trim() || !noteData.content.trim()) {
-      alert('Cliente, título e conteúdo são obrigatórios');
+      setErrorMsg('Cliente, titulo e conteudo sao obrigatorios.');
       return;
     }
+    if (!currentUser) return;
 
-    const newNote: TherapistNote = {
-      id: editingNote?.id || uuidv4(),
-      therapistId: currentUser.id,
-      clientId: noteData.clientId,
-      title: noteData.title,
-      content: noteData.content,
-      isPrivate: noteData.isPrivate,
-      createdAt: editingNote?.createdAt || new Date(),
-      updatedAt: new Date(),
-      sessionDate: noteData.sessionDate ? new Date(noteData.sessionDate) : undefined,
-      tags: noteData.tags
-    };
+    setSaving(true);
+    setErrorMsg(null);
 
-    if (editingNote) {
-      setTherapistNotes(prev => prev.map(n => n.id === editingNote.id ? newNote : n));
-    } else {
-      setTherapistNotes(prev => [...prev, newNote]);
+    try {
+      if (editingNote) {
+        const success = await SupabaseDataService.updateTherapistNote(editingNote.id, {
+          title: noteData.title,
+          content: noteData.content,
+          isPrivate: noteData.isPrivate,
+          tags: noteData.tags,
+        });
+        if (!success) {
+          setErrorMsg('Erro ao atualizar a nota. Verifique as suas permissoes e tente novamente.');
+          setSaving(false);
+          return;
+        }
+        setTherapistNotes(prev => prev.map(n => n.id === editingNote.id ? {
+          ...n,
+          title: noteData.title,
+          content: noteData.content,
+          isPrivate: noteData.isPrivate,
+          tags: noteData.tags,
+          updatedAt: new Date(),
+        } : n));
+      } else {
+        const created = await SupabaseDataService.createTherapistNote({
+          therapistId: currentUser.id,
+          clientId: noteData.clientId,
+          title: noteData.title,
+          content: noteData.content,
+          isPrivate: noteData.isPrivate,
+          sessionDate: noteData.sessionDate ? new Date(noteData.sessionDate) : undefined,
+          tags: noteData.tags,
+        });
+        if (!created) {
+          setErrorMsg('Erro ao criar a nota. Verifique as suas permissoes e tente novamente.');
+          setSaving(false);
+          return;
+        }
+        setTherapistNotes(prev => [created, ...prev]);
+      }
+
+      setNoteData({ clientId: '', title: '', content: '', isPrivate: true, sessionDate: '', tags: [] });
+      setEditingNote(null);
+      setShowCreateModal(false);
+    } catch (err) {
+      setErrorMsg('Erro inesperado ao salvar a nota. Tente novamente.');
+      console.error('Error saving note:', err);
+    } finally {
+      setSaving(false);
     }
-
-    // Reset form
-    setNoteData({
-      clientId: '',
-      title: '',
-      content: '',
-      isPrivate: true,
-      sessionDate: '',
-      tags: []
-    });
-    setEditingNote(null);
-    setShowCreateModal(false);
-
-    alert(editingNote ? 'Nota atualizada com sucesso!' : 'Nota criada com sucesso!');
   };
 
   const handleEditNote = (note: TherapistNote) => {
@@ -120,20 +142,24 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
     setShowCreateModal(true);
   };
 
-  const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = async (noteId: string) => {
     const note = therapistNotes.find(n => n.id === noteId);
     if (!note) return;
 
-    // Check if user can delete this note
     if (currentUser?.userType !== 'admin' && note.therapistId !== currentUser?.id) {
-      alert('Só pode eliminar as suas próprias notas');
+      setErrorMsg('So pode eliminar as suas proprias notas.');
       return;
     }
 
-    if (confirm('Tem certeza que deseja eliminar esta nota?')) {
-      setTherapistNotes(prev => prev.filter(n => n.id !== noteId));
-      alert('Nota eliminada com sucesso!');
+    if (!confirm('Tem certeza que deseja eliminar esta nota?')) return;
+
+    setErrorMsg(null);
+    const success = await SupabaseDataService.deleteTherapistNote(noteId);
+    if (!success) {
+      setErrorMsg('Erro ao eliminar a nota. Tente novamente.');
+      return;
     }
+    setTherapistNotes(prev => prev.filter(n => n.id !== noteId));
   };
 
   const addTag = () => {
@@ -164,6 +190,16 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
           <span>Nova Nota</span>
         </button>
       </div>
+
+      {errorMsg && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+          <p className="text-sm text-red-800 flex-1">{errorMsg}</p>
+          <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-600">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -314,7 +350,7 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
                           title="Editar nota"
                           style={{ touchAction: 'manipulation' }}
                         >
-                          <Edit className="w-4 h-4" />
+                          <Pencil className="w-4 h-4" />
                         </button>
                         {(currentUser?.userType === 'admin' || note.therapistId === currentUser?.id) && (
                           <button
@@ -529,11 +565,11 @@ export function TherapistNotes({ currentUser = null }: TherapistNotesProps) {
                 </button>
                 <button
                   onClick={handleCreateNote}
-                  disabled={!noteData.clientId || !noteData.title.trim() || !noteData.content.trim()}
+                  disabled={saving || !noteData.clientId || !noteData.title.trim() || !noteData.content.trim()}
                   className="w-full sm:flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium min-h-[48px] text-base"
                   style={{ touchAction: 'manipulation' }}
                 >
-                  {editingNote ? 'Atualizar' : 'Criar'} Nota
+                  {saving ? 'A guardar...' : editingNote ? 'Atualizar Nota' : 'Criar Nota'}
                 </button>
               </div>
             </div>
