@@ -18,6 +18,7 @@ import { UniversalAuth } from './components/Auth/UniversalAuth';
 import { ClientHistory } from './components/ClientBooking/ClientHistory';
 import { ClientDashboard } from './components/ClientBooking/ClientDashboard';
 import { BookingActionPage } from './components/BookingAction/BookingActionPage';
+import { DeployInfo } from './components/Layout/DeployInfo';
 
 function App() {
   const { user, loading, signIn, signUp, signOut } = useSupabaseAuth();
@@ -364,6 +365,7 @@ function App() {
           />
         )}
 
+        <DeployInfo />
       </div>
     </AppProvider>
   );
